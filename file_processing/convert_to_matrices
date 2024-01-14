@@ -1,0 +1,125 @@
+import numpy as np
+import torch, os, fnmatch
+
+
+def read_ct(file: str) -> tuple():
+    """
+    Takes a .ct file and returns the sequence as a string and a list of base pairs
+    """
+    sequence = ""
+    pairs = []
+
+    with open(file, 'r') as f:
+        lines = [line.split() for line in f.readlines()]
+
+    #Remove header - if any
+    header_lines = 0
+    for line in lines:
+        if line[0] == '1':
+                break
+        else:
+            header_lines += 1
+
+    lines = lines[header_lines:]
+
+    for line in lines:
+        sequence += line[1]
+        if line[4] != '0':
+            pairs.append((int(line[0])-1, int(line[4])-1)) #The files start indexing from 1
+
+    return sequence, pairs
+
+
+def make_matrix_from_sequence(sequence: str) -> np.array:
+    """
+    A sequence is converted to a matrix containing all the possible base pairs
+
+    Each pair in encoded as a onehot vector.
+
+    Unpaired are the bases on the diagonal, representing the unpaired/unfolded sequence
+    """
+    coding = np.array([
+        [1, 0, 0, 0, 0, 0, 0, 0],  # invalid pairing
+        [0, 1, 0, 0, 0, 0, 0, 0],  # unpaired
+        [0, 0, 1, 0, 0, 0, 0, 0],  # GC
+        [0, 0, 0, 1, 0, 0, 0, 0],  # CG
+        [0, 0, 0, 0, 1, 0, 0, 0],  # UG
+        [0, 0, 0, 0, 0, 1, 0, 0],  # GU
+        [0, 0, 0, 0, 0, 0, 1, 0],  # UA
+        [0, 0, 0, 0, 0, 0, 0, 1],  # AU
+    ], dtype=np.float32)
+
+    basepairs = ["GC", "CG", "UG", "GU", "UA", "AU"]
+
+    N = len(sequence)
+
+    # Create an array filled with "invalid pairing" vectors
+    matrix = np.tile(coding[0], (N, N, 1))
+
+    # Update the diagonal with "unpaired" vectors
+    matrix[np.arange(N), np.arange(N), :] = coding[1]
+
+    # Update base pair positions directly
+    for i, j in np.ndindex(N, N):
+        pair = sequence[i] + sequence[j]
+        if pair in basepairs:
+            matrix[i, j, :] = coding[basepairs.index(pair)+2]
+
+    return matrix
+
+
+def make_matrix_from_basepairs(sequence: str, pairs: list) -> np.array:
+    """
+    Takes a list of all the base pairs.
+    From the list a 2D matrix is made, with each cell coresponding to a base pair encoded as 1
+    """
+
+    N = len(sequence)
+    matrix = np.full((N,N), 0, dtype="float32")
+
+    for pair in pairs:
+        matrix[pair[0], pair[1]] = 1
+
+    return matrix
+
+def save_matrix(matrix: np.array, name: str) -> None:
+    """
+    Converts matrix to tensor and saves
+    """
+    torch.save(torch.from_numpy(matrix), name)
+
+def process_and_save(input_folder, pattern = "*.ct"): 
+  os.makedirs("input", exist_ok = True)
+  os.makedirs("output", exist_ok = True)
+
+  for root, dirs, files in os.walk(input_folder): 
+    
+    # Create corresponding subdirectories in the output folder
+    for dir_name in dirs:
+      dir_path_in = os.path.join("input", os.path.relpath(os.path.join(root, dir_name), input_folder))
+      os.makedirs(dir_path_in, exist_ok=True)
+
+      dir_path_out = os.path.join("output", os.path.relpath(os.path.join(root, dir_name), input_folder))
+      os.makedirs(dir_path_out, exist_ok=True)
+    
+    for file_name in files: 
+      if fnmatch(file_name, pattern):
+        input_file = os.path.join(root, file_name)
+        input_matrix_file = os.path.join("input", os.path.splitext(os.path.relpath(input_file, input_folder))[0] + '.pt')
+        output_matrix_file = os.path.join("output", os.path.splitext(os.path.relpath(input_file, input_folder))[0] + '.pt')
+
+        sequence, pairs = read_ct(input_file)
+
+        input_matrix, output_matrix = None, None
+
+        try:       
+          input_matrix = make_matrix_from_sequence(sequence)
+          output_matrix = make_matrix_from_basepairs(sequence, pairs)
+        
+        except Exception as e:
+          # Skip this file if an unexpected error occurs during processing
+          print(f"Skipping {input_file} due to unexpected error: {e}") 
+        
+        if output_matrix is not None:
+          save_matrix(input_matrix, input_matrix_file)
+          save_matrix(output_matrix, output_matrix_file)
