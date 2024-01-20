@@ -1,5 +1,4 @@
-import numpy as np
-import torch, os, fnmatch
+from python_packages import *
 
 
 def read_ct(file: str) -> tuple():
@@ -121,5 +120,5 @@ def process_and_save(input_folder, pattern = "*.ct"):
           print(f"Skipping {input_file} due to unexpected error: {e}") 
         
         if output_matrix is not None:
-          save_matrix(input_matrix, input_matrix_file)
+          save_matrix(input_matrix.transpose((2, 0, 1)), input_matrix_file)
           save_matrix(output_matrix, output_matrix_file)

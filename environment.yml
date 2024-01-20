@@ -1,0 +1,16 @@
+name: RNAUnet
+channels:
+  - conda-forge
+  - pytorch
+  - nvidia
+dependencies:
+  - numpy 
+  - pandas
+  - matplotlib 
+  - torchinfo
+  - scikit-learn
+  - pytorch  
+  - torchvision
+  - torchaudio
+  - cpuonly 
+  - pytorch-cuda=11.8
