@@ -26,7 +26,7 @@ def underGivenLength(length: int, data_size: int, file_list: list):
       try:
           files+=rd.sample(family, data_size)
       except:
-          print("Not enough data in family, adding all", file=sys.stdout)
+          print(f"Not enough data in {family}, adding all", file=sys.stdout)
           files+=family
   return files
 
@@ -71,7 +71,7 @@ def process_and_save(file_list, output_file):
         # Skip this file if an unexpected error occurs during processing
         print(f"Skipping {file} due to unexpected error: {e}", file=sys.stderr)
     
-  print("\n\nSave file", file=sys.stdout)
+  print(f"\n\n{len(all_files)} files converted\nSave file", file=sys.stdout)
   pickle.dump(all_files, open(output_file, 'wb'))
 
 if __name__ == "__main__": 
