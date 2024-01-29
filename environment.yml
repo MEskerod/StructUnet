@@ -14,3 +14,4 @@ dependencies:
   - torchaudio
   - cpuonly 
   - pytorch-cuda=11.8
+
