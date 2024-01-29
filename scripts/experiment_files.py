@@ -81,7 +81,7 @@ if __name__ == "__main__":
             print("Extract files", file=sys.stdout)
             tar.extractall(temp_dir)
         
-        file_list = underGivenLength(500, 5000, list_all_files(temp_dir))
+        file_list = underGivenLength(71, 5000, list_all_files(temp_dir))
         print(f"Total of {len(file_list)} files chosen\n", file=sys.stdout)
         
         print("Convert to matrices\n", file=sys.stdout)
