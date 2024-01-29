@@ -3,7 +3,12 @@ import os, tempfile, shutil, tarfile, pickle, sys
 import random as rd
 from collections import namedtuple
 
-from utils.prepare_data import make_matrix_from_sequence_8, make_matrix_from_sequence_17, make_matrix_from_basepairs, read_ct, getFamily, getLength, list_all_files
+from utils.prepare_data import make_matrix_from_sequence_8, make_matrix_from_sequence_17, make_matrix_from_basepairs, read_ct, getLength, list_all_files
+
+def getFamily(file_name):
+  '''
+  '''
+  return ''.join(file_name.split(os.sep)[5].split('_')[:-1])
 
 def underGivenLength(length: int, data_size: int, file_list: list):
   '''
@@ -12,7 +17,7 @@ def underGivenLength(length: int, data_size: int, file_list: list):
   '''
   rd.seed(42)
   
-  families = list(set([file.split(os.sep)[4] for file in file_list])) #Find all family names and remove duplicates
+  families = list(set([getFamily(file) for file in file_list])) #Find all family names and remove duplicates
 
   data = [[line for line in file_list if family in line and getLength(line)<length] for family in families] #Create list of lists, where each list contains all files from a family
 
