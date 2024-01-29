@@ -21,7 +21,7 @@ def underGivenLength(length: int, data_size: int, file_list: list):
       try:
           files+=rd.sample(family, data_size)
       except:
-          print("Not enough data in family, adding all")
+          print("Not enough data in family, adding all", file=sys.stdout)
           files+=family
   return files
 
@@ -64,9 +64,9 @@ def process_and_save(file_list, output_file):
 
     except Exception as e:
         # Skip this file if an unexpected error occurs during processing
-        print(f"Skipping {file} due to unexpected error: {e}")
+        print(f"Skipping {file} due to unexpected error: {e}", file=sys.stderr)
     
-  print("\n\nSave file")
+  print("\n\nSave file", file=sys.stdout)
   pickle.dump(all_files, open(output_file, 'wb'))
 
 if __name__ == "__main__": 
@@ -78,13 +78,13 @@ if __name__ == "__main__":
    
     try: 
         with tarfile.open(tar_file_path, 'r:gz') as tar: 
-            print("Extract files")
+            print("Extract files", file=sys.stdout)
             tar.extractall(temp_dir)
         
         file_list = underGivenLength(500, 5000, list_all_files(temp_dir))
-        print(f"Total of {len(file_list)} files chosen\n")
+        print(f"Total of {len(file_list)} files chosen\n", file=sys.stdout)
         
-        print("Convert to matrices\n")
+        print("Convert to matrices\n", file=sys.stdout)
         process_and_save(file_list, "data/experiment.pkl")
     
     finally: 
