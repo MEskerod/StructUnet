@@ -38,7 +38,7 @@ def update_progress_bar(current_index, total_indices):
     sys.stdout.write(f'\r[{bar}] {int(progress * 100)}%')
     sys.stdout.flush()
 
-def process_and_save(file_list, output_file):
+def process_and_save(file_list, output_file, matrix_type = '8'):
   all_files = []
   
   
@@ -53,12 +53,16 @@ def process_and_save(file_list, output_file):
         if (i + 1) % 100 == 0:
             update_progress_bar(i, len(file_list))
 
-        input_matrix_8 = make_matrix_from_sequence_8(sequence) 
-        #input_matrix_17 = make_matrix_from_sequence_17(sequence)
+        if matrix_type == '8':
+            input_matrix = make_matrix_from_sequence_8(sequence)
+        elif matrix_type == '17':  
+            input_matrix = make_matrix_from_sequence_17(sequence)
+        else: 
+            raise ValueError("Wrong matrix type")
+        
         output_matrix = make_matrix_from_basepairs(sequence, pairs)
 
-        sample = RNA_data_experiment(input_8 = input_matrix_8,
-                                     #input_17 = input_matrix_17, 
+        sample = RNA_data(input = input_matrix,
                                      output = output_matrix,
                                      length = length,
                                      family = family,
@@ -75,8 +79,9 @@ def process_and_save(file_list, output_file):
   pickle.dump(all_files, open(output_file, 'wb'))
 
 if __name__ == "__main__": 
-    #RNA_data_experiment = namedtuple('RNA_data_experiment', 'input_8 input_17 output length family name pairs')
-    RNA_data_experiment = namedtuple('RNA_data_experiment', 'input_8 output length family name pairs')
+    matrix_type = sys.argv[1]
+    
+    RNA_data = namedtuple('RNA_data', 'input output length family name pairs')
 
     tar_file_path = 'data/RNAStralign.tar.gz'
 
@@ -91,7 +96,7 @@ if __name__ == "__main__":
         print(f"Total of {len(file_list)} files chosen\n", file=sys.stdout)
         
         print("Convert to matrices\n", file=sys.stdout)
-        process_and_save(file_list, "data/experiment8.pkl")
+        process_and_save(file_list, f"data/experiment{matrix_type}.pkl")
     
     finally: 
         shutil.rmtree(temp_dir)
