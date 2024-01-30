@@ -19,14 +19,14 @@ def underGivenLength(length: int, data_size: int, file_list: list):
   
   families = list(set([getFamily(file) for file in file_list])) #Find all family names and remove duplicates
 
-  data = [[line for line in file_list if family in line and getLength(line)<length] for family in families] #Create list of lists, where each list contains all files from a family
+  data = {family:[line for line in file_list if family in line and getLength(line)<length] for family in families} #Create list of lists, where each list contains all files from a family
 
   files = []
-  for family in data: #Pick data_size files from each family
+  for name, family in data.items(): #Pick data_size files from each family
       try:
           files+=rd.sample(family, data_size)
       except:
-          print(f"Not enough data in {family}, adding all", file=sys.stdout)
+          print(f"Not enough data in {name}, adding all", file=sys.stdout)
           files+=family
   return files
 
@@ -54,11 +54,11 @@ def process_and_save(file_list, output_file):
             update_progress_bar(i, len(file_list))
 
         input_matrix_8 = make_matrix_from_sequence_8(sequence) 
-        input_matrix_17 = make_matrix_from_sequence_17(sequence)
+        #input_matrix_17 = make_matrix_from_sequence_17(sequence)
         output_matrix = make_matrix_from_basepairs(sequence, pairs)
 
         sample = RNA_data_experiment(input_8 = input_matrix_8,
-                                     input_17 = input_matrix_17, 
+                                     #input_17 = input_matrix_17, 
                                      output = output_matrix,
                                      length = length,
                                      family = family,
@@ -75,7 +75,8 @@ def process_and_save(file_list, output_file):
   pickle.dump(all_files, open(output_file, 'wb'))
 
 if __name__ == "__main__": 
-    RNA_data_experiment = namedtuple('RNA_data_experiment', 'input_8 input_17 output length family name pairs')
+    #RNA_data_experiment = namedtuple('RNA_data_experiment', 'input_8 input_17 output length family name pairs')
+    RNA_data_experiment = namedtuple('RNA_data_experiment', 'input_8 output length family name pairs')
 
     tar_file_path = 'data/RNAStralign.tar.gz'
 
@@ -90,7 +91,7 @@ if __name__ == "__main__":
         print(f"Total of {len(file_list)} files chosen\n", file=sys.stdout)
         
         print("Convert to matrices\n", file=sys.stdout)
-        process_and_save(file_list, "data/experiment.pkl")
+        process_and_save(file_list, "data/experiment8.pkl")
     
     finally: 
         shutil.rmtree(temp_dir)
