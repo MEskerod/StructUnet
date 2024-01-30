@@ -8,7 +8,7 @@ from utils.prepare_data import make_matrix_from_sequence_8, make_matrix_from_seq
 def getFamily(file_name):
   '''
   '''
-  return ''.join(file_name.split(os.sep)[5].split('_')[:-1])
+  return ''.join(file_name.split(os.sep)[4].split('_')[:-1]) #NOTE - change back to 5 before pushing
 
 def underGivenLength(length: int, data_size: int, file_list: list):
   '''
@@ -38,9 +38,10 @@ def update_progress_bar(current_index, total_indices):
     sys.stdout.write(f'\r[{bar}] {int(progress * 100)}%')
     sys.stdout.flush()
 
-def process_and_save(file_list, output_file, matrix_type = '8'):
-  all_files = []
-  
+def process_and_save(file_list, output_folder, matrix_type = '8'):
+  converted = 0
+
+  os.makedirs(output_folder, exist_ok=True)
   
   for i, file in enumerate(file_list):
 
@@ -69,14 +70,14 @@ def process_and_save(file_list, output_file, matrix_type = '8'):
                                      name = file, 
                                      pairs = [pair for pair in pairs if pair[0] < pair[1]])
         
-        all_files.append(sample)
+        pickle.dump(sample, open(os.path.join(output_folder, os.path.splitext(os.path.basename(file))[0] + '.pkl'), 'wb'))
+        converted += 1
 
     except Exception as e:
         # Skip this file if an unexpected error occurs during processing
         print(f"Skipping {file} due to unexpected error: {e}", file=sys.stderr)
     
-  print(f"\n\n{len(all_files)} files converted\nSave file", file=sys.stdout)
-  pickle.dump(all_files, open(output_file, 'wb'))
+  print(f"\n\n{converted} files converted", file=sys.stdout)
 
 if __name__ == "__main__": 
     matrix_type = sys.argv[1]
@@ -92,11 +93,11 @@ if __name__ == "__main__":
             print("Extract files", file=sys.stdout)
             tar.extractall(temp_dir)
         
-        file_list = underGivenLength(500, 5000, list_all_files(temp_dir))
+        file_list = underGivenLength(71, 5000, list_all_files(temp_dir))
         print(f"Total of {len(file_list)} files chosen\n", file=sys.stdout)
         
         print("Convert to matrices\n", file=sys.stdout)
-        process_and_save(file_list, f"data/experiment{matrix_type}.pkl")
+        process_and_save(file_list, f"data/experiment{matrix_type}")
     
     finally: 
         shutil.rmtree(temp_dir)
