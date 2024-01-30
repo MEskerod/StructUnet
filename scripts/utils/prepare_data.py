@@ -1,4 +1,4 @@
-import os, torch, math, pickle
+import os, torch, math, pickle, sys
 import numpy as np
 import random as rd
 from fnmatch import fnmatch
@@ -154,9 +154,7 @@ def make_matrix_from_sequence_17(sequence: str) -> np.array:
     """
 
     """
-    return np.vstack((input_representation(sequence), calculate_score_matrix(sequence)))
-
-
+    return torch.from_numpy(np.vstack((input_representation(sequence), calculate_score_matrix(sequence))))
 
 
 
@@ -196,7 +194,7 @@ def make_matrix_from_sequence_8(sequence: str) -> np.array:
         if pair in basepairs:
             matrix[i, j, :] = coding[basepairs.index(pair)+2]
 
-    return matrix.transpose((2, 0, 1))
+    return torch.from_numpy(matrix.transpose((2, 0, 1)))
 
 
 def make_matrix_from_basepairs(sequence: str, pairs: list) -> np.array:
@@ -211,48 +209,62 @@ def make_matrix_from_basepairs(sequence: str, pairs: list) -> np.array:
     for pair in pairs:
         matrix[pair[0], pair[1]] = 1
 
-    return matrix
-
-def save_matrix(matrix: np.array, name: str) -> None:
-    """
-    Converts matrix to tensor and saves
-    """
-    torch.save(torch.from_numpy(matrix), name)
+    return torch.from_numpy(matrix)
 
 
 RNA_data = namedtuple('RNA_data', 'input output length family name pairs')
 
-def process_and_save(file_list, output_file):
-  all_files = []
+def update_progress_bar(current_index, total_indices):
+    progress = (current_index + 1) / total_indices
+    bar_length = 50
+    filled_length = int(bar_length * progress)
+    bar = '=' * filled_length + '.' * (bar_length - filled_length)
+    sys.stdout.write(f'\r[{bar}] {int(progress * 100)}%')
+    sys.stdout.flush()
+
+def process_and_save(file_list, output_folder, matrix_type = '8'):
+  converted = 0
+
+  os.makedirs(output_folder, exist_ok=True)
   
-  
-  for file in file_list:
+  for i, file in enumerate(file_list):
+
     length = getLength(file)
     family = getFamily(file)
 
     sequence, pairs = read_ct(file)
 
     try:
-        input_matrix = make_matrix_from_sequence_8(sequence) #NOTE - Change according to the final choice
+        if (i + 1) % 100 == 0:
+            update_progress_bar(i, len(file_list))
+
+        if matrix_type == '8':
+            input_matrix = make_matrix_from_sequence_8(sequence)
+        elif matrix_type == '17':  
+            input_matrix = make_matrix_from_sequence_17(sequence)
+        else: 
+            raise ValueError("Wrong matrix type")
+        
         output_matrix = make_matrix_from_basepairs(sequence, pairs)
 
-        sample = RNA_data(input = input_matrix, 
-                          output = output_matrix,
-                          length = length,
-                          family = family,
-                          name = file, 
-                          pairs = [pair for pair in pairs if pair[0] < pair[1]])
+        sample = RNA_data(input = input_matrix,
+                                     output = output_matrix,
+                                     length = length,
+                                     family = family,
+                                     name = file, 
+                                     pairs = [pair for pair in pairs if pair[0] < pair[1]])
         
-        all_files.append(sample)
+        pickle.dump(sample, open(os.path.join(output_folder, os.path.splitext(os.path.basename(file))[0] + '.pkl'), 'wb'))
+        converted += 1
 
     except Exception as e:
         # Skip this file if an unexpected error occurs during processing
-        print(f"Skipping {file} due to unexpected error: {e}")
+        print(f"Skipping {file} due to unexpected error: {e}", file=sys.stderr)
     
-  pickle.dump(all_files, open(output_file, 'wb'))
+  print(f"\n\n{converted} files converted", file=sys.stdout)
 
 def file_length(file):
-  return int(file.length)
+  return int(pickle.load(open(file, 'rb')).length)
 
 def get_indices(ratios): 
   rd.seed(42)
@@ -276,7 +288,7 @@ def split_data(file_list, train_ratio = 0.8, validation_ratio = 0.1, test_ratio 
 
   family_data = defaultdict(list)
   for file in file_list:
-    family = file.family
+    family = pickle.load(open(file, 'rb')).family
     family_data[family].append((file))
 
   for family, files in family_data.items():
