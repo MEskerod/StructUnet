@@ -7,7 +7,10 @@ from torch.utils.data import DataLoader
 
 import random as rd
 import numpy as np
+
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+import matplotlib as mpl
 
 from collections import defaultdict, namedtuple
 
@@ -15,9 +18,13 @@ RNA_data = namedtuple('RNA_data', 'input output length family name pairs')
 
 
 def file_length(file):
+  """
+  """
   return int(pickle.load(open(file, 'rb')).length)
 
-def get_indices(ratios): 
+def get_indices(ratios):
+  """
+  """ 
   rd.seed(42)
   
   numbers = list(range(10))
@@ -32,7 +39,9 @@ def get_indices(ratios):
 
   return group1, group2, group3
 
-def split_data(file_list, train_ratio = 0.8, validation_ratio = 0.1, test_ratio = 0.1, input_path = "input", output_path = "output"):
+def split_data(file_list, train_ratio = 0.8, validation_ratio = 0.1, test_ratio = 0.1):
+  """
+  """
   train_indices, valid_indices, test_indices = get_indices([train_ratio, validation_ratio, test_ratio])
   
   train, valid, test = [], [], []
@@ -89,6 +98,8 @@ class ImageToImageDataset(Dataset):
 
 ### MODEL RELATED ###
 class DynamicPadLayer(nn.Module):
+  """
+  """
   def __init__(self, stride_product):
     super(DynamicPadLayer, self).__init__()
     self.stride_product = stride_product
@@ -118,7 +129,7 @@ class RNA_Unet(nn.Module):
         """
         args:
         num_channels: length of the one-hot encoding vector
-        num_hidden_channels: number of channels in the hidden layers of both encoder and decoder
+        channels: number of channels after the first convolutional layer
         """
         super(RNA_Unet, self).__init__()
 
@@ -229,6 +240,8 @@ class RNA_Unet(nn.Module):
 ### TRAINING ###
 
 def f1_score(inputs, targets, epsilon=1e-7, treshold = 0.5):
+    """
+    """
     # Ensure tensors have the same shape
     assert inputs.shape == targets.shape
 
@@ -252,7 +265,9 @@ def f1_score(inputs, targets, epsilon=1e-7, treshold = 0.5):
 def adam_optimizer(model, lr, weight_decay = 0):
   return torch.optim.Adam(model.parameters(), lr=lr, weight_decay = weight_decay)
 
-def onehot_to_image(array):
+def onehot_to_image_8(array):
+  """
+  """
   channel_to_color = {0: [255, 255, 255], #invalid pairing = white
                       1: [64, 64, 64], #unpaired = gray
                       2: [0, 255, 0], #GC = green
@@ -272,11 +287,53 @@ def onehot_to_image(array):
 
   return rgb_image
 
-def show_matrices(inputs, observed, predicted, treshold=0.5, output_file = None):
+def onehot_to_image_17(array):
+  """
+  """
+  channel_to_color = {0: [255, 255, 255], #invalid pairing = white (AA)
+                      1: [128, 0, 0], #AU = dark red
+                      2: [255, 255, 255], #invalid pairing = white (AC)
+                      3: [255, 255, 255], #invalid pairing = white (AG)
+                      4: [255, 0, 0], #UA = red
+                      5: [255, 255, 255], #invalid pairing = white (UU)
+                      6: [255, 255, 255], #invalid pairing = white (UC)
+                      7: [0, 0, 255], #UG = blue
+                      8: [255, 255, 255], #invalid pairing = white (CA)
+                      9: [255, 255, 255], #invalid pairing = white (CU)
+                      10: [255, 255, 255], #invalid pairing = white (CC)
+                      11: [0, 128, 0], #CG = dark green
+                      12: [255, 255, 255], #invalid pairing = white (GA)
+                      13: [0, 0, 128], #GU = dark blue
+                      14: [0, 255, 0], #GC = green
+                      15: [255, 255, 255]} #invalid pairing = white (GG)
 
+  rgb_image = np.zeros((array.shape[0], array.shape[1], 3), dtype=np.uint8)
+
+  
+  for channel, color in channel_to_color.items():
+    # Select the indices where the channel has non-zero values
+    indices = array[:, :, channel] == 1
+    # Assign the corresponding color to those indices in the RGB image
+    rgb_image[indices] = color
+  
+  indices = array[:, :, 16] == 0
+  rgb_image[indices] = [255, 255, 255]
+
+  indices = np.sum(array == 1, axis=2) > 1
+  rgb_image[indices] = [255, 255, 255]
+
+
+  return rgb_image
+
+def show_matrices(inputs, observed, predicted, treshold=0.5, output_file = None, input_size = 8):
+  """
+  """
   fig, axs = plt.subplots(1, 4, figsize=(6,2))
 
-  axs[0].imshow(onehot_to_image(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()))
+  if input_size == 8:
+    axs[0].imshow(onehot_to_image_8(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()))
+  elif input_size == 17: 
+    axs[0].imshow(onehot_to_image_17(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()))
   axs[0].set_title("Input")
 
   axs[1].imshow(observed.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy(), cmap='binary')
@@ -317,6 +374,8 @@ def show_F1(train_F1, valid_F1, time):
 
 
 def fit_model(model, train_dataset, validation_dataset, loss_func = F.binary_cross_entropy, optimizer = adam_optimizer, lr=0.01, bs=1, epochs=5, plots = True):
+  """
+  """
   train_dl = DataLoader(train_dataset, batch_size=bs, shuffle=True)
   valid_dl = DataLoader(validation_dataset, batch_size=bs)
 
@@ -394,3 +453,78 @@ def fit_model(model, train_dataset, validation_dataset, loss_func = F.binary_cro
     show_F1(train_F1_history, valid_F1_history, plot_time)
 
   return train_loss_history, train_F1_history, valid_loss_history, valid_F1_history, plot_time
+
+### FOR RESULTS ###
+def plot_f1_curves(training_df, output_file = None):
+    """
+    """
+    colors = mpl.colormaps["tab10"].colors
+    fig, ax = plt.subplots(constrained_layout=True, figsize = (10, 6))
+
+    handles = []
+
+    for index, (loss_name, row) in enumerate(training_df.iterrows()):
+      training_f1 = eval(row["Training_f1"]) if type(row["Training_f1"]) == str else row["Training_f1"]
+      valid_f1 = eval(row["Validation_f1"]) if type(row["Validation_f1"]) == str else row["Validation_f1"]
+
+      x = [i for i in range(1, len(training_f1)+1)]
+
+      ax.scatter(x=x, y=training_f1, marker="o", color=colors[index], s = 6)
+      ax.scatter(x=x, y=valid_f1, marker="x", color=colors[index], s = 6)
+
+      # Create line plots for training and validation
+      ax.plot(x, training_f1, linestyle="-", color=colors[index], linewidth = 0.5)
+      ax.plot(x, valid_f1, linestyle="--", color=colors[index], linewidth = 0.5)
+
+      #Add handles for legend
+      handles.append(Line2D([0], [0], color = colors[index], linestyle = "-", marker = "o", label = f"Training {loss_name}", linewidth=0.5, markersize=3))
+      handles.append(Line2D([0], [0], color = colors[index], linestyle = "--", marker = "x", label = f"Validation {loss_name}", linewidth=0.5, markersize=3))
+
+    ax.set_xlabel("Epochs", size = 11)
+    ax.set_ylabel("f1 score", size = 11)
+    ax.legend(handles = handles, loc = 'upper left', bbox_to_anchor = (1.01, 1), fontsize=8)
+
+    if output_file:
+      plt.savefig(output_file)
+
+    plt.show()
+
+
+def plot_loss_curves(training_df, output_file = None):
+    """
+    """
+    colors = mpl.colormaps["tab10"].colors
+
+    fig, ax = plt.subplots(constrained_layout=True, figsize = (10, 6))
+
+    handles = []
+
+    for index, (model_name, row) in enumerate(training_df.iterrows()):
+      training_loss = eval(row["Training_loss"]) if type(row["Training_loss"]) == str else row["Training_loss"]
+      valid_loss = eval(row["Validation_loss"]) if type(row["Validation_loss"]) == str else row["Validation_loss"]
+
+      x = [i for i in range(1, len(training_loss)+1)]
+
+      ax.scatter(x=x, y=training_loss, marker="o", color=colors[index], s=6)
+      ax.scatter(x=x, y=valid_loss, marker="x", color=colors[index], s=6)
+
+      # Create line plots for training and validation
+      ax.plot(x, training_loss, linestyle="-", color=colors[index], linewidth = 0.5)
+      ax.plot(x, valid_loss, linestyle="--", color=colors[index], linewidth = 0.5)
+
+      #Add handles for legend
+      handles.append(Line2D([0], [0], color = colors[index], linestyle = "-", marker = "o", label = f"Training {model_name}", linewidth=0.5, markersize=3))
+      handles.append(Line2D([0], [0], color = colors[index], linestyle = "--", marker = "x", label = f"Validation {model_name}", linewidth=0.5, markersize=3))
+
+    ax.set_yscale('log')
+
+    ax.set_xlabel("Epochs", size = 11)
+    ax.legend(handles = handles, loc = 'upper left', bbox_to_anchor = (1.01, 1), fontsize=8)
+
+
+    ax.set_ylabel("loss (log scale)", size = 11)
+
+    if output_file:
+      plt.savefig(output_file)
+
+    plt.show()
