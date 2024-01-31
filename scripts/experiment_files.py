@@ -77,6 +77,7 @@ def process_and_save(file_list, output_folder, matrix_type = '8'):
         # Skip this file if an unexpected error occurs during processing
         print(f"Skipping {file} due to unexpected error: {e}", file=sys.stderr)
     
+  print(input_matrix)
   print(f"\n\n{converted} files converted", file=sys.stdout)
 
 if __name__ == "__main__": 
@@ -97,7 +98,7 @@ if __name__ == "__main__":
         print(f"Total of {len(file_list)} files chosen\n", file=sys.stdout)
         
         print("Convert to matrices\n", file=sys.stdout)
-        process_and_save(file_list, f"data/experiment{matrix_type}")
+        process_and_save(file_list, f"data/experiment{matrix_type}", matrix_type=matrix_type)
     
     finally: 
         shutil.rmtree(temp_dir)

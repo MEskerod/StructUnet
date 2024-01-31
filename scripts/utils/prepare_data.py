@@ -4,6 +4,8 @@ import random as rd
 from fnmatch import fnmatch
 from collections import defaultdict, namedtuple
 
+from torch.utils.data import Dataset
+
 def read_ct(file: str) -> tuple():
     """
     Takes a .ct file and returns the sequence as a string and a list of base pairs
@@ -81,7 +83,6 @@ def sequence_onehot(sequence):
         'H':np.array([1,1,1,0])}
     
     onehot = np.array([seq_dict[base] for base in sequence])
-    
     return onehot
 
 def input_representation(sequence):
@@ -89,8 +90,7 @@ def input_representation(sequence):
     
     """
     x = sequence_onehot(sequence)
-    return np.kron(x, x).reshape((16, len(sequence), len(sequence)))
-
+    return np.kron(x, x).reshape((len(sequence), len(sequence), 16))
 
 def Gaussian(x, t2 = 1): 
     """
@@ -116,9 +116,12 @@ def calculate_W(sequence, i, j):
     pairs = {'AU', 'UA', 'GU', 'UG', 'GC', 'CG'}
     
     ij =  0
-
+    
+    if abs(i-j) < 3:
+        return ij
+    
     for alpha in range(30): 
-        if i - alpha >= 0 and j + alpha < len(sequence): 
+        if i - alpha >= 0 and j + alpha < len(sequence) and abs(i-j) >= 3: 
             score = P(sequence[i - alpha] + sequence[j + alpha])
             if score == 0: 
                 break
@@ -128,7 +131,7 @@ def calculate_W(sequence, i, j):
 
     if ij > 0: 
         for beta in range(1, 30): 
-            if i + beta < len(sequence) and j - beta >= 0: 
+            if i + beta < len(sequence) and j - beta >= 0 and abs(i-j) >= 3: 
                 score = P(sequence[i + beta] + sequence[j-beta]) 
                 if score == 0: 
                     break
@@ -148,13 +151,13 @@ def calculate_score_matrix(sequence):
     for i, j in np.ndindex(N, N):
         S[i, j] = calculate_W(sequence, i, j) 
     
-    return S.reshape(1, N, N)
+    return S.reshape(N, N, 1)
 
 def make_matrix_from_sequence_17(sequence: str) -> np.array:
     """
 
     """
-    return torch.from_numpy(np.vstack((input_representation(sequence), calculate_score_matrix(sequence))))
+    return torch.from_numpy(np.concatenate((input_representation(sequence), calculate_score_matrix(sequence)), axis = -1)).permute(2, 0, 1)
 
 
 
@@ -191,7 +194,7 @@ def make_matrix_from_sequence_8(sequence: str) -> np.array:
     # Update base pair positions directly
     for i, j in np.ndindex(N, N):
         pair = sequence[i] + sequence[j]
-        if pair in basepairs:
+        if pair in basepairs and abs(i-j) >=3:
             matrix[i, j, :] = coding[basepairs.index(pair)+2]
 
     return torch.from_numpy(matrix.transpose((2, 0, 1)))
@@ -305,3 +308,32 @@ def split_data(file_list, train_ratio = 0.8, validation_ratio = 0.1, test_ratio 
       test.extend(files[i] for i in test_idx if i < N)
 
   return train, valid, test
+
+class ImageToImageDataset(Dataset):
+    """
+
+    """
+    def __init__(self, file_list):
+        self.file_list = file_list
+        self.family_map = {'16SrRNA': torch.tensor([1, 0, 0, 0, 0, 0, 0, 0], dtype = torch.float32),
+                    '5SrRNA': torch.tensor([0, 1, 0, 0, 0, 0, 0, 0], dtype = torch.float32),
+                    'RNaseP': torch.tensor([0, 0, 1, 0, 0, 0, 0, 0], dtype = torch.float32),
+                    'SRP': torch.tensor([0, 0, 0, 1, 0, 0, 0, 0], dtype = torch.float32),
+                    'groupIintron': torch.tensor([0, 0, 0, 0, 1, 0, 0, 0], dtype = torch.float32),
+                    'tRNA': torch.tensor([0, 0, 0, 0, 0, 1, 0, 0], dtype = torch.float32),
+                    'telomerase': torch.tensor([0, 0, 0, 0, 0, 0, 1, 0], dtype = torch.float32),
+                    'tmRNA': torch.tensor([0, 0, 0, 0, 0, 0, 0, 1], dtype = torch.float32)}
+
+    def __len__(self):
+        return len(self.file_list)
+
+    def __getitem__(self, idx):
+      data = pickle.load(open(self.file_list[idx], 'rb'))
+      
+      input_image = data.input
+      output_image = data.output
+
+      family = data.family
+      label = self.family_map[family]
+
+      return input_image, output_image, label
