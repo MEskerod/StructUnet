@@ -3,10 +3,11 @@ import os, tempfile, shutil, tarfile, pickle, sys
 import random as rd
 from collections import namedtuple
 
-from utils.prepare_data import make_matrix_from_sequence_8, make_matrix_from_sequence_17, make_matrix_from_basepairs, read_ct, getLength, list_all_files
+from utils.prepare_data import make_matrix_from_sequence_8, make_matrix_from_sequence_17, make_matrix_from_basepairs, read_ct, getLength, list_all_files, make_pairs_from_list
 
-def getFamily(file_name):
+def getFamily(file_name: str):
   '''
+  Returns the family of a file in the RNAStralign data set, based on folder structure
   '''
   return ''.join(file_name.split(os.sep)[5].split('_')[:-1])
 
@@ -30,7 +31,10 @@ def underGivenLength(length: int, data_size: int, file_list: list):
           files+=family
   return files
 
-def update_progress_bar(current_index, total_indices):
+def update_progress_bar(current_index: int, total_indices: int):
+    """
+    Updates progress bar based on the current index and the total number of indices
+    """
     progress = (current_index + 1) / total_indices
     bar_length = 50
     filled_length = int(bar_length * progress)
@@ -38,7 +42,17 @@ def update_progress_bar(current_index, total_indices):
     sys.stdout.write(f'\r[{bar}] {int(progress * 100)}%')
     sys.stdout.flush()
 
-def process_and_save(file_list, output_folder, matrix_type = '8'):
+def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8'):
+  """
+  Takes a list of ct files and converts them into a namedtuple type element containing: 
+  - input
+  - output
+  - sequence length 
+  - RNAfamily 
+  - file name 
+  - pairs in structure
+  All elements are saved into output_folder as pickle files. 
+  """
   converted = 0
 
   os.makedirs(output_folder, exist_ok=True)
@@ -61,14 +75,14 @@ def process_and_save(file_list, output_folder, matrix_type = '8'):
         else: 
             raise ValueError("Wrong matrix type")
         
-        output_matrix = make_matrix_from_basepairs(sequence, pairs)
+        output_matrix = make_matrix_from_basepairs(pairs)
 
         sample = RNA_data(input = input_matrix,
                                      output = output_matrix,
                                      length = length,
                                      family = family,
                                      name = file, 
-                                     pairs = [pair for pair in pairs if pair[0] < pair[1]])
+                                     pairs = make_pairs_from_list(pairs))
         
         pickle.dump(sample, open(os.path.join(output_folder, os.path.splitext(os.path.basename(file))[0] + '.pkl'), 'wb'))
         converted += 1
@@ -76,8 +90,7 @@ def process_and_save(file_list, output_folder, matrix_type = '8'):
     except Exception as e:
         # Skip this file if an unexpected error occurs during processing
         print(f"Skipping {file} due to unexpected error: {e}", file=sys.stderr)
-    
-  print(input_matrix)
+  
   print(f"\n\n{converted} files converted", file=sys.stdout)
 
 if __name__ == "__main__": 

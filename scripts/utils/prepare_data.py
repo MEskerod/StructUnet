@@ -8,7 +8,7 @@ from torch.utils.data import Dataset
 
 def read_ct(file: str) -> tuple():
     """
-    Takes a .ct file and returns the sequence as a string and a list of base pairs
+    Takes a .ct file and returns the sequence as a string and a list pairing state of each base (0 = unpaired)
     """
     sequence = ""
     pairs = []
@@ -28,8 +28,9 @@ def read_ct(file: str) -> tuple():
 
     for line in lines:
         sequence += line[1].upper()
-        if line[4] != '0':
-            pairs.append((int(line[0])-1, int(line[4])-1)) #The files start indexing from 1
+        pairs.append(int(line[4])-1) if line[4] != '0' else pairs.append(0)
+
+    assert len(sequence) == len(pairs)
 
     return sequence, pairs
 
@@ -42,7 +43,7 @@ def list_all_files(root, pattern = '*.ct'):
                 ct_files.append(os.path.join(path, file))
     return ct_files
 
-def getLength(ct_file):
+def getLength(ct_file: str):
     '''
     Opens a ct_file and returns the length of the sequence as it appears in the first line.
     '''
@@ -200,19 +201,29 @@ def make_matrix_from_sequence_8(sequence: str) -> np.array:
     return torch.from_numpy(matrix.transpose((2, 0, 1)))
 
 
-def make_matrix_from_basepairs(sequence: str, pairs: list) -> np.array:
+def make_matrix_from_basepairs(pairs: list) -> np.array:
     """
     Takes a list of all the base pairs.
-    From the list a 2D matrix is made, with each cell coresponding to a base pair encoded as 1
+    From the list a 2D matrix is made, with each cell coresponding to a base pair encoded as 1 and unpaired bases encoded as 1 at the diagonal
     """
 
-    N = len(sequence)
+    N = len(pairs)
     matrix = np.full((N,N), 0, dtype="float32")
 
-    for pair in pairs:
-        matrix[pair[0], pair[1]] = 1
+    pairs = [p if p else index for index, p in enumerate(pairs)]
+
+    for i in range(N):
+        matrix[i, pairs[i]] = 1 
 
     return torch.from_numpy(matrix)
+
+def make_pairs_from_list(pairs): 
+    """
+    Takes a list of the pairing state at each position in the sequence and converts it into a list with all base pairs in tuples
+    """
+    pairs = [tuple([index, p]) for index, p in enumerate(pairs) if p and index < p]
+
+    return pairs
 
 
 RNA_data = namedtuple('RNA_data', 'input output length family name pairs')
