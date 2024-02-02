@@ -17,85 +17,6 @@ from collections import defaultdict, namedtuple
 RNA_data = namedtuple('RNA_data', 'input output length family name pairs')
 
 
-def file_length(file):
-  """
-  """
-  return int(pickle.load(open(file, 'rb')).length)
-
-def get_indices(ratios):
-  """
-  """ 
-  rd.seed(42)
-  
-  numbers = list(range(10))
-  rd.shuffle(numbers)
-
-  count1 = int(10 * ratios[0])
-  count2 = int(10 * ratios[1])
-
-  group1 = numbers[:count1]
-  group2 = numbers[count1: count1+count2]
-  group3 = numbers[count1+count2:]
-
-  return group1, group2, group3
-
-def split_data(file_list, train_ratio = 0.8, validation_ratio = 0.1, test_ratio = 0.1):
-  """
-  """
-  train_indices, valid_indices, test_indices = get_indices([train_ratio, validation_ratio, test_ratio])
-  
-  train, valid, test = [], [], []
-
-  family_data = defaultdict(list)
-  for file in file_list:
-    family = pickle.load(open(file, 'rb')).family
-    family_data[family].append((file))
-
-  for family, files in family_data.items():
-    N = len(files)
-    files.sort(key=file_length)
-
-    for i in range(0, N, 10): 
-      train_idx = [n+i for n in train_indices]
-      valid_idx = [n+i for n in valid_indices]
-      test_idx = [n+i for n in test_indices]
-
-      train.extend([files[i] for i in train_idx if i < N])
-      valid.extend(files[i] for i in valid_idx if i < N)
-      test.extend(files[i] for i in test_idx if i < N)
-
-  return train, valid, test
-
-class ImageToImageDataset(Dataset):
-    """
-
-    """
-    def __init__(self, file_list):
-        self.file_list = file_list
-        self.family_map = {'16SrRNA': torch.tensor([1, 0, 0, 0, 0, 0, 0, 0], dtype = torch.float32),
-                    '5SrRNA': torch.tensor([0, 1, 0, 0, 0, 0, 0, 0], dtype = torch.float32),
-                    'RNaseP': torch.tensor([0, 0, 1, 0, 0, 0, 0, 0], dtype = torch.float32),
-                    'SRP': torch.tensor([0, 0, 0, 1, 0, 0, 0, 0], dtype = torch.float32),
-                    'groupIintron': torch.tensor([0, 0, 0, 0, 1, 0, 0, 0], dtype = torch.float32),
-                    'tRNA': torch.tensor([0, 0, 0, 0, 0, 1, 0, 0], dtype = torch.float32),
-                    'telomerase': torch.tensor([0, 0, 0, 0, 0, 0, 1, 0], dtype = torch.float32),
-                    'tmRNA': torch.tensor([0, 0, 0, 0, 0, 0, 0, 1], dtype = torch.float32)}
-
-    def __len__(self):
-        return len(self.file_list)
-
-    def __getitem__(self, idx):
-      data = pickle.load(open(self.file_list[idx], 'rb'))
-      
-      input_image = data.input
-      output_image = data.output
-
-      family = data.family
-      label = self.family_map[family]
-
-      return input_image, output_image, label
-
-
 ### MODEL RELATED ###
 class DynamicPadLayer(nn.Module):
   """
@@ -125,7 +46,7 @@ class MaxPooling(nn.Module):
     return self.max_pool(x)
 
 class RNA_Unet(nn.Module):
-    def __init__(self, channels=32, in_channels=8, output_channels=1, negative_slope = 0.0, pooling = MaxPooling):
+    def __init__(self, channels=32, in_channels=8, output_channels=1, negative_slope = 0.01, pooling = MaxPooling):
         """
         args:
         num_channels: length of the one-hot encoding vector
@@ -236,6 +157,94 @@ class RNA_Unet(nn.Module):
         out = out[:, :, :dim, :dim]
 
         return out
+
+
+### HANDLING DATA ###
+def file_length(file):
+  """
+  """
+  return int(pickle.load(open(file, 'rb')).length)
+
+def get_indices(ratios):
+  """
+  """ 
+  rd.seed(42)
+  
+  numbers = list(range(10))
+  rd.shuffle(numbers)
+
+  count1 = int(10 * ratios[0])
+  count2 = int(10 * ratios[1])
+
+  group1 = numbers[:count1]
+  group2 = numbers[count1: count1+count2]
+  group3 = numbers[count1+count2:]
+
+  return group1, group2, group3
+
+def split_data(file_list, train_ratio = 0.8, validation_ratio = 0.1, test_ratio = 0.1):
+  """
+  """
+  train_indices, valid_indices, test_indices = get_indices([train_ratio, validation_ratio, test_ratio])
+  
+  train, valid, test = [], [], []
+
+  family_data = defaultdict(list)
+  for file in file_list:
+    family = pickle.load(open(file, 'rb')).family
+    family_data[family].append((file))
+
+  for family, files in family_data.items():
+    N = len(files)
+    files.sort(key=file_length)
+
+    for i in range(0, N, 10): 
+      train_idx = [n+i for n in train_indices]
+      valid_idx = [n+i for n in valid_indices]
+      test_idx = [n+i for n in test_indices]
+
+      train.extend([files[i] for i in train_idx if i < N])
+      valid.extend(files[i] for i in valid_idx if i < N)
+      test.extend(files[i] for i in test_idx if i < N)
+
+  return train, valid, test
+
+def make_family_map(file_list): 
+    """
+    """
+    families = []
+    for index, file in enumerate(file_list): 
+        families.append(pickle.load(open(file, 'rb')).family)
+    
+    families = set(families)
+    
+    family_map = {family: torch.from_numpy(np.eye(len(families))[i]) for i, family in enumerate(families)}
+    
+    return family_map
+
+class ImageToImageDataset(Dataset):
+    """
+
+    """
+    def __init__(self, file_list, family_map):
+        self.file_list = file_list
+        self.family_map = family_map
+
+    def __len__(self):
+        return len(self.file_list)
+
+    def __getitem__(self, idx):
+      data = pickle.load(open(self.file_list[idx], 'rb'))
+      
+      input_image = data.input
+      output_image = data.output
+
+      family = data.family
+      label = self.family_map[family]
+
+      return input_image, output_image, label
+
+
 
 ### TRAINING ###
 

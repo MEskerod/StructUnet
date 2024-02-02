@@ -330,20 +330,26 @@ def split_data(file_list, train_ratio = 0.8, validation_ratio = 0.1, test_ratio 
 
   return train, valid, test
 
+def make_family_map(file_list): 
+    """
+    """
+    families = []
+    for index, file in enumerate(file_list): 
+        update_progress_bar(index, len(file_list))
+        families.append(pickle.load(open(file, 'rb')).family)
+    
+    families = set(families)
+    
+    family_map = {family: torch.from_numpy(np.eye(len(families))[i]) for i, family in enumerate(families)}
+    
+    return family_map
+
 class ImageToImageDataset(Dataset):
     """
 
     """
-    def __init__(self, file_list):
-        self.file_list = file_list
-        self.family_map = {'16SrRNA': torch.tensor([1, 0, 0, 0, 0, 0, 0, 0], dtype = torch.float32),
-                    '5SrRNA': torch.tensor([0, 1, 0, 0, 0, 0, 0, 0], dtype = torch.float32),
-                    'RNaseP': torch.tensor([0, 0, 1, 0, 0, 0, 0, 0], dtype = torch.float32),
-                    'SRP': torch.tensor([0, 0, 0, 1, 0, 0, 0, 0], dtype = torch.float32),
-                    'groupIintron': torch.tensor([0, 0, 0, 0, 1, 0, 0, 0], dtype = torch.float32),
-                    'tRNA': torch.tensor([0, 0, 0, 0, 0, 1, 0, 0], dtype = torch.float32),
-                    'telomerase': torch.tensor([0, 0, 0, 0, 0, 0, 1, 0], dtype = torch.float32),
-                    'tmRNA': torch.tensor([0, 0, 0, 0, 0, 0, 0, 1], dtype = torch.float32)}
+    def __init__(self, file_list, family_map):
+        self.file_list = family_map
 
     def __len__(self):
         return len(self.file_list)
