@@ -64,24 +64,24 @@ def sequence_onehot(sequence):
     
     """
     seq_dict = {
-        'A':np.array([1,0,0,0]),
-        'U':np.array([0,1,0,0]),
-        'C':np.array([0,0,1,0]),
-        'G':np.array([0,0,0,1]),
-        'N':np.array([0,0,0,0]),
-        'M':np.array([1,0,1,0]),
-        'Y':np.array([0,1,1,0]),
-        'W':np.array([1,0,0,0]),
-        'V':np.array([1,0,1,1]),
-        'K':np.array([0,1,0,1]),
-        'R':np.array([1,0,0,1]),
-        'I':np.array([0,0,0,0]),
-        'X':np.array([0,0,0,0]),
-        'S':np.array([0,0,1,1]),
-        'D':np.array([1,1,0,1]),
-        'P':np.array([0,0,0,0]),
-        'B':np.array([0,1,1,1]),
-        'H':np.array([1,1,1,0])}
+        'A':np.array([1,0,0,0], dtype=np.float32),
+        'U':np.array([0,1,0,0], dtype=np.float32),
+        'C':np.array([0,0,1,0], dtype=np.float32),
+        'G':np.array([0,0,0,1], dtype=np.float32),
+        'N':np.array([0,0,0,0], dtype=np.float32),
+        'M':np.array([1,0,1,0], dtype=np.float32),
+        'Y':np.array([0,1,1,0], dtype=np.float32),
+        'W':np.array([1,0,0,0], dtype=np.float32),
+        'V':np.array([1,0,1,1], dtype=np.float32),
+        'K':np.array([0,1,0,1], dtype=np.float32),
+        'R':np.array([1,0,0,1], dtype=np.float32),
+        'I':np.array([0,0,0,0], dtype=np.float32),
+        'X':np.array([0,0,0,0], dtype=np.float32),
+        'S':np.array([0,0,1,1], dtype=np.float32),
+        'D':np.array([1,1,0,1], dtype=np.float32),
+        'P':np.array([0,0,0,0], dtype=np.float32),
+        'B':np.array([0,1,1,1], dtype=np.float32),
+        'H':np.array([1,1,1,0], dtype=np.float32)}
     
     onehot = np.array([seq_dict[base] for base in sequence])
     return onehot
@@ -147,7 +147,7 @@ def calculate_score_matrix(sequence):
     
     """
     N = len(sequence)
-    S = np.zeros((N, N))
+    S =     
 
     for i, j in np.ndindex(N, N):
         S[i, j] = calculate_W(sequence, i, j) 
