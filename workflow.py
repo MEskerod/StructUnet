@@ -20,5 +20,5 @@ def make_experiment_data(matrix_type):
 ### WORKFLOW ###
 gwf = Workflow()
 
-for matrix_type in [8, 17]:
+for matrix_type in [8, 9, 17]:
     gwf.target_from_template(f'experiment_data_{matrix_type}', make_experiment_data(matrix_type))

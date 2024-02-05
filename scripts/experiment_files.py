@@ -3,7 +3,7 @@ import os, tempfile, shutil, tarfile, pickle, sys
 import random as rd
 from collections import namedtuple
 
-from utils.prepare_data import getLength, list_all_files, make_matrix_from_basepairs, make_matrix_from_sequence_8, make_matrix_from_sequence_17, read_ct, update_progress_bar, make_pairs_from_list
+from utils.prepare_data import getLength, list_all_files, make_matrix_from_basepairs, make_matrix_from_sequence_8, make_matrix_from_sequence_9, make_matrix_from_sequence_17, read_ct, update_progress_bar, make_pairs_from_list
 
 def getFamily(file_name: str):
   '''
@@ -59,6 +59,8 @@ def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8'
 
         if matrix_type == '8':
             input_matrix = make_matrix_from_sequence_8(sequence)
+        elif matrix_type == '9': 
+            input_matrix = make_matrix_from_sequence_9(sequence)
         elif matrix_type == '17':  
             input_matrix = make_matrix_from_sequence_17(sequence)
         else: 

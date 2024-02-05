@@ -161,6 +161,14 @@ def make_matrix_from_sequence_17(sequence: str) -> np.array:
     return torch.from_numpy(np.concatenate((input_representation(sequence), calculate_score_matrix(sequence)), axis = -1)).permute(2, 0, 1)
 
 
+def make_matrix_from_sequence_9(sequence: str) -> np.array:
+    """
+
+    """
+
+    return torch.cat((make_matrix_from_sequence_8(sequence), torch.from_numpy(calculate_score_matrix(sequence)).permute(2, 0, 1)), dim=0)
+
+
 
 
 def make_matrix_from_sequence_8(sequence: str) -> np.array:
