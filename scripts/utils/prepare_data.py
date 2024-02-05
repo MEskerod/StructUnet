@@ -147,7 +147,7 @@ def calculate_score_matrix(sequence):
     
     """
     N = len(sequence)
-    S =     
+    S = np.zeros((N, N), dtype=np.float32)
 
     for i, j in np.ndindex(N, N):
         S[i, j] = calculate_W(sequence, i, j) 
