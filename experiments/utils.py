@@ -342,7 +342,7 @@ def show_matrices(inputs, observed, predicted, treshold=0.5, output_file = None,
   if input_size == 8:
     axs[0].imshow(onehot_to_image_8(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()))
   elif input_size == 9: 
-    axs[0].imshow(onehot_to_image_8(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()[:, :8, :8, :]))
+    axs[0].imshow(onehot_to_image_8(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()[:, :, :8]))
   elif input_size == 17: 
     axs[0].imshow(onehot_to_image_17(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()))
   axs[0].set_title("Input")
@@ -527,13 +527,13 @@ def plot_loss_curves(training_df, output_file = None):
       handles.append(Line2D([0], [0], color = colors[index], linestyle = "-", marker = "o", label = f"Training {model_name}", linewidth=0.5, markersize=3))
       handles.append(Line2D([0], [0], color = colors[index], linestyle = "--", marker = "x", label = f"Validation {model_name}", linewidth=0.5, markersize=3))
 
-    ax.set_yscale('log')
+    #ax.set_yscale('log')
 
     ax.set_xlabel("Epochs", size = 11)
     ax.legend(handles = handles, loc = 'upper left', bbox_to_anchor = (1.01, 1), fontsize=8)
 
 
-    ax.set_ylabel("loss (log scale)", size = 11)
+    ax.set_ylabel("loss", size = 11)
 
     if output_file:
       plt.savefig(output_file)
