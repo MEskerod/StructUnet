@@ -341,6 +341,8 @@ def show_matrices(inputs, observed, predicted, treshold=0.5, output_file = None,
 
   if input_size == 8:
     axs[0].imshow(onehot_to_image_8(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()))
+  elif input_size == 9: 
+    axs[0].imshow(onehot_to_image_8(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()[:, :8, :8, :]))
   elif input_size == 17: 
     axs[0].imshow(onehot_to_image_17(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()))
   axs[0].set_title("Input")
@@ -452,7 +454,7 @@ def fit_model(model, train_dataset, validation_dataset, loss_func = F.binary_cro
     train_F1_history.append(train_F1)
     plot_time.append(t)
 
-    show_matrices(input, output, predicted)
+    show_matrices(input, output, predicted, input_size = input.size(dim=1))
 
     print(f"Epoch [{epoch + 1}/{epochs}], Loss: {round(train_loss,4)}, Validation: {round(valid_loss, 4)}")
 
