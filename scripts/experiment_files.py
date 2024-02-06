@@ -9,7 +9,7 @@ def getFamily(file_name: str):
   '''
   Returns the family of a file in the RNAStralign data set, based on folder structure
   '''
-  return '_'.join(file_name.split(os.sep)[4].split('_')[:-1])
+  return '_'.join(file_name.split(os.sep)[5].split('_')[:-1])
 
 def underGivenLength(length: int, data_size: int, file_list: list):
   '''
