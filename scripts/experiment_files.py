@@ -9,7 +9,7 @@ def getFamily(file_name: str):
   '''
   Returns the family of a file in the RNAStralign data set, based on folder structure
   '''
-  return ''.join(file_name.split(os.sep)[5].split('_')[:-1])
+  return '_'.join(file_name.split(os.sep)[4].split('_')[:-1])
 
 def underGivenLength(length: int, data_size: int, file_list: list):
   '''
@@ -98,7 +98,7 @@ if __name__ == "__main__":
             print("Extract files", file=sys.stdout)
             tar.extractall(temp_dir)
         
-        file_list = underGivenLength(500, 5000, list_all_files(temp_dir))
+        file_list = underGivenLength(600, 5000, list_all_files(temp_dir))
         print(f"Total of {len(file_list)} files chosen\n", file=sys.stdout)
         
         print("Convert to matrices\n", file=sys.stdout)
