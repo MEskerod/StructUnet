@@ -17,7 +17,7 @@ def underGivenLength(length: int, data_size: int, file_list: list):
   If a family does not have enough data, all data from that family is added.
   '''
   rd.seed(42)
-  
+
   families = list(set([getFamily(file) for file in file_list])) #Find all family names and remove duplicates
 
   data = {family:[line for line in file_list if family in line and getLength(line)<length] for family in families} #Create list of lists, where each list contains all files from a family
@@ -49,6 +49,9 @@ def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8'
   for i, file in enumerate(file_list):
 
     length = getLength(file)
+    if length == 0: 
+        continue
+    
     family = getFamily(file)
 
     sequence, pairs = read_ct(file)
@@ -68,6 +71,9 @@ def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8'
         
         output_matrix = make_matrix_from_basepairs(pairs)
 
+        if input_matrix.shape[-1] == 0 or output_matrix.shape[-1] == 0: 
+            continue
+
         sample = RNA_data(input = input_matrix,
                                      output = output_matrix,
                                      length = length,
@@ -85,6 +91,7 @@ def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8'
   print(f"\n\n{converted} files converted", file=sys.stdout)
 
 if __name__ == "__main__": 
+    rd.seed(42)
     matrix_type = sys.argv[1]
     
     RNA_data = namedtuple('RNA_data', 'input output length family name pairs')
@@ -98,7 +105,7 @@ if __name__ == "__main__":
             print("Extract files", file=sys.stdout)
             tar.extractall(temp_dir)
         
-        file_list = underGivenLength(600, 5000, list_all_files(temp_dir))
+        file_list = underGivenLength(500, 5000, list_all_files(temp_dir))
         print(f"Total of {len(file_list)} files chosen\n", file=sys.stdout)
         
         print("Convert to matrices\n", file=sys.stdout)
