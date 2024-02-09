@@ -417,6 +417,9 @@ def fit_model(model, train_dataset, validation_dataset, loss_func = F.binary_cro
     model.train()
 
     for input, output, label in train_dl:
+      if input.shape[-1] == 0: 
+        continue
+
       output = output.unsqueeze(1) #Since output is made from NxN matrix, we need to unsqueeze to get channel dimension
 
       #Forward pass
@@ -437,6 +440,9 @@ def fit_model(model, train_dataset, validation_dataset, loss_func = F.binary_cro
     model.eval()
     with torch.no_grad():
       for valid_input, valid_output, valid_label in valid_dl:
+        if valid_input.shape[-1] == 0: 
+          continue
+        
         valid_output =  valid_output.unsqueeze(1)
         predicted_valid = model(valid_input.to(device))
 
