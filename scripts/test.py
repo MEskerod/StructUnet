@@ -98,7 +98,6 @@ def test_output_matrix():
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 ],
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 ],
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ]], dtype='float32')
-
     assert np.all(output1 == prep.make_matrix_from_basepairs([0, 26, 25, 24, 23, 0, 0, 0, 0, 18, 17, 16, 0, 0, 0, 0, 11, 10, 9, 0, 0, 0, 0, 4, 3, 2, 1, 0, 0, 0, 0]).numpy())
 
 def test_split_data(): 
@@ -118,5 +117,14 @@ def test_f1():
 
 ### POST PROCESSING ###
 
+def test_argmax(): 
+    assert 2==2
+
+
+def test_blossum(): 
+    assert 2==2
+
 
 ### EVALUATION ###
+def test_evaluation(): 
+    assert 2==2

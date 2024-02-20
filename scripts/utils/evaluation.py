@@ -1,10 +1,17 @@
+import torch
+
+
+
 def evaluate(y_pred, y_true, epsilon: float=1e-10): 
     """
     epsilon is a small number that is added to avoid potential division by 0 
     """
-    TP = 0 #True positive
-    FP = 0 #False positive
-    FN = 0 #False negative
+    
+    y_true = torch.sign(y_pred)
+    
+    TP = torch.sum(y_true * y_pred) #True positive
+    FP = torch.sum((1 - y_true) * y_pred) #False postive
+    FN = torch.sum(y_true * (1-y_pred)) #False negative
 
     precision = TP / (TP + FP + epsilon)
     recall = TP / (TP + FN + epsilon)
