@@ -1,6 +1,8 @@
 import numpy as np
 import networkx as nx
 
+from utils import blossom
+
 def argmax_postprocessing(matrix: np.array): 
     N = matrix.shape[0]
     
@@ -18,7 +20,7 @@ def argmax_postprocessing(matrix: np.array):
     
     return y_out
 
-def blossum_postprocessing(matrix: np.array): 
+def nx_blossum_postprocessing(matrix: np.array): 
     n = matrix.shape[0]
 
     mask = np.eye(n)*2
@@ -42,5 +44,25 @@ def blossum_postprocessing(matrix: np.array):
     
     return y_out
 
-def blossom_linear(matrix: np.array):
-    return
+def blossom_postprocessing(matrix: np.array) -> np.array: 
+    n = matrix.shape[0]
+
+    mask = np.eye(n)*2
+
+    A = np.zeros((2*n, 2*n))
+    A[:n, :n] = matrix
+    A[n:, n:] = matrix
+    A[:n, n:] = matrix*mask
+    A[n:, :n] = matrix*mask
+
+    pairing = blossom.max_weight_matching_matrix(A)
+
+    y_out = np.zeros_like(matrix)
+
+    for (i, j) in pairing:
+        if i>n and j>n:
+            continue
+        y_out[i%n, j%n] = 1
+        y_out[j%n, i%n] = 1
+    
+    return y_out
