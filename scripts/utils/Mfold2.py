@@ -1,36 +1,11 @@
-import ast, argparse, sys, time, math, os
+import math, os
 import numpy as np
 import pandas as pd
-from Bio import SeqIO
-from io import TextIOWrapper
 
 ####### HELP FUNCTIONS #######
 
 
-def read_parameters(file_loop: str, file_stacking: str) -> tuple[pd.array, pd.array]: 
-    """
-    Read parameters from two .csv files:
-    The .csv files are converted to Pandas tables and defined as the global variable 'parameters'
-
-    Args: 
-        file_loop: csv file containing the parameters for different loop types and lengths
-        file_stacking: csv file containing the parameters for base paring between different nucleotides
-    """
-    try:
-        loops = pd.read_csv(file_loop) 
-        stacking = pd.read_csv(file_stacking, index_col=0)
-    except FileNotFoundError:
-        raise FileNotFoundError("One or both parameter files not found")
-    except pd.errors.EmptyDataError:
-        raise ValueError("One or both parameter files are empty or in an unexpected file format")
-    
-    global parameters
-    parameters = (loops, stacking)
-    
-    return parameters
-
-
-def declare_global_variable(seq) -> None: 
+def declare_global_variable(seq, M) -> None: 
     """
     Declares the global variables used troughout all the other functions. 
 
@@ -39,11 +14,25 @@ def declare_global_variable(seq) -> None:
         - closing: Is closing penalty added for GU/UG and AU/UA base pairs that closses interior loops [True/False] (default = False)
         - asymmetry: Is a penalty added for asymmetric interior loops [True/False] (default = False)
     """
-    global basepairs, sequence
+    global basepairs, sequence, matrix, parameters
 
+    #Find absolute path of script, to be able to open csv files whereever the script is called from
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    file_stacking = os.path.join(script_dir, 'parameters', 'stacking_1988.csv')
+    file_loop = os.path.join(script_dir, 'parameters', 'loop_1989.csv')
+    
+    try:
+        loops = pd.read_csv(file_loop) 
+        stacking = pd.read_csv(file_stacking, index_col=0)
+    except FileNotFoundError:
+        raise FileNotFoundError("One or both parameter files not found")
+    except pd.errors.EmptyDataError:
+        raise ValueError("One or both parameter files are empty or in an unexpected file format")
+    
     basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
     sequence = seq
-
+    matrix = M
+    parameters = (loops, stacking)
 
 
 ####### FOLD FUNCTIONS #######
@@ -107,7 +96,7 @@ def stacking(i: int, j: int, V: np.array) -> float:
     prev_bp = sequence[i+1] + sequence[j-1]   
     
     #If previous bases can form a base pair stacking is possible
-    if prev_bp in basepairs: 
+    if matrix[i+1, j-1] and prev_bp in basepairs: 
         current_bp = sequence[i] + sequence[j]
         energy = round(parameters[1].at[current_bp, prev_bp] + V[i+1, j-1], 5)
     
@@ -126,7 +115,7 @@ def bulge_loop_3end(i: int, j: int, V: np.array) -> tuple[float, int]:
     #Try all sizes of bulge loop and save the one that gives the lowest energy
     for jp in range(i+2,j-1):  
         bp = sequence[i+1]+sequence[jp]
-        if bp in basepairs: 
+        if matrix[i+1, jp] and bp in basepairs: 
             size = j-jp-1
             if size <= 10:
                BL_energy = parameters[0].at[size, "BL"] + V[i+1, jp]
@@ -151,7 +140,7 @@ def bulge_loop_5end(i: int, j: int, V: np.array) -> tuple[float, int]:
     #Try all sizes of bulge loop and save the one that gives the lowest energy
     for ip in range(i+2,j-1):  
         bp = sequence[ip]+sequence[j-1]
-        if bp in basepairs: 
+        if matrix[ip, j-1] and bp in basepairs: 
             size = ip-i-1
             if size <= 10:
                 BL_energy = parameters[0].at[size, "BL"] + V[ip, j-1]
@@ -177,7 +166,7 @@ def interior_loop(i: int, j: int, V: np.array) -> tuple[float, tuple[int, int]]:
     for ip in range(i+2, j-2): #Try loop of any size between i and i'
         for jp in range(ip+3, j-1): #Try loop of any size between j and j'
             bp_prime = sequence[ip] + sequence[jp]
-            if bp_prime in basepairs:
+            if matrix[ip, jp] and bp_prime in basepairs:
                 size = (ip-i-1)+(j-jp-1)
 
                 IL_energy = (parameters[0].at[size, "IL"] + V[ip, jp]) if size <= 10 else (loop_greater_10("IL", size) + V[ip, jp])
@@ -266,7 +255,7 @@ def penta_nucleotides(W: np.array, V: np.array) -> None:
     for i in range(0, N-4): 
         j = i+4
         bp = sequence[i]+sequence[j]
-        if bp not in basepairs:
+        if bp not in basepairs or not matrix[i, j]:
             V[i,j] = W[i,j ]= float('inf')
         else: 
             V[i,j] = W[i,j] = parameters[0].at[3, "HL"] 
@@ -277,7 +266,7 @@ def compute_V(i: int, j: int, W: np.array, V: np.array) -> None:
     Computes the minimization over E1, E2 and E3, which will give the value at V[i,j]
     """
 
-    if sequence[i] + sequence[j] in basepairs:
+    if matrix[i, j] and sequence[i]+sequence[j] in basepairs:
         v = min(find_E1(i, j), 
                 find_E2(i, j, V), 
                 find_E3(i, j, W)[0])
@@ -334,99 +323,107 @@ def find_optimal(W: np.array) -> float:
     return W[0, -1]
 
 ### BACTRACKING ### 
-#TODO - CHANGE TO MAKE PAIRING OR MATRIX INSTEAD
-def trace_V(i: int, j: int, W: np.array, V: np.array, dotbracket: list) -> None: 
-    """
-    Traces backwards trough the V matrix recursively to find the secondary structure
-    """
-    if V[i,j] == find_E1(i, j): 
-        dotbracket[i], dotbracket[j] = '(', ')'
-        for n in range(i+1, j): 
-            dotbracket[n] = '.'
-    
-    elif V[i,j] == stacking(i, j, V): 
-        dotbracket[i], dotbracket[j] = '(', ')'
-        trace_V(i+1, j-1, W, V, dotbracket)
-    
-    elif V[i,j] == bulge_loop_3end(i, j, V)[0]: 
-        jp = bulge_loop_3end(i, j, V)[1]
-        dotbracket[i], dotbracket[j] = '(', ')'
-        for n in range(jp, j): 
-            dotbracket[n] = '.'
-        trace_V(i+1, jp, W, V)
-    
-    elif V[i,j] == bulge_loop_5end(i, j, V)[0]: 
-        ip = bulge_loop_5end(i, j, V)[1]
-        dotbracket[i], dotbracket[j] = '(', ')'
-        for n in range(i+1, ip): 
-            dotbracket[n] = '.'
-        trace_V(ip, j-1, W, V, dotbracket)
-    
-    elif V[i,j] == interior_loop(i, j, V)[0]:
-        ij = interior_loop(i, j, V)[1]
-        dotbracket[i], dotbracket[j] = '(', ')' 
-        for n in range(i+1, ij[0]): 
-            dotbracket[n] = '.'
-        for n in range(ij[1]+1, j): 
-            dotbracket[n] = '.'
-        trace_V(ij[0], ij[1], W, V, dotbracket)
-    
-    elif V[i, j] == find_E3(i, j, W)[0]: 
-        ij = find_E3(i, j, W)[1]
-        dotbracket[i], dotbracket[j] = '(', ')' 
-        trace_W(i+1, ij[0], W, V, dotbracket), trace_W(ij[1], j-1, W, V, dotbracket)
-
-def trace_W(i: int, j: int, W: np.array, V: np.array, dotbracket: list) -> None: 
-    """
-    Traces backwards trough the W matrix recursively to find the secondary structure
-    """
-    if W[i,j] == W[i+1, j]: 
-        dotbracket[i] = '.'
-        trace_W(i+1, j, W, V, dotbracket)
-
-    elif W[i,j] == W[i, j-1]: 
-        dotbracket[j] = '.'
-        trace_W(i, j-1, W, V, dotbracket)
-
-    elif W[i, j] == V[i, j]: 
-        trace_V(i, j, W, V, dotbracket)
-
-    elif W[i,j] == find_E4(i, j, W)[0]: 
-        ij = find_E4(i,j,W)[1] 
-        trace_W(i, ij[0], W, V, dotbracket), trace_W(ij[1], j, W, V, dotbracket)
-
-
-
 def backtrack(W: np.array, V: np.array) -> str: 
     """
     Backtracks trough the W, V matrices to find the final fold
     Returns the fold as a dotbracket structure
     """
-    #Allocate the dot bracket structure
-    dotbracket =  ['?' for x in range(W.shape[0])]
+    pairs = []
     
     j = W.shape[0]-1
     i = 0
+
+    def trace_V(i: int, j: int) -> None: 
+        """
+        Traces backwards trough the V matrix recursively to find the secondary structure
+        """
+        if V[i,j] == find_E1(i, j): 
+            pairs.append((i, j))
+    
+        elif V[i,j] == stacking(i, j, V): 
+            pairs.append((i, j))
+            trace_V(i+1, j-1)
+    
+        elif V[i,j] == bulge_loop_3end(i, j, V)[0]: 
+            jp = bulge_loop_3end(i, j, V)[1]
+            pairs.append((i, j))
+            trace_V(i+1, jp)
+    
+        elif V[i,j] == bulge_loop_5end(i, j, V)[0]: 
+            ip = bulge_loop_5end(i, j, V)[1]
+            pairs.append((i, j))
+            trace_V(ip, j-1)
+    
+        elif V[i,j] == interior_loop(i, j, V)[0]:
+            ij = interior_loop(i, j, V)[1]
+            pairs.append((i, j))
+            trace_V(ij[0], ij[1])
+    
+        elif V[i, j] == find_E3(i, j, W)[0]: 
+            ij = find_E3(i, j, W)[1]
+            pairs.append((i, j))
+            trace_W(i+1, ij[0]), trace_W(ij[1], j-1)
+
+    def trace_W(i: int, j: int) -> None: 
+        """
+        Traces backwards trough the W matrix recursively to find the secondary structure
+        """
+        if W[i,j] == W[i+1, j]: 
+            trace_W(i+1, j)
+
+        elif W[i,j] == W[i, j-1]: 
+            trace_W(i, j-1)
+
+        elif W[i, j] == V[i, j]: 
+            trace_V(i, j)
+
+        elif W[i,j] == find_E4(i, j, W)[0]: 
+            ij = find_E4(i,j,W)[1] 
+            trace_W(i, ij[0]), trace_W(ij[1], j)
     
     #Fill out db
-    trace_W(i, j, W, V,dotbracket)
+    trace_W(i, j)
 
-    return "".join(dotbracket)
+    return pairs
 
 
 def Mfold(sequence: str, matrix: np.array): 
     """
     """
-    declare_global_variable(sequence)
-    make_asymmetric_penalty() #TODO - Change! Do I want to do it this way or as part of 'declare_global_variable' and what parameters?
-
-    #Find absolute path of script, to be able to open csv files whereever the script is called from
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    stacking_file = os.path.join(script_dir, 'parameters', 'stacking_1988.csv')
-    loop_file = os.path.join(script_dir, 'parameters', 'loop_1989.csv')
-    read_parameters(loop_file, stacking_file) #TODO - Consider whether I want this as part of 'declare_global_variable'
+    declare_global_variable(sequence, matrix)
+    make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3) #TODO - Change! Do I want to do it this way or as part of 'declare_global_variable' and what parameters?
 
     W, V = fold_rna()
     fold = backtrack(W, V)
 
     return fold
+
+sequence = 'UGCUCCUAGUACGUAAGGACCGGAGUG'
+matrix = np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]])
+print(Mfold(sequence, matrix))

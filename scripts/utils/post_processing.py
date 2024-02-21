@@ -66,3 +66,20 @@ def blossom_postprocessing(matrix: np.array) -> np.array:
         y_out[j%n, i%n] = 1
     
     return y_out
+
+def blossom_unsecure(matrix, treshold = 0.5): 
+    matrix = matrix[matrix < treshold] = 0
+
+    pairs = blossom.max_weight_matching_matrix(matrix)
+
+    y_out = np.zeros_like(matrix)
+
+    for (i, j) in pairs:
+        print(i, j) 
+        y_out[i, j] = y_out[j, i] = 1
+    
+    for i in range(matrix.shape[0]): 
+        if not np.any(y_out[i, :]): 
+            y_out[i, i] = 1
+    
+    return y_out
