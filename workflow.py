@@ -12,6 +12,14 @@ def make_experiment_data(matrix_type):
     rm -r data/experiment{matrix_type}""".format(matrix_type = matrix_type)
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
+def postprocess_time(): 
+    inputs = []
+    outputs = [os.path.join('results', 'postprocess_time.csv'),
+               os.path.join('figures', 'postprocess_time.png')]
+    options = {"memory": "16gb", "walltime": "36:00:00"}
+    spec = """python3 scripts/time_postprocessing.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
 
 ### TRAINING ###
 def make_complete_set(): 
@@ -34,3 +42,6 @@ for matrix_type in [8, 9, 17]:
 
 #Convert entire data set
 gwf.target_from_template('convert_data', make_complete_set())
+
+#Make experiment of post processing time 
+gwf.target_from_template('time_postprocess', postprocess_time())
