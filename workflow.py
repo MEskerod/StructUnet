@@ -14,11 +14,23 @@ def make_experiment_data(matrix_type):
 
 
 ### TRAINING ###
+def make_complete_set(): 
+    inputs = [os.path.join('data', 'RNAStralign.tar.gz')]
+    outputs = [os.path.join('data', f'complete_set.tar.gz')]
+    options = {"memory":"64gb", "walltime":"24:00:00"}
+    spec = """python3 scripts/complete_dataset.py
+    tar -czf data/complete_set.tar.gz data/complete_set
+    rm -r data/complete_set"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)    
 
 
 
 ### WORKFLOW ###
 gwf = Workflow()
 
+#Make data for experiments
 for matrix_type in [8, 9, 17]:
     gwf.target_from_template(f'experiment_data_{matrix_type}', make_experiment_data(matrix_type))
+
+#Convert entire data set
+gwf.target_from_template('convert_data', make_complete_set())
