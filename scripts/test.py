@@ -1,6 +1,7 @@
 import utils.model
 import utils.prepare_data as prep
 import utils.training_functions as train
+import utils.post_processing as post_process
 
 import numpy as np
 import torch, pytest, os
@@ -117,7 +118,41 @@ def test_f1():
 
 ### POST PROCESSING ###
 
+def test_all_paired():
+    
+    matrix1 = np.random.random((50, 50))
+    matrix2 = np.eye(50)
+    sequence = 'AUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAU'
+
+    #Row wise
+    assert np.all(np.any(post_process.argmax_postprocessing(matrix1), axis=1))
+    assert np.all(np.any(post_process.blossom_postprocessing(matrix1), axis=1))
+    assert np.all(np.any(post_process.blossom_weak(matrix1), axis=1)) 
+    assert np.all(np.any(post_process.Mfold_constrain_postprocessing(matrix1, sequence), axis=1)) 
+    assert np.all(np.any(post_process.Mfold_param_postprocessing(matrix1, sequence), axis=1)) 
+
+    assert np.all(np.any(post_process.argmax_postprocessing(matrix2), axis=1))
+    assert np.all(np.any(post_process.blossom_postprocessing(matrix2), axis=1))
+    assert np.all(np.any(post_process.blossom_weak(matrix2), axis=1)) 
+    assert np.all(np.any(post_process.Mfold_constrain_postprocessing(matrix2, sequence), axis=1))
+    assert np.all(np.any(post_process.Mfold_param_postprocessing(matrix2, sequence), axis=1))
+
+    #Column wise (without argmax)
+    assert np.all(np.any(post_process.blossom_postprocessing(matrix1), axis=0))
+    assert np.all(np.any(post_process.blossom_weak(matrix1), axis=0)) 
+    assert np.all(np.any(post_process.Mfold_constrain_postprocessing(matrix1, sequence), axis=0)) 
+    assert np.all(np.any(post_process.Mfold_param_postprocessing(matrix1, sequence), axis=0)) 
+
+    assert np.all(np.any(post_process.blossom_postprocessing(matrix2), axis=0)) 
+    assert np.all(np.any(post_process.blossom_weak(matrix2), axis=0)) 
+    assert np.all(np.any(post_process.Mfold_constrain_postprocessing(matrix2, sequence), axis=0))
+    assert np.all(np.any(post_process.Mfold_param_postprocessing(matrix2, sequence), axis=0))
+
+
 def test_argmax(): 
+    matrix1 = np.random.random((50, 50))
+
+    assert isinstance(post_process.argmax_postprocessing(matrix1), np.ndarray)
     assert 2==2
 
 
