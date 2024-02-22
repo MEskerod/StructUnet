@@ -14,7 +14,7 @@ def declare_global_variable(seq, M) -> None:
         - closing: Is closing penalty added for GU/UG and AU/UA base pairs that closses interior loops [True/False] (default = False)
         - asymmetry: Is a penalty added for asymmetric interior loops [True/False] (default = False)
     """
-    global basepairs, sequence, matrix, parameters
+    global basepairs, sequence, matrix, parameters, asymmetric_penalty_function
 
     #Find absolute path of script, to be able to open csv files whereever the script is called from
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -33,6 +33,7 @@ def declare_global_variable(seq, M) -> None:
     sequence = seq
     matrix = M
     parameters = (loops, stacking)
+    asymmetric_penalty_function = make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3)
 
 
 ####### FOLD FUNCTIONS #######
@@ -62,11 +63,8 @@ def make_asymmetric_penalty(f: list, penalty_max: int) -> callable:
         M = min(M_max, N1, N2)-1
         penalty = min(penalty_max, N*f[M]) 
         return penalty
-    
-    global asymmetric_penalty_function
-    asymmetric_penalty_function = asymmetry_func
 
-    return asymmetric_penalty_function
+    return asymmetry_func
 
 def loop_greater_10(loop_type: str, length: int) -> float:
     """
@@ -169,7 +167,7 @@ def interior_loop(i: int, j: int, V: np.array) -> tuple[float, tuple[int, int]]:
             if matrix[ip, jp] and bp_prime in basepairs:
                 size = (ip-i-1)+(j-jp-1)
 
-                IL_energy = (parameters[0].at[size, "IL"] + V[ip, jp]) if size <= 10 else (loop_greater_10("IL", size) + V[ip, jp])
+                IL_energy = (parameters[0].at[size, "IL"] + V[ip, jp]) if 0 > size <= 10 else (loop_greater_10("IL", size) + V[ip, jp])
                 
                 #Add penalty to energy if loop is asymmetric
                 if (ip-i-1) != (j-jp-1): 
@@ -323,12 +321,14 @@ def find_optimal(W: np.array) -> float:
     return W[0, -1]
 
 ### BACTRACKING ### 
-def backtrack(W: np.array, V: np.array) -> str: 
+def backtrack(W: np.ndarray, V: np.ndarray) -> str: 
     """
     Backtracks trough the W, V matrices to find the final fold
     Returns the fold as a dotbracket structure
     """
     pairs = []
+
+    N = W.shape[0]-1
     
     j = W.shape[0]-1
     i = 0
@@ -368,10 +368,13 @@ def backtrack(W: np.array, V: np.array) -> str:
         """
         Traces backwards trough the W matrix recursively to find the secondary structure
         """
-        if W[i,j] == W[i+1, j]: 
+        if j >= i: 
+            return
+        
+        if i < N and W[i,j] == W[i+1, j]: 
             trace_W(i+1, j)
 
-        elif W[i,j] == W[i, j-1]: 
+        elif j > 0 and W[i,j] == W[i, j-1]: 
             trace_W(i, j-1)
 
         elif W[i, j] == V[i, j]: 
@@ -387,43 +390,12 @@ def backtrack(W: np.array, V: np.array) -> str:
     return pairs
 
 
-def Mfold(sequence: str, matrix: np.array): 
+def Mfold(sequence: str, matrix: np.ndarray): 
     """
     """
     declare_global_variable(sequence, matrix)
-    make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3) #TODO - Change! Do I want to do it this way or as part of 'declare_global_variable' and what parameters?
 
     W, V = fold_rna()
     fold = backtrack(W, V)
 
     return fold
-
-sequence = 'UGCUCCUAGUACGUAAGGACCGGAGUG'
-matrix = np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]])
-print(Mfold(sequence, matrix))
