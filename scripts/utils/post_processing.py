@@ -2,8 +2,10 @@ import numpy as np
 import networkx as nx
 
 from utils import blossom
+from utils.Mfold1 import Mfold as Mfold_param
+from utils.Mfold2 import Mfold as Mfold_constrain
 
-def argmax_postprocessing(matrix: np.array): 
+def argmax_postprocessing(matrix: np.ndarray): 
     N = matrix.shape[0]
     
     #Make symmetric
@@ -20,7 +22,7 @@ def argmax_postprocessing(matrix: np.array):
     
     return y_out
 
-def nx_blossum_postprocessing(matrix: np.array): 
+def nx_blossum_postprocessing(matrix: np.ndarray): 
     n = matrix.shape[0]
 
     mask = np.eye(n)*2
@@ -44,7 +46,7 @@ def nx_blossum_postprocessing(matrix: np.array):
     
     return y_out
 
-def blossom_postprocessing(matrix: np.array) -> np.array: 
+def blossom_postprocessing(matrix: np.ndarray) -> np.array: 
     n = matrix.shape[0]
 
     mask = np.eye(n)*2
@@ -67,15 +69,45 @@ def blossom_postprocessing(matrix: np.array) -> np.array:
     
     return y_out
 
-def blossom_unsecure(matrix, treshold = 0.5): 
-    matrix = matrix[matrix < treshold] = 0
+def blossom_weak(matrix: np.ndarray, treshold: float = 0.5) -> np.array: 
+    matrix[matrix < treshold] = 0
 
     pairs = blossom.max_weight_matching_matrix(matrix)
 
     y_out = np.zeros_like(matrix)
 
     for (i, j) in pairs:
-        print(i, j) 
+        y_out[i, j] = y_out[j, i] = 1
+    
+    for i in range(matrix.shape[0]): 
+        if not np.any(y_out[i, :]): 
+            y_out[i, i] = 1
+    
+    return y_out
+
+def Mfold_param_postprocessing(matrix: np.ndarray, sequence: str) -> np.array:
+    M = np.copy(-matrix)
+    M[M == 0] = np.inf
+
+    pairs = Mfold_param(sequence, M)
+
+    y_out = np.zeros_like(matrix)
+
+    for (i, j) in pairs:
+        y_out[i, j] = y_out[j, i] = 1
+    
+    for i in range(matrix.shape[0]): 
+        if not np.any(y_out[i, :]): 
+            y_out[i, i] = 1
+    
+    return y_out
+
+def Mfold_constrain_postprocessing(matrix: np.ndarray, sequence: str) -> np.array: 
+    pairs = Mfold_constrain(sequence, matrix)
+    
+    y_out = np.zeros_like(matrix)
+
+    for (i, j) in pairs:
         y_out[i, j] = y_out[j, i] = 1
     
     for i in range(matrix.shape[0]): 
