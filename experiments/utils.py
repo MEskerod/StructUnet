@@ -271,6 +271,13 @@ def f1_score(inputs, targets, epsilon=1e-7, treshold = 0.5):
 
     return f1
 
+def dice_loss(inputs, targets, smooth=1e-5):
+  intersection = torch.sum(targets * inputs, dim=(1,2,3))
+  sum_of_squares_pred = torch.sum(torch.square(inputs), dim=(1,2,3))
+  sum_of_squares_true = torch.sum(torch.square(targets), dim=(1,2,3))
+  dice = (2 * intersection + smooth) / (sum_of_squares_pred + sum_of_squares_true + smooth)
+  return 1-dice
+
 def adam_optimizer(model, lr, weight_decay = 0):
   return torch.optim.Adam(model.parameters(), lr=lr, weight_decay = weight_decay)
 
