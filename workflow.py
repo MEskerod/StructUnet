@@ -25,6 +25,7 @@ def postprocess_time():
 def make_complete_set(): 
     inputs = [os.path.join('data', 'RNAStralign.tar.gz')]
     outputs = [os.path.join('data', 'complete_set.tar.gz'),
+               os.path.join('data', 'test_files.tar.gz'),
                os.path.join('data', 'train.pkl'),
                os.path.join('data', 'valid.pkl'),
                os.path.join('data', 'test.pkl'),
@@ -33,6 +34,8 @@ def make_complete_set():
                os.path.join('figures', 'family_distribution.png')]
     options = {"memory":"64gb", "walltime":"24:00:00"}
     spec = """python3 scripts/complete_dataset.py
+    tar -czf data/test_files.tar.gz data/test_files
+    rm -r data/test_files
     tar -czf data/complete_set.tar.gz data/complete_set
     rm -r data/complete_set"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)    

@@ -6,8 +6,6 @@ from collections import namedtuple
 from utils import prepare_data
 from utils import plots
 
-#from utils.prepare_data import getLength, list_all_files, make_matrix_from_basepairs, make_matrix_from_sequence_8, read_ct, update_progress_bar, split_data
-
 def getFamily(file_name: str):
   '''
   Returns the family of a file in the RNAStralign data set, based on folder structure
@@ -88,6 +86,13 @@ if __name__ == "__main__":
     pickle.dump(train, open('data/train.pkl', 'wb'))
     pickle.dump(valid, open('data/valid.pkl', 'wb'))
     pickle.dump(test, open('data/test.pkl', 'wb'))
+
+    print("Move test files to different folder")
+    os.makedirs("data/test_files")
+    for file in test: 
+        shutil.move(file, "data/test_files")
+
+    print(f"FILES FOR TRAINING: {len(train)} for training, {len(valid)} for validation", file=sys.stdout)
 
     print("Make family map", file=sys.stdout)
         
