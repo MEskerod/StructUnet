@@ -55,45 +55,47 @@ def process_and_save(file_list: list, output_folder: str):
     
     print(f"\n\n{converted} files converted", file=sys.stdout)
 
-    if __name__ == "__main__": 
-        RNA = namedtuple('RNA', 'input output length family name sequence')
-
-        tar_file_path = 'data/RNAStralign.tar.gz'
-
-        temp_dir = tempfile.mkdtemp()
-
-        try: 
-            with tarfile.open(tar_file_path, 'r:gz') as tar: 
-                print("Extract files", file=sys.stdout)
-                tar.extractall(temp_dir)
+if __name__ == "__main__": 
+    print("RUN")
         
-            file_list = prepare_data.list_all_files(temp_dir)
-            print(f'Total of {len(file_list)} files where extracted\n', file=sys.stdout)
+    RNA = namedtuple('RNA', 'input output length family name sequence')
 
-            print("Convert matrices\n", file=sys.stdout)
-            process_and_save(file_list, "data/complete_set")
+    tar_file_path = 'data/RNAStralign.tar.gz'
+
+    temp_dir = tempfile.mkdtemp()
+
+    try: 
+        with tarfile.open(tar_file_path, 'r:gz') as tar: 
+            print("Extract files", file=sys.stdout)
+            tar.extractall(temp_dir)
         
-        finally:
-            shutil.rmtree(temp_dir)
+        file_list = prepare_data.list_all_files(temp_dir)
+        print(f'Total of {len(file_list)} files where extracted\n', file=sys.stdout)
+
+        print("Convert matrices\n", file=sys.stdout)
+        process_and_save(file_list, "data/complete_set")
+        
+    finally:
+        shutil.rmtree(temp_dir)
         
 
-        print("Splitting data", file=sys.stdout)
+    print("Splitting data", file=sys.stdout)
 
-        file_list = [os.path.join('data', 'complete_set', file) for file in os.listdir('data/experiment8')]
+    file_list = [os.path.join('data', 'complete_set', file) for file in os.listdir('data/experiment8')]
 
-        train, valid, test = prepare_data.split_data(file_list, validation_ratio=0.2, test_ratio=0.0)
+    train, valid, test = prepare_data.split_data(file_list, validation_ratio=0.2, test_ratio=0.0)
 
-        pickle.dump(train, open('data/train.pkl', 'wb'))
-        pickle.dump(valid, open('data/valid.pkl', 'wb'))
-        pickle.dump(test, open('data/test.pkl', 'wb'))
+    pickle.dump(train, open('data/train.pkl', 'wb'))
+    pickle.dump(valid, open('data/valid.pkl', 'wb'))
+    pickle.dump(test, open('data/test.pkl', 'wb'))
 
-        print("Make family map", file=sys.stdout)
+    print("Make family map", file=sys.stdout)
         
-        family_map = prepare_data.make_family_map(file_list)
-        pickle.dump(family_map, open('data/familymap.pkl', 'wb'))
+    family_map = prepare_data.make_family_map(file_list)
+    pickle.dump(family_map, open('data/familymap.pkl', 'wb'))
 
-        print("Plotting data distribution", file=sys.stdout)
+    print("Plotting data distribution", file=sys.stdout)
         
-        plots.plot_families({"train":train, "valid":valid, "test":test}, family_map, output_file='figures/family_distribution.png')
-        plots.plot_len_histogram({"train":train, "valid":valid, "test":test}, output_file='figures/length_distribution.png')
+    plots.plot_families({"train":train, "valid":valid, "test":test}, family_map, output_file='figures/family_distribution.png')
+    plots.plot_len_histogram({"train":train, "valid":valid, "test":test}, output_file='figures/length_distribution.png')
      
