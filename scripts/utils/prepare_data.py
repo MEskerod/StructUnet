@@ -6,7 +6,7 @@ from collections import defaultdict, namedtuple
 
 from torch.utils.data import Dataset
 
-def read_ct(file: str) -> tuple():
+def read_ct(file: str) -> tuple:
     """
     Takes a .ct file and returns the sequence as a string and a list pairing state of each base (0 = unpaired)
     """
@@ -236,6 +236,8 @@ def make_pairs_from_list(pairs):
 
 RNA_data = namedtuple('RNA_data', 'input output length family name pairs')
 
+RNA = namedtuple('RNA', 'input output length family name sequence')
+
 def update_progress_bar(current_index, total_indices):
     progress = (current_index + 1) / total_indices
     bar_length = 50
@@ -243,57 +245,6 @@ def update_progress_bar(current_index, total_indices):
     bar = '=' * filled_length + '.' * (bar_length - filled_length)
     sys.stdout.write(f'\r[{bar}] {int(progress * 100)}%')
     sys.stdout.flush()
-
-def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8'):
-  """
-  Takes a list of ct files and converts them into a namedtuple type element containing: 
-  - input
-  - output
-  - sequence length 
-  - RNAfamily 
-  - file name 
-  - pairs in structure
-  All elements are saved into output_folder as pickle files. 
-  """
-  converted = 0
-
-  os.makedirs(output_folder, exist_ok=True)
-  
-  for i, file in enumerate(file_list):
-
-    length = getLength(file)
-    family = getFamily(file)
-
-    sequence, pairs = read_ct(file)
-
-    try:
-        if (i + 1) % 100 == 0:
-            update_progress_bar(i, len(file_list))
-
-        if matrix_type == '8':
-            input_matrix = make_matrix_from_sequence_8(sequence)
-        elif matrix_type == '17':  
-            input_matrix = make_matrix_from_sequence_17(sequence)
-        else: 
-            raise ValueError("Wrong matrix type")
-        
-        output_matrix = make_matrix_from_basepairs(pairs)
-
-        sample = RNA_data(input = input_matrix,
-                                     output = output_matrix,
-                                     length = length,
-                                     family = family,
-                                     name = file, 
-                                     pairs = make_pairs_from_list(pairs))
-        
-        pickle.dump(sample, open(os.path.join(output_folder, os.path.splitext(os.path.basename(file))[0] + '.pkl'), 'wb'))
-        converted += 1
-
-    except Exception as e:
-        # Skip this file if an unexpected error occurs during processing
-        print(f"Skipping {file} due to unexpected error: {e}", file=sys.stderr)
-  
-  print(f"\n\n{converted} files converted", file=sys.stdout)
 
 def file_length(file):
   return int(pickle.load(open(file, 'rb')).length)
@@ -314,6 +265,8 @@ def get_indices(ratios):
   return group1, group2, group3
 
 def split_data(file_list, train_ratio = 0.8, validation_ratio = 0.1, test_ratio = 0.1, input_path = "input", output_path = "output"):
+  assert int((train_ratio + validation_ratio + test_ratio)) == 1
+  
   train_indices, valid_indices, test_indices = get_indices([train_ratio, validation_ratio, test_ratio])
   
   train, valid, test = [], [], []

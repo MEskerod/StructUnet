@@ -2,13 +2,14 @@ import os, pickle
 import matplotlib as plt
 import numpy as np
 
-def plot_families(file_dict, output_file = None):
+
+def plot_families(file_dict: dict, family_map: dict, output_file = None):
   file_dict = {key:item for key, item in file_dict.items() if len(item)>0}
 
   file_lists = [item for key, item in file_dict.items()]
   data_set = [key for key, item in file_dict.items()]
 
-  RNA_families = {family: [0]*len(file_lists) for family in ['16SrRNA', '5SrRNA', 'RNaseP', 'SRP', 'groupIintron', 'tRNA','telomerase', 'tmRNA']}
+  RNA_families = {family: [0]*len(file_lists) for family in family_map.keys()}
 
   for index, file_list in enumerate(file_lists):
     for file in file_list:
@@ -17,7 +18,7 @@ def plot_families(file_dict, output_file = None):
 
   RNA_families = sorted({family:item for family, item in RNA_families.items() if item != ([0]*len(file_lists))}.items(), key=lambda x:x[1])
   values = [[f[1][i]/len(file_lists[i]) for i in range(len(file_lists))] for f in RNA_families]
-  families = [f[0] for f in RNA_families]
+  families = [" ".join(f[0].split('_')) for f in RNA_families]
 
   x = np.arange(len(families))
   width = 1/len(file_dict)*0.9
@@ -41,16 +42,14 @@ def plot_families(file_dict, output_file = None):
   if output_file:
     plt.savefig(output_file, bbox_inches = 'tight')
 
-  plt.show()
 
-
-def plot_len_histogram(file_dict, output_file = None):
+def plot_len_histogram(file_dict: dict, output_file = None):
   file_dict = {key:item for key, item in file_dict.items() if len(item)>0}
 
   file_lists = [item for key, item in file_dict.items()]
   data_set = [key for key, item in file_dict.items()]
 
-  # Takes a list of .ct file and produces a histogram of the distribution of lengths of sequences
+  # Takes a list of .pkl files and produces a histogram of the distribution of lengths of sequences
   lengths = []
 
   for file_list in file_lists:
@@ -71,6 +70,7 @@ def plot_len_histogram(file_dict, output_file = None):
   plt.tight_layout()
 
   if output_file:
-    plt.savefig(output_file, bbox_inches = 'tight')
+    plt.savefig(output_file, bbox_inches = 'tight', dpi = 300)
 
   plt.show()
+     

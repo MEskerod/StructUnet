@@ -3,7 +3,10 @@ import os, tempfile, shutil, tarfile, pickle, sys
 import random as rd
 from collections import namedtuple
 
-from utils.prepare_data import getLength, list_all_files, make_matrix_from_basepairs, make_matrix_from_sequence_8, make_matrix_from_sequence_9, make_matrix_from_sequence_17, read_ct, update_progress_bar, make_pairs_from_list
+from utils import prepare_data
+from utils import plots
+
+#from utils.prepare_data import getLength, list_all_files, make_matrix_from_basepairs, make_matrix_from_sequence_8, read_ct, update_progress_bar, split_data
 
 def getFamily(file_name: str):
   '''
@@ -19,25 +22,25 @@ def process_and_save(file_list: list, output_folder: str):
     os.makedirs(output_folder, exist_ok=True)
 
     for i, file in enumerate(file_list): 
-        length = getLength(file)
+        length = prepare_data.getLength(file)
         if length == 0: 
             continue
 
         family = getFamily(file)
 
-        sequence, pairs = read_ct(file)
+        sequence, pairs = prepare_data.read_ct(file)
 
         try: 
             if (i+1) % 100 == 0:
-                update_progress_bar(i, len(file_list))
+                prepare_data.update_progress_bar(i, len(file_list))
             
-            input_matrix = make_matrix_from_sequence_8(sequence)
-            output_matrix = make_matrix_from_basepairs(pairs)
+            input_matrix = prepare_data.make_matrix_from_sequence_8(sequence)
+            output_matrix = prepare_data.make_matrix_from_basepairs(pairs)
 
             if input_matrix.shape[-1] == 0 or output_matrix.shape[-1] == 0: 
                 continue
 
-            sample = RNA_data(input = input_matrix,
+            sample = RNA(input = input_matrix,
                               output = output_matrix,
                               length = length,
                               family = family,
@@ -53,7 +56,7 @@ def process_and_save(file_list: list, output_folder: str):
     print(f"\n\n{converted} files converted", file=sys.stdout)
 
     if __name__ == "__main__": 
-        RNA_data = namedtuple('RNA_data', 'input output length family name sequence')
+        RNA = namedtuple('RNA', 'input output length family name sequence')
 
         tar_file_path = 'data/RNAStralign.tar.gz'
 
@@ -64,7 +67,7 @@ def process_and_save(file_list: list, output_folder: str):
                 print("Extract files", file=sys.stdout)
                 tar.extractall(temp_dir)
         
-            file_list = list_all_files(temp_dir)
+            file_list = prepare_data.list_all_files(temp_dir)
             print(f'Total of {len(file_list)} files where extracted\n', file=sys.stdout)
 
             print("Convert matrices\n", file=sys.stdout)
@@ -72,3 +75,25 @@ def process_and_save(file_list: list, output_folder: str):
         
         finally:
             shutil.rmtree(temp_dir)
+        
+
+        print("Splitting data", file=sys.stdout)
+
+        file_list = [os.path.join('data', 'complete_set', file) for file in os.listdir('data/experiment8')]
+
+        train, valid, test = prepare_data.split_data(file_list, validation_ratio=0.2, test_ratio=0.0)
+
+        pickle.dump(train, open('data/train.pkl', 'wb'))
+        pickle.dump(valid, open('data/valid.pkl', 'wb'))
+        pickle.dump(test, open('data/test.pkl', 'wb'))
+
+        print("Make family map", file=sys.stdout)
+        
+        family_map = prepare_data.make_family_map(file_list)
+        pickle.dump(family_map, open('data/familymap.pkl', 'wb'))
+
+        print("Plotting data distribution", file=sys.stdout)
+        
+        plots.plot_families({"train":train, "valid":valid, "test":test}, family_map, output_file='figures/family_distribution.png')
+        plots.plot_len_histogram({"train":train, "valid":valid, "test":test}, output_file='figures/length_distribution.png')
+     
