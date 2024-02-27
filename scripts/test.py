@@ -2,6 +2,7 @@ import utils.model
 import utils.prepare_data as prep
 import utils.training_functions as train
 import utils.post_processing as post_process
+import utils.evaluation as evaluation
 
 import numpy as np
 import torch, pytest, os
@@ -148,18 +149,54 @@ def test_all_paired():
     assert np.all(np.any(post_process.Mfold_constrain_postprocessing(matrix2, sequence), axis=0))
     assert np.all(np.any(post_process.Mfold_param_postprocessing(matrix2, sequence), axis=0))
 
-
 def test_argmax(): 
     matrix1 = np.random.random((50, 50))
 
-    assert isinstance(post_process.argmax_postprocessing(matrix1), np.ndarray)
-    assert 2==2
+    assert isinstance(post_process.argmax_postprocessing(matrix1), np.ndarray) #Test that matrix is returned
+    assert len(np.nonzero(post_process.argmax_postprocessing(matrix1))[0]) == 50 #Test correct number of values is in the matrix
 
+    # Test that the functionality is correct
+    result = post_process.argmax_postprocessing(matrix1)
+    max_indices = np.argmax((matrix1+matrix1.T)/2, axis=1)
+    for i, idx in enumerate(max_indices):
+        assert result[i, idx] == 1
 
-def test_blossum(): 
-    assert 2==2
+def test_blossum():
+    matrix1 = np.random.random((50, 50))
+
+    result1 = post_process.blossom_postprocessing(matrix1)
+    result2 = post_process.blossom_weak(matrix1)
+    assert np.allclose(result1, result1.T)
+    assert np.allclose(result2, result2.T)
+
+    matrix = np.zeros((3, 3))
+    result = post_process.blossom_weak(matrix)
+    assert np.array_equal(result, np.eye(3))
+
+def test_Mfold(): 
+    return
 
 
 ### EVALUATION ###
 def test_evaluation(): 
-    assert 2==2
+    # Test functionality
+    y_pred = torch.tensor([1, 1, 1, 1])
+    y_true = torch.tensor([1, 0, 1, 0])
+
+    precision, recall, F1 = evaluation.evaluate(y_pred, y_true)
+
+    assert round(precision, 1) == 0.5
+    assert round(recall, 1) == 1
+    assert round(F1, 2) == 0.67
+
+    #Test zero-case
+    y_pred = torch.tensor([0, 0, 0, 0])
+    y_true = torch.tensor([1, 1, 1, 1])
+
+    precision, recall, F1 = evaluation.evaluate(y_pred, y_true)
+
+    assert round(precision) == 0
+    assert round(recall) == 0
+    assert round(F1) == 0
+    
+
