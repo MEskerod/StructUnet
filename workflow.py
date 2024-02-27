@@ -20,6 +20,14 @@ def postprocess_time():
     spec = """python3 scripts/time_postprocessing.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
+def convert_time(): 
+    inputs = []
+    outputs = [os.path.join('results', 'convert_time.csv'),
+               os.path.join('figures', 'convert_time.png')]
+    options = {"memory": "16gb", "walltime": "24:00:00"}
+    spec = """python3 scripts/time_matrix_conversion.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
 
 ### TRAINING ###
 def make_complete_set(): 
@@ -54,3 +62,6 @@ gwf.target_from_template('convert_data', make_complete_set())
 
 #Make experiment of post processing time 
 gwf.target_from_template('time_postprocess', postprocess_time())
+
+#Make experiment of conversion time
+gwf.target_from_template('time_convert', convert_time())
