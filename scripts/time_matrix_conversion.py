@@ -61,7 +61,7 @@ def average_times(func, func_name, repeats = 3, n = 81, min_length = 60, max_len
     
     return average[1:]
 
-def plot_timedict(timedict, lengths, outputfile = None, min_length = 60, max_length = 1000):
+def plot_timedict(timedict, lengths, outputfile = None):
     colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9']
     
     
@@ -76,7 +76,6 @@ def plot_timedict(timedict, lengths, outputfile = None, min_length = 60, max_len
     
     ax.legend(handles = handles, loc = 'upper left', bbox_to_anchor = (1.01, 1))
     ax.grid(linestyle = '--')
-    ax.set_ylim(min_length, max_length)
     ax.set_xlabel("Sequence length")
     ax.set_ylabel("Time (s)")
 
