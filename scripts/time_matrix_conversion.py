@@ -14,7 +14,7 @@ def generate_random_sequence(N):
     return random.choices(alphabet, k=N)
 
 
-def calculate_lengths(n: int = 50, min_length: int = 60, max_length: int = 600) -> list[int]:
+def calculate_lengths(n: int = 81, min_length: int = 60, max_length: int = 1000) -> list[int]:
     """
     Calculate the lengths of the slices, to obtain a given number of slices of lengths between a minimum and maximum length, spaced according to a quadratic function. 
 
@@ -34,7 +34,7 @@ def calculate_lengths(n: int = 50, min_length: int = 60, max_length: int = 600) 
     return lengths
 
 
-def average_times(func, func_name, repeats = 3, n = 50, min_length = 60, max_length = 600): 
+def average_times(func, func_name, repeats = 3, n = 81, min_length = 60, max_length = 1000): 
     times = [0] * n
 
     def time_convert():
@@ -59,9 +59,9 @@ def average_times(func, func_name, repeats = 3, n = 50, min_length = 60, max_len
     
     average = [t/repeats for t in times]
     
-    return average
+    return average[1:]
 
-def plot_timedict(timedict, lengths, outputfile = None):
+def plot_timedict(timedict, lengths, outputfile = None, min_length = 60, max_length = 1000):
     colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9']
     
     
@@ -76,6 +76,7 @@ def plot_timedict(timedict, lengths, outputfile = None):
     
     ax.legend(handles = handles, loc = 'upper left', bbox_to_anchor = (1.01, 1))
     ax.grid(linestyle = '--')
+    ax.set_ylim(min_length, max_length)
     ax.set_xlabel("Sequence length")
     ax.set_ylabel("Time (s)")
 
@@ -91,7 +92,7 @@ def main():
     
     timedict = {func_name: average_times(v, func_name) for func_name, v in functions.items()}
 
-    lengths = calculate_lengths()
+    lengths = calculate_lengths()[1:]
     
     df = pd.DataFrame(timedict, index = lengths)
     df.to_csv('results/convert_time.csv')
