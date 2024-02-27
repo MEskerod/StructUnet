@@ -444,7 +444,6 @@ def fit_model(model, train_dataset, validation_dataset, loss_func = F.binary_cro
 
     #Validation loss (only after each epoch)
     valid_loss, valid_F1 = 0.0, 0.0
-    model.eval()
     with torch.no_grad():
       for valid_input, valid_output, valid_label in valid_dl:
         if valid_input.shape[-1] == 0: 
