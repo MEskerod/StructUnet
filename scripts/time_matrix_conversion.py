@@ -14,7 +14,7 @@ def generate_random_sequence(N):
     return random.choices(alphabet, k=N)
 
 
-def calculate_lengths(n: int = 81, min_length: int = 60, max_length: int = 1000) -> list[int]:
+def calculate_lengths(n: int = 81, min_length: int = 60, max_length: int = 2000) -> list[int]:
     """
     Calculate the lengths of the slices, to obtain a given number of slices of lengths between a minimum and maximum length, spaced according to a quadratic function. 
 
@@ -34,7 +34,7 @@ def calculate_lengths(n: int = 81, min_length: int = 60, max_length: int = 1000)
     return lengths
 
 
-def average_times(func, func_name, repeats = 3, n = 81, min_length = 60, max_length = 1000): 
+def average_times(func, func_name, repeats = 3, n = 81, min_length = 60, max_length = 2000): 
     times = [0] * n
 
     def time_convert():
