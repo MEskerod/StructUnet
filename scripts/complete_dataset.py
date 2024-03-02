@@ -1,7 +1,7 @@
-import os, tempfile, shutil, tarfile, pickle, sys
+import os, tempfile, shutil, tarfile, pickle, sys, multiprocessing
 
-import random as rd
 from collections import namedtuple
+from tqdm import tqdm
 
 from utils import prepare_data
 from utils import plots
@@ -12,46 +12,52 @@ def getFamily(file_name: str):
   '''
   return '_'.join(file_name.split(os.sep)[5].split('_')[:-1])
 
+
 def process_and_save(file_list: list, output_folder: str): 
     """
     """
-    converted  = 0
+    converted = multiprocessing.Value('i', 0) #Shared variable to keep track of the number of files converted
+    total_files = len(file_list)
 
     os.makedirs(output_folder, exist_ok=True)
 
-    for i, file in enumerate(file_list): 
-        length = prepare_data.getLength(file)
-        if length == 0: 
-            continue
-
-        family = getFamily(file)
-
-        sequence, pairs = prepare_data.read_ct(file)
-
+    def process_file(file: str):
         try: 
-            if (i+1) % 100 == 0:
-                prepare_data.update_progress_bar(i, len(file_list))
+            length = prepare_data.getLength(file)
+            if length == 0:
+                return
             
+            family = getFamily(file)
+            sequence, pairs = prepare_data.read_ct(file)
             input_matrix = prepare_data.make_matrix_from_sequence_8(sequence)
             output_matrix = prepare_data.make_matrix_from_basepairs(pairs)
 
-            if input_matrix.shape[-1] == 0 or output_matrix.shape[-1] == 0: 
-                continue
-
+            if input_matrix.shape[-1] == 0 or output_matrix.shape[-1] == 0:
+                return
+            
             sample = RNA(input = input_matrix,
-                              output = output_matrix,
-                              length = length,
-                              family = family,
-                              name = file,
-                              sequence = sequence)
-
+                                output = output_matrix,
+                                length = length,
+                                family = family,
+                                name = file,
+                                sequence = sequence)    
+            
+            with converted.get_lock():
+                converted.value += 1 #Inrement converted files counter
+            
             pickle.dump(sample, open(os.path.join(output_folder, os.path.splitext(os.path.basename(file))[0] + '.pkl'), 'wb'))
 
         except Exception as e: 
             # Skip this file if an unexpected error occurs during processing
             print(f"Skipping {file} due to unexpected error: {e}", file=sys.stderr)
+            return
     
-    print(f"\n\n{converted} files converted", file=sys.stdout)
+    with multiprocessing.Pool() as pool:
+        #Map the process_file function to the list of files
+        for _ in tqdm(pool.imap_unordered(process_file, file_list), total=total_files, file=sys.stdout, desc="Processing files"):
+            pass   
+    
+    print(f"\n\n{converted.value} files converted", file=sys.stdout)
 
 if __name__ == "__main__": 
     print("RUN")
