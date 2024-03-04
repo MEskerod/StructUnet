@@ -2,6 +2,7 @@ import os, tempfile, shutil, tarfile, pickle, sys, multiprocessing
 
 from collections import namedtuple
 from tqdm import tqdm
+from functools import partial
 
 from utils import prepare_data
 from utils import plots
@@ -13,54 +14,55 @@ def getFamily(file_name: str):
   return '_'.join(file_name.split(os.sep)[5].split('_')[:-1])
 
 
+def process_file(file: str, output_folder: str):
+    try: 
+        length = prepare_data.getLength(file)
+        if length == 0:
+            return
+        
+        family = getFamily(file)
+        sequence, pairs = prepare_data.read_ct(file)
+        input_matrix = prepare_data.make_matrix_from_sequence_8(sequence)
+        output_matrix = prepare_data.make_matrix_from_basepairs(pairs)
+
+        if input_matrix.shape[-1] == 0 or output_matrix.shape[-1] == 0:
+            return
+        
+        sample = RNA(input = input_matrix,
+                            output = output_matrix,
+                            length = length,
+                            family = family,
+                            name = file,
+                            sequence = sequence)    
+        
+        pickle.dump(sample, open(os.path.join(output_folder, os.path.splitext(os.path.basename(file))[0] + '.pkl'), 'wb'))
+        return 1
+
+    except Exception as e: 
+        # Skip this file if an unexpected error occurs during processing
+        print(f"Skipping {file} due to unexpected error: {e}", file=sys.stderr)
+        return
+
+
 def process_and_save(file_list: list, output_folder: str): 
     """
     """
-    converted = multiprocessing.Value('i', 0) #Shared variable to keep track of the number of files converted
     total_files = len(file_list)
 
     os.makedirs(output_folder, exist_ok=True)
 
-    def process_file(file: str):
-        try: 
-            length = prepare_data.getLength(file)
-            if length == 0:
-                return
-            
-            family = getFamily(file)
-            sequence, pairs = prepare_data.read_ct(file)
-            input_matrix = prepare_data.make_matrix_from_sequence_8(sequence)
-            output_matrix = prepare_data.make_matrix_from_basepairs(pairs)
-
-            if input_matrix.shape[-1] == 0 or output_matrix.shape[-1] == 0:
-                return
-            
-            sample = RNA(input = input_matrix,
-                                output = output_matrix,
-                                length = length,
-                                family = family,
-                                name = file,
-                                sequence = sequence)    
-            
-            with converted.get_lock():
-                converted.value += 1 #Inrement converted files counter
-            
-            pickle.dump(sample, open(os.path.join(output_folder, os.path.splitext(os.path.basename(file))[0] + '.pkl'), 'wb'))
-
-        except Exception as e: 
-            # Skip this file if an unexpected error occurs during processing
-            print(f"Skipping {file} due to unexpected error: {e}", file=sys.stderr)
-            return
+    partial_process_file = partial(process_file, output_folder=output_folder)
     
     with multiprocessing.Pool() as pool:
         #Map the process_file function to the list of files
-        for _ in tqdm(pool.imap_unordered(process_file, file_list), total=total_files, file=sys.stdout, desc="Processing files"):
-            pass   
+        results = list(tqdm(pool.imap_unordered(partial_process_file, file_list), total=total_files, file=sys.stdout, desc="Processing files"))
+
+    converted = sum([result for result in results if result is not None])  
     
-    print(f"\n\n{converted.value} files converted", file=sys.stdout)
+    print(f"\n\n{converted} files converted", file=sys.stdout)
 
 if __name__ == "__main__": 
-    print("RUN")
+    print("RUN", file=sys.stdout)
         
     RNA = namedtuple('RNA', 'input output length family name sequence')
 
@@ -85,7 +87,7 @@ if __name__ == "__main__":
 
     print("Splitting data", file=sys.stdout)
 
-    file_list = [os.path.join('data', 'complete_set', file) for file in os.listdir('data/experiment8')]
+    file_list = [os.path.join('data', 'complete_set', file) for file in os.listdir('data/complete_set')]
 
     train, valid, test = prepare_data.split_data(file_list, validation_ratio=0.2, test_ratio=0.0)
 
@@ -94,7 +96,7 @@ if __name__ == "__main__":
     pickle.dump(test, open('data/test.pkl', 'wb'))
 
     print("Move test files to different folder")
-    os.makedirs("data/test_files")
+    os.makedirs("data/test_files", exist_ok=True)
     for file in test: 
         shutil.move(file, "data/test_files")
 
@@ -105,7 +107,7 @@ if __name__ == "__main__":
     family_map = prepare_data.make_family_map(file_list)
     pickle.dump(family_map, open('data/familymap.pkl', 'wb'))
 
-    print("Plotting data distribution", file=sys.stdout)
+    print("\nPlotting data distribution", file=sys.stdout)
         
     plots.plot_families({"train":train, "valid":valid, "test":test}, family_map, output_file='figures/family_distribution.png')
     plots.plot_len_histogram({"train":train, "valid":valid, "test":test}, output_file='figures/length_distribution.png')
