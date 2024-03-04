@@ -506,6 +506,7 @@ def plot_f1_curves(training_df, output_file = None):
     ax.set_xlabel("Epochs", size = 11)
     ax.set_ylabel("f1 score", size = 11)
     ax.legend(handles = handles, loc = 'upper left', bbox_to_anchor = (1.01, 1), fontsize=8)
+    ax.grid(linestyle='--')
 
     if output_file:
       plt.savefig(output_file)
@@ -543,6 +544,7 @@ def plot_loss_curves(training_df, output_file = None):
 
     ax.set_xlabel("Epochs", size = 11)
     ax.legend(handles = handles, loc = 'upper left', bbox_to_anchor = (1.01, 1), fontsize=8)
+    ax.grid(linestyle='--')
 
 
     ax.set_ylabel("loss", size = 11)
