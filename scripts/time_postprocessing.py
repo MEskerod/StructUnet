@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-import time, random, sys 
+import time, random, sys, multiprocessing 
 
 
 def generate_random_matrix(N): 
@@ -17,7 +17,7 @@ def generate_random_sequence(N):
     return random.choices(alphabet, k=N)
 
 
-def calculate_lengths(n: int = 50, min_length: int = 60, max_length: int = 600) -> list[int]:
+def calculate_lengths(n: int = 51, min_length: int = 60, max_length: int = 600) -> list[int]:
     """
     Calculate the lengths of the slices, to obtain a given number of slices of lengths between a minimum and maximum length, spaced according to a quadratic function. 
 
@@ -37,47 +37,48 @@ def calculate_lengths(n: int = 50, min_length: int = 60, max_length: int = 600) 
     return lengths
 
 
-def average_times(func, func_name, repeats = 3, n = 50, min_length = 60, max_length = 600, seq = False): 
+def time_postprocess(func, n, min_length, max_length, seq = False): 
+    t = []
+
+    lengths = calculate_lengths(n, min_length, max_length)
+    if seq:
+        for N in lengths:
+            matrix = generate_random_matrix(N)
+            sequence = generate_random_sequence(N)
+            t0 = time.time()
+            matrix = func(matrix, sequence)
+            t.append(time.time() - t0)
+        
+    else:
+        for N in lengths:
+            matrix = generate_random_matrix(N)
+            t0 = time.time()
+            matrix = func(matrix)
+            t.append(time.time() - t0)
+        
+        return t
+
+
+
+def average_times(func, func_name, repeats = 5, n = 51, min_length = 60, max_length = 600, seq = False): #change to 51, 60, 600
     times = [0] * n
 
-    if seq:
-        def time_postprocess():
-    
-            t = []
+    pool = multiprocessing.Pool()
 
-            lengths = calculate_lengths(n, min_length, max_length)
-            for N in lengths:
-                matrix = generate_random_matrix(N)
-                sequence = generate_random_sequence(N)
-                t0 = time.time()
-                matrix = func(matrix, sequence)
-                t.append(time.time() - t0)
-    
-            return t
-    else:
-        def time_postprocess():
-    
-            t = []
-
-            lengths = calculate_lengths(n, min_length, max_length)
-            for N in lengths:
-                matrix = generate_random_matrix(N)
-                t0 = time.time()
-                matrix = func(matrix)
-                t.append(time.time() - t0)
-    
-            return t
-    
     print(f'Processing with {func_name}', file=sys.stdout)
-    for rep in range(repeats): 
-        print(f'Repeat {rep+1}/{repeats}', file=sys.stdout)
-        t = time_postprocess()
+    args = [(func, n, min_length, max_length, seq)] * repeats
+    all_times = pool.starmap(time_postprocess, args)
+
+    for rep_times in all_times:
         for i in range(n): 
-            times[i] +=t[i]
+            times[i] += rep_times[i]
+    
+    pool.close()
+    pool.join()
     
     average = [t/repeats for t in times]
     
-    return average
+    return average[1:]
 
 def plot_timedict(timedict, lengths, outputfile = None):
     colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9']
@@ -104,16 +105,16 @@ def plot_timedict(timedict, lengths, outputfile = None):
 
 def main(): 
     functions = {'NetworkX blossom w/ self-loops': (post_processing.nx_blossum_postprocessing, False), 
-                 'blossom w/ self-loops': (post_processing.blossom_postprocessing, False), 
-                 'blossom': (post_processing.blossom_weak, False), 
-                 'argmax': (post_processing.argmax_postprocessing, False),
+                 'Blossom w/ self-loops': (post_processing.blossom_postprocessing, False), 
+                 'Blossom': (post_processing.blossom_weak, False), 
+                 'Argmax': (post_processing.argmax_postprocessing, False),
                  'Mfold w/ matrix as parameters': (post_processing.Mfold_param_postprocessing, True), 
                  'Mfold w/ matrix as constrains': (post_processing.Mfold_constrain_postprocessing, True),
                  }
     
     timedict = {func_name: average_times(v[0], func_name, seq=v[1]) for func_name, v in functions.items()}
 
-    lengths = calculate_lengths()
+    lengths = calculate_lengths()[1:]
     
     df = pd.DataFrame(timedict, index = lengths)
     df.to_csv('results/postprocess_time.csv')

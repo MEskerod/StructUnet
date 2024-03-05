@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-import time, random, sys 
+import time, random, sys, multiprocessing 
 
 
 def generate_random_sequence(N): 
@@ -14,7 +14,7 @@ def generate_random_sequence(N):
     return random.choices(alphabet, k=N)
 
 
-def calculate_lengths(n: int = 81, min_length: int = 60, max_length: int = 2000) -> list[int]:
+def calculate_lengths(n: int = 31, min_length: int = 60, max_length: int = 100) -> list[int]: #Change to 81, 60, 2000
     """
     Calculate the lengths of the slices, to obtain a given number of slices of lengths between a minimum and maximum length, spaced according to a quadratic function. 
 
@@ -34,10 +34,7 @@ def calculate_lengths(n: int = 81, min_length: int = 60, max_length: int = 2000)
     return lengths
 
 
-def average_times(func, func_name, repeats = 3, n = 81, min_length = 60, max_length = 2000): 
-    times = [0] * n
-
-    def time_convert():
+def time_convert(n, min_length, max_length, func):
     
         t = []
 
@@ -49,13 +46,23 @@ def average_times(func, func_name, repeats = 3, n = 81, min_length = 60, max_len
             t.append(time.time() - t0)
     
         return t
+
+def average_times(func, func_name, repeats = 5, n = 81, min_length = 60, max_length = 2000): #change to 81, 60, 2000
+    times = [0] * n
+
+    pool =  multiprocessing.Pool()
     
     print(f'Processing with {func_name}', file=sys.stdout)
-    for rep in range(repeats): 
-        print(f'Repeat {rep+1}/{repeats}', file=sys.stdout)
-        t = time_convert()
+
+    args = [(n, min_length, max_length, func)] * repeats
+    all_times = pool.starmap(time_convert, args)
+
+    for rep_times in all_times:
         for i in range(n): 
-            times[i] +=t[i]
+            times[i] += rep_times[i]
+    
+    pool.close()
+    pool.join()
     
     average = [t/repeats for t in times]
     
