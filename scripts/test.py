@@ -1,6 +1,5 @@
-import utils.model
 import utils.prepare_data as prep
-import utils.training_functions as train
+import scripts.utils.model_and_training as train
 import utils.post_processing as post_process
 import utils.evaluation as evaluation
 
