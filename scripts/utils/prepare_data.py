@@ -304,24 +304,3 @@ def make_family_map(file_list):
     family_map = {family: torch.from_numpy(np.eye(len(families))[i]) for i, family in enumerate(families)}
     
     return family_map
-
-class ImageToImageDataset(Dataset):
-    """
-
-    """
-    def __init__(self, file_list, family_map):
-        self.file_list = family_map
-
-    def __len__(self):
-        return len(self.file_list)
-
-    def __getitem__(self, idx):
-      data = pickle.load(open(self.file_list[idx], 'rb'))
-      
-      input_image = data.input
-      output_image = data.output
-
-      family = data.family
-      label = self.family_map[family]
-
-      return input_image, output_image, label
