@@ -18,116 +18,7 @@ def declare_global_variable(seq, M) -> None:
     matrix = M
 
 
-
-####### FOLD FUNCTIONS #######
-def make_asymmetric_penalty(f: list, penalty_max: int) -> callable: 
-    """
-    f has to be a list. In articles writen as f(1), f(2) and so forth
-
-    The asymmetry function is used to calculate a penalty to internal loops that are asymmetric. 
-    This penalty does not exists in the orginial paper, but is added later
-
-    This functions returns a function that uses the given parameters to calculate the penalty for asymmetric loops of given size
-
-    args: 
-        - f: list that gives the values from f(0) to f(m_max). 
-        - penalty_max: that maximum penalty that can be addded to ad asymmetric interior loop
-    """
-
-    M_max = len(f)
-
-    def asymmetry_func(i: int, ip: int, j: int, jp: int) -> float:
-        """
-        Calculates the penalty to add to the asymmetric interior loop enclosed by the base pairs i and j and i' and p' 
-        """
-        N1 = (ip-i-1)
-        N2 =(j-jp-1)
-        N = abs(N1-N2)
-        M = min(M_max, N1, N2)-1
-        penalty = min(penalty_max, N*f[M]) 
-        return penalty
-    
-    global asymmetric_penalty_function
-    asymmetric_penalty_function = asymmetry_func
-
-    return asymmetric_penalty_function
-
-
 ### LOOP ENERGIES ###
-def stacking(i: int, j: int, V: np.array) -> float: 
-    """
-    Find the energy parameter for basepairing of Sij and Si+1j-1, which results in basepair stacking
-    If Si+1 and Sj+1 cannot basepair the energy is infinity
-    Allows for Watson-Crick basepairs and wobble basepairs
-    """ 
-    
-    #If previous bases can form a base pair stacking is possible
-    if (sequence[i+1] + sequence[j-1]) in basepairs: 
-        energy = matrix[i, j] + V[i+1, j-1]
-    
-    else: 
-        energy = float('inf')
-    
-    return energy
-
-def bulge_loop_3end(i: int, j: int, V: np.array) -> tuple[float, int]: 
-    """
-    Find the energy parameter of introducing a bulge loop on the 3' end of the strand 
-    """
-    energy = float('inf')
-    ij = None
-
-    #Try all sizes of bulge loop and save the one that gives the lowest energy
-    for jp in range(i+2,j-1):  
-        bp = sequence[i+1]+sequence[jp]
-        if bp in basepairs:
-            BL_energy = matrix[i, j] + V[i+1, jp]
-            
-            if BL_energy < energy: 
-                energy = BL_energy
-                ij = jp
-    
-    return energy, ij
-
-def bulge_loop_5end(i: int, j: int, V: np.array) -> tuple[float, int]:
-    """
-    Find the energy parameter of introducing a bulge loop on the 5' end of the strand 
-    """
-    energy = float('inf')
-    ij = None
-    
-    #Try all sizes of bulge loop and save the one that gives the lowest energy
-    for ip in range(i+2,j-1):  
-        bp = sequence[ip]+sequence[j-1]
-        if bp in basepairs: 
-            BL_energy = matrix[i, j] + V[ip, j-1]
-
-            if BL_energy < energy: 
-                energy = BL_energy
-                ij = ip
-
-    return energy, ij
-
-def interior_loop(i: int, j: int, V: np.array) -> tuple[float, tuple[int, int]]: 
-    """
-    Find the energy parameter of adding a interior loop
-    """
-    
-    energy = float('inf')
-    ij = None
-
-    for ip in range(i+2, j-2): #Try loop of any size between i and i'
-        for jp in range(ip+3, j-1): #Try loop of any size between j and j'
-            if (sequence[ip] + sequence[jp]) in basepairs:
-                IL_energy = matrix[i, j] + V[ip, jp]
-                
-                #Check if energy is smaller than current min
-                if IL_energy < energy: 
-                    energy = IL_energy
-                    ij = (ip, jp)
-    
-    return energy, ij
-
 def find_E1(i: int, j: int) -> float:
     """
     E1 are the energy of base pairing between Si and Sj with one internal edge (hairpin loop) 
@@ -143,11 +34,17 @@ def find_E2(i: int, j: int, V: np.ndarray) -> float:
     i<i'<j'<j
     Returns the minimum of the 3 options  
     """  
-    energy = min(stacking(i, j, V), 
-                 bulge_loop_3end(i, j, V)[0], 
-                 bulge_loop_5end(i, j, V)[0], 
-                 interior_loop(i, j, V)[0])
-    return energy
+    energy = float('inf')
+    ij = None
+
+    for ip in range(i+1, j-2): 
+        for jp in range(ip+3, j): 
+            if (sequence[ip] + sequence[jp]) in basepairs:
+                energy_loop = matrix[i, j] + V[ip, jp]
+                if energy_loop < energy: 
+                    energy = energy_loop
+                    ij = (ip, jp) 
+    return energy, ij
 
 def find_E3(i: int, j: int, W: np.array) -> float: 
     """
@@ -206,7 +103,7 @@ def compute_V(i: int, j: int, W: np.array, V: np.array) -> None:
 
     if sequence[i] + sequence[j] in basepairs:
         v = min(find_E1(i, j), 
-                find_E2(i, j, V), 
+                find_E2(i, j, V)[0], 
                 find_E3(i, j, W)[0])
 
     else: 
@@ -280,23 +177,9 @@ def backtrack(W: np.array, V: np.array) -> str:
         """
         if V[i,j] == find_E1(i, j): 
             pairs.append((i, j))
-    
-        elif V[i,j] == stacking(i, j, V): 
-            pairs.append((i, j))
-            trace_V(i+1, j-1)
-    
-        elif V[i,j] == bulge_loop_3end(i, j, V)[0]: 
-            jp = bulge_loop_3end(i, j, V)[1]
-            pairs.append((i, j))
-            trace_V(i+1, jp)
-    
-        elif V[i,j] == bulge_loop_5end(i, j, V)[0]: 
-            ip = bulge_loop_5end(i, j, V)[1]
-            pairs.append((i, j))
-            trace_V(ip, j-1)
-    
-        elif V[i,j] == interior_loop(i, j, V)[0]:
-            ij = interior_loop(i, j, V)[1]
+        
+        elif V[i,j] == find_E2(i, j, V)[0]:
+            ij = find_E2(i, j, V)[1]
             pairs.append((i, j))
             trace_V(ij[0], ij[1])
     
@@ -337,3 +220,17 @@ def Mfold(sequence: str, matrix: np.array):
     fold = backtrack(W, V)
 
     return fold
+
+
+
+sequence = 'CGUGUCAGGUCCGGAAGGAAGCAGCACUAAC'
+pairs = [0, 26, 25, 24, 23, 0, 0, 0, 0, 18, 17, 16, 0, 0, 0, 0, 11, 10, 9, 0, 0, 0, 0, 4, 3, 2, 1, 0, 0, 0, 0]
+
+matrix = np.zeros((len(pairs), len(pairs)))
+for i in range(len(pairs)):
+    if pairs[i] != 0:
+        matrix[i, pairs[i]] = -1
+    else: 
+        matrix[i, i] = -1
+
+print(Mfold(sequence, matrix))
