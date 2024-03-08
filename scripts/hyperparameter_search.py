@@ -1,4 +1,4 @@
-import sys, torch, os, pickle, logging
+import torch, os, pickle, logging, sys
 
 from collections import namedtuple
 
@@ -167,5 +167,8 @@ if __name__ == "__main__":
     train_dataset = utils.ImageToImageDataset(train, family_map)
 
     best_params = adaptive_hyperparameter_search(train_dataset, 10, params["lr"], params["weight_decay"], params["conv2_filters"])
+
+    logging.info(f"Best hyperparameters found: {best_params}")
+    print(f"Best hyperparameters found: {best_params}", file=sys.stdout)
 
     

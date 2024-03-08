@@ -57,11 +57,15 @@ gwf = Workflow()
 for matrix_type in [8, 9, 17]:
     gwf.target_from_template(f'experiment_data_{matrix_type}', make_experiment_data(matrix_type))
 
-#Convert entire data set
-gwf.target_from_template('convert_data', make_complete_set())
-
 #Make experiment of post processing time 
 gwf.target_from_template('time_postprocess', postprocess_time())
 
 #Make experiment of conversion time
 gwf.target_from_template('time_convert', convert_time())
+
+
+
+
+## FOR TRAINING THE ON THE ENTIRE DATA SET
+#Convert entire data set
+gwf.target_from_template('convert_data', make_complete_set())
