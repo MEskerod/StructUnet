@@ -61,11 +61,66 @@ def test_read_ct(make_ct_file_1):
 def test_get_length(make_ct_file_1): 
     assert 31 == prep.getLength(make_ct_file_1)
 
+def test_score_matrix(): 
+    sequence = 'GCGGUUAUAG'
+    matrix = np.round(prep.calculate_score_matrix(sequence), 2)
+    true = np.array([[0, 0, 0, 0, 2.62, 0.8, 0, 0.8, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 3.0],
+                     [0, 0, 0, 0, 0, 0, 0, 0.8, 0, 0],
+                     [0, 0, 0, 0, 0, 0, 0, 2.01, 0, 0],
+                     [2.62, 0, 0, 0, 0, 0, 0, 0, 2.0, 2.31],
+                     [0.8, 0, 0, 0, 0, 0, 0, 0, 0, 0.8],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                     [0.8, 0, 0.8, 2.01, 0, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 0, 2.0, 0, 0, 0, 0, 0],
+                     [0, 3.0, 0, 0, 2.31, 0.8, 0, 0, 0, 0]], dtype='float32')    
+    assert np.allclose(matrix, true.reshape(10, 10, 1))
+
 def test_matrix_8():
-    assert 2==2
+    sequence = 'CGUGUCAGGUCCGGAAGGAAGCAGCACUAAC'
+    matrix = prep.make_matrix_from_sequence_8(sequence)
+
+    assert torch.all(torch.eq(matrix[:, 0, 0], torch.tensor([0, 1, 0, 0, 0, 0, 0, 0], dtype=torch.float32)))
+    assert torch.all(torch.eq(matrix[:, 1, 0], torch.tensor([1, 0, 0, 0, 0, 0, 0, 0], dtype=torch.float32)))
+    assert torch.all(torch.eq(matrix[:, 1, -1], torch.tensor([0, 0, 1, 0, 0, 0, 0, 0], dtype=torch.float32)))
+    assert torch.all(torch.eq(matrix[:, 0, -8], torch.tensor([0, 0, 0, 1, 0, 0, 0, 0], dtype=torch.float32)))
+    assert torch.all(torch.eq(matrix[:, 2, -8], torch.tensor([0, 0, 0, 0, 1, 0, 0, 0], dtype=torch.float32)))
+    assert torch.all(torch.eq(matrix[:, 1, -4], torch.tensor([0, 0, 0, 0, 0, 1, 0, 0], dtype=torch.float32)))
+    assert torch.all(torch.eq(matrix[:, 2, -2], torch.tensor([0, 0, 0, 0, 0, 0, 1, 0], dtype=torch.float32)))
+    assert torch.all(torch.eq(matrix[:, 6, -4], torch.tensor([0, 0, 0, 0, 0, 0, 0, 1], dtype=torch.float32)))
 
 def test_matrix_17(): 
-    assert 2==2
+    sequence = 'AUCGNMYWVKRIXSDPBH'
+
+    onehot  = prep.sequence_onehot(sequence)
+
+    seq_dict = [
+        np.array([1,0,0,0], dtype=np.float32),
+        np.array([0,1,0,0], dtype=np.float32),
+        np.array([0,0,1,0], dtype=np.float32),
+        np.array([0,0,0,1], dtype=np.float32),
+        np.array([0,0,0,0], dtype=np.float32),
+        np.array([1,0,1,0], dtype=np.float32),
+        np.array([0,1,1,0], dtype=np.float32),
+        np.array([1,0,0,0], dtype=np.float32),
+        np.array([1,0,1,1], dtype=np.float32),
+        np.array([0,1,0,1], dtype=np.float32),
+        np.array([1,0,0,1], dtype=np.float32),
+        np.array([0,0,0,0], dtype=np.float32),
+        np.array([0,0,0,0], dtype=np.float32),
+        np.array([0,0,1,1], dtype=np.float32),
+        np.array([1,1,0,1], dtype=np.float32),
+        np.array([0,0,0,0], dtype=np.float32),
+        np.array([0,1,1,1], dtype=np.float32),
+        np.array([1,1,1,0], dtype=np.float32)]
+    
+    for i, _ in enumerate(sequence): 
+        assert np.all(onehot[i] == seq_dict[i])
+    
+    matrix = prep.input_representation(sequence)
+    assert np.array_equal(matrix[0, 0, :], np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32))
+    assert np.array_equal(matrix[17, 0, :], np.array([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32))
+    assert np.array_equal(matrix[17, 17, :], np.array([1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0], dtype=np.float32))
 
 def test_output_matrix(): 
     output1 = np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
@@ -101,19 +156,66 @@ def test_output_matrix():
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ]], dtype='float32')
     assert np.all(output1 == prep.make_matrix_from_basepairs([0, 26, 25, 24, 23, 0, 0, 0, 0, 18, 17, 16, 0, 0, 0, 0, 11, 10, 9, 0, 0, 0, 0, 4, 3, 2, 1, 0, 0, 0, 0]).numpy())
 
-def test_split_data(): 
-    assert 2==2
-
 ### ERROR METRICS ###
 
 def test_dice(): 
-    assert 2==2
+    #Test on binary
+    inputs = torch.tensor([[[[1, 1, 1, 1]]]])
+    targets = torch.tensor([[[[1, 0, 1, 0]]]])
+    assert round(train.dice_loss(inputs, targets).item(), 2) == 0.33
 
-def test_mse(): 
-    assert 2==2
+    #Test zero-case
+    inputs = torch.tensor([[[[0, 0, 0, 0]]]])
+    targets = torch.tensor([[[[1, 1, 1, 1]]]])
+    assert round(train.dice_loss(inputs, targets).item()) == 1
+
+    #Test perfect case
+    inputs = torch.tensor([[[[1, 1, 1, 1]]]])
+    targets = torch.tensor([[[[1, 1, 1, 1]]]])
+    assert round(train.dice_loss(inputs, targets).item()) == 0
+
+    #Test on non-binary
+    inputs = torch.tensor([[[[0.2, 0.4, 0.9, 0.1]]]])
+    targets = torch.tensor([[[[0, 0, 1, 0]]]])
+    assert round(train.dice_loss(inputs, targets).item(), 2) == 0.11
+
+    #Test on more compex
+    inputs = torch.tensor([[[[0.2, 0.4, 0.9, 0.1],
+                             [0.1, 0.4, 0.66, 0.0],
+                             [0.99, 0.3, 0.86, 0.1],
+                             [0.87, 0.67, 0.99, 0.1]]]])
+    targets = torch.tensor([[[[0, 0, 1, 0],
+                              [0, 0, 1, 0],
+                              [1, 0, 0, 0],
+                              [1, 0, 1, 0]]]])
+    assert round(train.dice_loss(inputs, targets).item(), 2) == 0.17
 
 def test_f1(): 
-    assert 2==2
+    # Test functionality
+    y_pred = torch.tensor([1, 1, 1, 1])
+    y_true = torch.tensor([1, 0, 1, 0])
+    assert round(train.f1_score(y_pred, y_true).item(), 2) == 0.67
+
+    #Test zero-case
+    y_pred = torch.tensor([0, 0, 0, 0])
+    y_true = torch.tensor([1, 1, 1, 1])
+    assert round(train.f1_score(y_pred, y_true).item()) == 0
+
+    #Test perfect case
+    y_pred = torch.tensor([1, 1, 1, 1])
+    y_true = torch.tensor([1, 1, 1, 1])
+    assert round(train.f1_score(y_pred, y_true).item()) == 1
+
+    #Test more complex case
+    y_pred = torch.tensor([[1, 0, 1, 0],
+                          [1, 0, 1, 0],
+                          [1, 0, 1, 0],
+                          [1, 0, 1, 0]])
+    y_true = torch.tensor([[1, 1, 1, 1],
+                           [0, 0, 0, 0], 
+                           [1, 1, 1, 1],
+                           [0, 0, 0, 0]])
+    assert round(train.f1_score(y_pred, y_true).item(), 2) == 0.5
 
 
 ### POST PROCESSING ###
@@ -173,7 +275,19 @@ def test_blossum():
     assert np.array_equal(result, np.eye(3))
 
 def test_Mfold(): 
-    return
+    sequence = 'CGUGUCAGGUCCGGAAGGAAGCAGCACUAAC'
+    pairs = [0, 26, 25, 24, 23, 0, 0, 0, 0, 18, 17, 16, 0, 0, 0, 0, 11, 10, 9, 0, 0, 0, 0, 4, 3, 2, 1, 0, 0, 0, 0]
+
+    matrix = np.zeros((len(pairs), len(pairs)))
+    for i in range(len(pairs)):
+        if pairs[i] != 0:
+            matrix[i, pairs[i]] = 1
+        else: 
+            matrix[i, i] = 1
+    
+    result = post_process.Mfold_param_postprocessing(matrix, sequence)
+
+    assert np.array_equal(matrix, result)
 
 
 ### EVALUATION ###
@@ -197,5 +311,28 @@ def test_evaluation():
     assert round(precision) == 0
     assert round(recall) == 0
     assert round(F1) == 0
+
+    #Test perfect case
+    y_pred = torch.tensor([1, 1, 1, 1])
+    y_true = torch.tensor([1, 1, 1, 1])
+
+    precision, recall, F1 = evaluation.evaluate(y_pred, y_true)
+    assert round(precision) == 1
+    assert round(recall) == 1
+    assert round(F1) == 1
+
+    #Test more complex case
+    y_pred = torch.tensor([[1, 0, 1, 0],
+                          [1, 0, 1, 0],
+                          [1, 0, 1, 0],
+                          [1, 0, 1, 0]])
+    y_true = torch.tensor([[1, 1, 1, 1],
+                           [0, 0, 0, 0], 
+                           [1, 1, 1, 1],
+                           [0, 0, 0, 0]])
+    precision, recall, F1 = evaluation.evaluate(y_pred, y_true)
+    assert round(precision, 2) == 0.5
+    assert round(recall, 2) == 0.5
+    assert round(F1, 2) == 0.5
     
 
