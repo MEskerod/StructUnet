@@ -49,6 +49,29 @@ def make_complete_set():
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)    
 
 
+def hyper_parametersearch(): 
+    inputs = [os.path.join('data', 'complete_set.tar.gz'),
+              os.path.join('data', 'familymap.pkl'),
+              os.path.join('data', 'train.pkl'),
+              os.path.join('data', 'valid.pkl')]
+    outputs = ['hyperparameter_log.txt']
+    options = {"memory":"64gb", "walltime":"72:00:00"} #NOTE - Think about memory
+    spec = """mdir data/complete_set
+    tar -xzf data/complete_set.tar.gz -C data/complete_set
+    python3 scripts/hyperparameter_search.py
+    rm -r data/complete_set"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+def train_model(): 
+    inputs = []
+    outputs = []
+    options = {"memory":"64gb", "walltime":"72:00:00"} #NOTE - Think about memory and walltime
+    spec = """mdir data/complete_set
+    tar -xzf data/complete_set.tar.gz -C data/complete_set
+    python3 scripts/train_model.py
+    rm -r data/complete_set"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
 
 ### WORKFLOW ###
 gwf = Workflow()
@@ -69,3 +92,5 @@ gwf.target_from_template('time_convert', convert_time())
 ## FOR TRAINING THE ON THE ENTIRE DATA SET
 #Convert entire data set
 gwf.target_from_template('convert_data', make_complete_set())
+
+gwf.target_from_template('hyperparameter_search', hyper_parametersearch())
