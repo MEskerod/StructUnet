@@ -7,7 +7,13 @@ from collections import namedtuple
 from utils import model_and_training as model
 from utils import evaluation as eval
 
-def evaluate_output(output, sequence): 
+def evaluate_output(output, sequence):
+    results = [eval.evaluate]
+    
+    functions = []
+
+
+
     return
 
 
