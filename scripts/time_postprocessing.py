@@ -37,36 +37,28 @@ def calculate_lengths(n: int = 51, min_length: int = 60, max_length: int = 600) 
     return lengths
 
 
-def time_postprocess(func, n, min_length, max_length, seq = False): 
+def time_postprocess(func, n, min_length, max_length): 
     t = []
 
     lengths = calculate_lengths(n, min_length, max_length)
-    if seq:
-        for N in lengths:
-            matrix = generate_random_matrix(N)
-            sequence = generate_random_sequence(N)
-            t0 = time.time()
-            matrix = func(matrix, sequence)
-            t.append(time.time() - t0)
-        
-    else:
-        for N in lengths:
-            matrix = generate_random_matrix(N)
-            t0 = time.time()
-            matrix = func(matrix)
-            t.append(time.time() - t0)
+    for N in lengths:
+        matrix = generate_random_matrix(N)
+        sequence = generate_random_sequence(N)
+        t0 = time.time()
+        matrix = func(matrix, sequence)
+        t.append(time.time() - t0)
         
         return t
 
 
 
-def average_times(func, func_name, repeats = 5, n = 51, min_length = 60, max_length = 600, seq = False): #change to 51, 60, 600
+def average_times(func, func_name, repeats = 5, n = 51, min_length = 60, max_length = 600): #change to 51, 60, 600
     times = [0] * n
 
     pool = multiprocessing.Pool()
 
     print(f'Processing with {func_name}', file=sys.stdout)
-    args = [(func, n, min_length, max_length, seq)] * repeats
+    args = [(func, n, min_length, max_length)] * repeats
     all_times = pool.starmap(time_postprocess, args)
 
     for rep_times in all_times:
@@ -104,15 +96,15 @@ def plot_timedict(timedict, lengths, outputfile = None):
         plt.savefig(outputfile, dpi = 300)
 
 def main(): 
-    functions = {'NetworkX blossom w/ self-loops': (post_processing.nx_blossum_postprocessing, False), 
-                 'Blossom w/ self-loops': (post_processing.blossom_postprocessing, False), 
-                 'Blossom': (post_processing.blossom_weak, False), 
-                 'Argmax': (post_processing.argmax_postprocessing, False),
-                 'Mfold w/ matrix as parameters': (post_processing.Mfold_param_postprocessing, True), 
-                 'Mfold w/ matrix as constrains': (post_processing.Mfold_constrain_postprocessing, True),
+    functions = {'NetworkX blossom w/ self-loops': post_processing.nx_blossum_postprocessing, 
+                 'Blossom w/ self-loops': post_processing.blossom_postprocessing, 
+                 'Blossom': post_processing.blossom_weak, 
+                 'Argmax': post_processing.argmax_postprocessing,
+                 'Mfold w/ matrix as parameters': post_processing.Mfold_param_postprocessing, 
+                 'Mfold w/ matrix as constrains': post_processing.Mfold_constrain_postprocessing,
                  }
     
-    timedict = {func_name: average_times(v[0], func_name, seq=v[1]) for func_name, v in functions.items()}
+    timedict = {func_name: average_times(v, func_name) for func_name, v in functions.items()}
 
     lengths = calculate_lengths()[1:]
     
