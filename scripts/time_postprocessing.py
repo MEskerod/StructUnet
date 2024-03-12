@@ -85,10 +85,13 @@ def plot_timedict(timedict, lengths, outputfile = None):
         handles.append(Line2D([0], [0], color = colors[i], linestyle = '--', linewidth = 0.8, marker = 'o', markerfacecolor = 'none', markeredgecolor = colors[i], label = func))
 
     
-    ax.legend(handles = handles, loc = 'upper left', bbox_to_anchor = (1.01, 1))
+    ax.legend(handles = handles, loc = 'upper left', frameon = False)
     ax.grid(linestyle = '--')
     ax.set_xlabel("Sequence length")
     ax.set_ylabel("Time (s)")
+
+    plt.gca().spines['right'].set_visible(False)
+    plt.gca().spines['top'].set_visible(False)
 
     plt.tight_layout()
     
