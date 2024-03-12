@@ -391,7 +391,7 @@ def show_F1(train_F1, valid_F1, time):
   plt.show()
 
 
-def fit_model(model, train_dataset, validation_dataset, loss_func = F.binary_cross_entropy, optimizer = adam_optimizer, lr=0.01, bs=1, epochs=5, plots = True):
+def fit_model(model, train_dataset, validation_dataset, loss_func = F.binary_cross_entropy, optimizer = adam_optimizer, lr=0.01, bs=1, epochs=10, plots = True):
   """
   """
   train_dl = DataLoader(train_dataset, batch_size=bs, shuffle=True)
