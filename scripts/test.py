@@ -1,7 +1,6 @@
 import utils.prepare_data as prep
 import scripts.utils.model_and_training as train
 import utils.post_processing as post_process
-import utils.evaluation as evaluation
 
 import numpy as np
 import torch, pytest, os
@@ -227,37 +226,37 @@ def test_all_paired():
     sequence = 'AUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAU'
 
     #Row wise
-    assert np.all(np.any(post_process.argmax_postprocessing(matrix1), axis=1))
-    assert np.all(np.any(post_process.blossom_postprocessing(matrix1), axis=1))
-    assert np.all(np.any(post_process.blossom_weak(matrix1), axis=1)) 
+    assert np.all(np.any(post_process.argmax_postprocessing(matrix1, 'sequence'), axis=1))
+    assert np.all(np.any(post_process.blossom_postprocessing(matrix1, 'sequence'), axis=1))
+    assert np.all(np.any(post_process.blossom_weak(matrix1, 'sequence'), axis=1)) 
     assert np.all(np.any(post_process.Mfold_constrain_postprocessing(matrix1, sequence), axis=1)) 
     assert np.all(np.any(post_process.Mfold_param_postprocessing(matrix1, sequence), axis=1)) 
 
-    assert np.all(np.any(post_process.argmax_postprocessing(matrix2), axis=1))
-    assert np.all(np.any(post_process.blossom_postprocessing(matrix2), axis=1))
-    assert np.all(np.any(post_process.blossom_weak(matrix2), axis=1)) 
+    assert np.all(np.any(post_process.argmax_postprocessing(matrix2, 'sequence'), axis=1))
+    assert np.all(np.any(post_process.blossom_postprocessing(matrix2, 'sequence'), axis=1))
+    assert np.all(np.any(post_process.blossom_weak(matrix2, 'sequence'), axis=1)) 
     assert np.all(np.any(post_process.Mfold_constrain_postprocessing(matrix2, sequence), axis=1))
     assert np.all(np.any(post_process.Mfold_param_postprocessing(matrix2, sequence), axis=1))
 
     #Column wise (without argmax)
-    assert np.all(np.any(post_process.blossom_postprocessing(matrix1), axis=0))
-    assert np.all(np.any(post_process.blossom_weak(matrix1), axis=0)) 
+    assert np.all(np.any(post_process.blossom_postprocessing(matrix1, 'sequence'), axis=0))
+    assert np.all(np.any(post_process.blossom_weak(matrix1, 'sequence'), axis=0)) 
     assert np.all(np.any(post_process.Mfold_constrain_postprocessing(matrix1, sequence), axis=0)) 
     assert np.all(np.any(post_process.Mfold_param_postprocessing(matrix1, sequence), axis=0)) 
 
-    assert np.all(np.any(post_process.blossom_postprocessing(matrix2), axis=0)) 
-    assert np.all(np.any(post_process.blossom_weak(matrix2), axis=0)) 
+    assert np.all(np.any(post_process.blossom_postprocessing(matrix2, 'sequence'), axis=0)) 
+    assert np.all(np.any(post_process.blossom_weak(matrix2, 'sequence'), axis=0)) 
     assert np.all(np.any(post_process.Mfold_constrain_postprocessing(matrix2, sequence), axis=0))
     assert np.all(np.any(post_process.Mfold_param_postprocessing(matrix2, sequence), axis=0))
 
 def test_argmax(): 
     matrix1 = np.random.random((50, 50))
 
-    assert isinstance(post_process.argmax_postprocessing(matrix1), np.ndarray) #Test that matrix is returned
-    assert len(np.nonzero(post_process.argmax_postprocessing(matrix1))[0]) == 50 #Test correct number of values is in the matrix
+    assert isinstance(post_process.argmax_postprocessing(matrix1, 'sequence'), np.ndarray) #Test that matrix is returned
+    assert len(np.nonzero(post_process.argmax_postprocessing(matrix1, 'sequence'))[0]) == 50 #Test correct number of values is in the matrix
 
     # Test that the functionality is correct
-    result = post_process.argmax_postprocessing(matrix1)
+    result = post_process.argmax_postprocessing(matrix1, 'sequence')
     max_indices = np.argmax((matrix1+matrix1.T)/2, axis=1)
     for i, idx in enumerate(max_indices):
         assert result[i, idx] == 1
@@ -265,13 +264,13 @@ def test_argmax():
 def test_blossum():
     matrix1 = np.random.random((50, 50))
 
-    result1 = post_process.blossom_postprocessing(matrix1)
-    result2 = post_process.blossom_weak(matrix1)
+    result1 = post_process.blossom_postprocessing(matrix1, 'sequence')
+    result2 = post_process.blossom_weak(matrix1, 'sequence')
     assert np.allclose(result1, result1.T)
     assert np.allclose(result2, result2.T)
 
     matrix = np.zeros((3, 3))
-    result = post_process.blossom_weak(matrix)
+    result = post_process.blossom_weak(matrix, 'sequence')
     assert np.array_equal(result, np.eye(3))
 
 def test_Mfold(): 
@@ -296,7 +295,7 @@ def test_evaluation():
     y_pred = torch.tensor([1, 1, 1, 1])
     y_true = torch.tensor([1, 0, 1, 0])
 
-    precision, recall, F1 = evaluation.evaluate(y_pred, y_true)
+    precision, recall, F1 = train.evaluate(y_pred, y_true)
 
     assert round(precision, 1) == 0.5
     assert round(recall, 1) == 1
@@ -306,7 +305,7 @@ def test_evaluation():
     y_pred = torch.tensor([0, 0, 0, 0])
     y_true = torch.tensor([1, 1, 1, 1])
 
-    precision, recall, F1 = evaluation.evaluate(y_pred, y_true)
+    precision, recall, F1 = train.evaluate(y_pred, y_true)
 
     assert round(precision) == 0
     assert round(recall) == 0
@@ -316,7 +315,7 @@ def test_evaluation():
     y_pred = torch.tensor([1, 1, 1, 1])
     y_true = torch.tensor([1, 1, 1, 1])
 
-    precision, recall, F1 = evaluation.evaluate(y_pred, y_true)
+    precision, recall, F1 = train.evaluate(y_pred, y_true)
     assert round(precision) == 1
     assert round(recall) == 1
     assert round(F1) == 1
@@ -330,7 +329,7 @@ def test_evaluation():
                            [0, 0, 0, 0], 
                            [1, 1, 1, 1],
                            [0, 0, 0, 0]])
-    precision, recall, F1 = evaluation.evaluate(y_pred, y_true)
+    precision, recall, F1 = train.evaluate(y_pred, y_true)
     assert round(precision, 2) == 0.5
     assert round(recall, 2) == 0.5
     assert round(F1, 2) == 0.5

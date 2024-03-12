@@ -76,4 +76,8 @@ def plot_len_histogram(file_dict: dict, output_file = None):
     plt.savefig(output_file, bbox_inches = 'tight', dpi = 300)
 
   plt.show()
+
+
+def violin_plot(): 
+    return
      
