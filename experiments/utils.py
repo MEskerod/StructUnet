@@ -504,12 +504,15 @@ def plot_f1_curves(training_df, output_file = None):
       handles.append(Line2D([0], [0], color = colors[index], linestyle = "--", marker = "x", label = f"Validation {loss_name}", linewidth=0.5, markersize=3))
 
     ax.set_xlabel("Epochs", size = 11)
-    ax.set_ylabel("f1 score", size = 11)
-    ax.legend(handles = handles, loc = 'upper left', bbox_to_anchor = (1.01, 1), fontsize=8)
+    ax.set_ylabel("F1 score", size = 11)
+    ax.legend(handles = handles, loc = 'lower right', fontsize=8, frameon=False)
     ax.grid(linestyle='--')
 
+    plt.gca().spines["top"].set_visible(False)
+    plt.gca().spines["right"].set_visible(False)
+
     if output_file:
-      plt.savefig(output_file)
+      plt.savefig(output_file, dpi=300)
 
     plt.show()
 
@@ -543,13 +546,16 @@ def plot_loss_curves(training_df, output_file = None):
     #ax.set_yscale('log')
 
     ax.set_xlabel("Epochs", size = 11)
-    ax.legend(handles = handles, loc = 'upper left', bbox_to_anchor = (1.01, 1), fontsize=8)
+    ax.legend(handles = handles, loc = 'upper right', fontsize=8, frameon=False)
     ax.grid(linestyle='--')
 
 
-    ax.set_ylabel("loss", size = 11)
+    ax.set_ylabel("Loss", size = 11)
+
+    plt.gca().spines["top"].set_visible(False)
+    plt.gca().spines["right"].set_visible(False)
 
     if output_file:
-      plt.savefig(output_file)
+      plt.savefig(output_file, dpi=300)
 
     plt.show()
