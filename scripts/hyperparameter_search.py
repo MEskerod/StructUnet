@@ -1,4 +1,4 @@
-import torch, os, pickle, logging, sys
+import torch, os, pickle, logging, sys, time
 
 from collections import namedtuple
 
@@ -28,7 +28,7 @@ def train_model_on_fold(train_set, val_set, device, parameters, num_epochs):
   #Train model
   for epoch in range(num_epochs):
     train_loss = 0.0
-    for input, output, _ in train_fold_loader:
+    for input, output in train_fold_loader:
       input, output = input.to(device), output.to(device)
       output = output.unsqueeze(1)
       optimizer.zero_grad()
@@ -46,7 +46,7 @@ def train_model_on_fold(train_set, val_set, device, parameters, num_epochs):
 
   logging.info(f"\t\tEvaluating model on validation set")
   with torch.no_grad():
-    for input, output, _ in val_fold_loader:
+    for input, output in val_fold_loader:
       input, output = input.to(device), output.to(device)
       output = output.unsqueeze(1)
       predicted = model(input)
@@ -55,6 +55,7 @@ def train_model_on_fold(train_set, val_set, device, parameters, num_epochs):
   return val_loss
 
 def Kfold_cv(parameters: dict, device, train_set, num_epochs, k=5):
+    start_time = time.time()
     val_losses = 0.0
 
     #Split data into k folds:
@@ -70,6 +71,7 @@ def Kfold_cv(parameters: dict, device, train_set, num_epochs, k=5):
         val_losses += val_loss
 
         logging.info(f"\tFinished fold {fold+1}/{k}. Validation loss: {val_loss}")
+        logging.info(f"\tElapsed time: {time.time() - start_time}")
 
 
     #Return average validation loss
@@ -152,8 +154,6 @@ if __name__ == "__main__":
     logging.basicConfig(filename='hyperparameter_log.txt', level=logging.INFO)
     
     train = pickle.load(open('data/train.pkl', 'rb'))
-
-    family_map = pickle.load(open('data/familymap.pkl', 'rb'))
     
     RNA = namedtuple('RNA', 'input output length family name sequence')
 
@@ -164,7 +164,7 @@ if __name__ == "__main__":
        }
     
     # Define your train_dataset and validation_dataset
-    train_dataset = utils.ImageToImageDataset(train, family_map)
+    train_dataset = utils.ImageToImageDataset(train)
 
     best_params = adaptive_hyperparameter_search(train_dataset, 10, params["lr"], params["weight_decay"], params["conv2_filters"])
 

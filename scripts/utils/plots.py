@@ -3,17 +3,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_families(file_dict: dict, family_map: dict, output_file = None):
+def plot_families(file_dict: dict, output_file = None):
   file_dict = {key:item for key, item in file_dict.items() if len(item)>0}
 
-  file_lists = [item for key, item in file_dict.items()]
-  data_set = [key for key, item in file_dict.items()]
+  file_lists = [item for _, item in file_dict.items()]
+  data_set = [key for key, _ in file_dict.items()]
 
-  RNA_families = {family: [0]*len(file_lists) for family in family_map.keys()}
+  RNA_families = {}
 
   for index, file_list in enumerate(file_lists):
     for file in file_list:
       family = pickle.load(open(file, 'rb')).family
+      if family not in RNA_families:
+        RNA_families[family] = [0]*len(file_lists)
+      
       RNA_families[family][index] += 1
 
   RNA_families = sorted({family:item for family, item in RNA_families.items() if item != ([0]*len(file_lists))}.items(), key=lambda x:x[1])

@@ -48,9 +48,8 @@ class ImageToImageDataset(Dataset):
     """
 
     """
-    def __init__(self, file_list, family_map):
+    def __init__(self, file_list):
         self.file_list = file_list
-        self.family_map = family_map
 
     def __len__(self):
         return len(self.file_list)
@@ -61,10 +60,7 @@ class ImageToImageDataset(Dataset):
       input_image = data.input
       output_image = data.output
 
-      family = data.family
-      label = self.family_map[family]
-
-      return input_image, output_image, label
+      return input_image, output_image
     
 
 ### MODEL ARCHITECTURES ###

@@ -102,13 +102,8 @@ if __name__ == "__main__":
 
     print(f"FILES FOR TRAINING: {len(train)} for training, {len(valid)} for validation", file=sys.stdout)
 
-    print("Make family map", file=sys.stdout)
-        
-    family_map = prepare_data.make_family_map(file_list)
-    pickle.dump(family_map, open('data/familymap.pkl', 'wb'))
-
     print("\nPlotting data distribution", file=sys.stdout)
         
-    plots.plot_families({"train":train, "valid":valid, "test":test}, family_map, output_file='figures/family_distribution.png')
+    plots.plot_families({"train":train, "valid":valid, "test":test}, output_file='figures/family_distribution.png')
     plots.plot_len_histogram({"train":train, "valid":valid, "test":test}, output_file='figures/length_distribution.png')
      
