@@ -5,7 +5,7 @@ from utils import blossom
 from utils.Mfold1 import Mfold as Mfold_param
 from utils.Mfold2 import Mfold as Mfold_constrain
 
-def argmax_postprocessing(matrix: np.ndarray) -> np.ndarray: 
+def argmax_postprocessing(matrix: np.ndarray, sequence: str) -> np.ndarray: 
     N = matrix.shape[0]
     
     #Make symmetric
@@ -22,7 +22,7 @@ def argmax_postprocessing(matrix: np.ndarray) -> np.ndarray:
     
     return y_out
 
-def nx_blossum_postprocessing(matrix: np.ndarray) -> np.ndarray: 
+def nx_blossum_postprocessing(matrix: np.ndarray, sequence: str) -> np.ndarray: 
     n = matrix.shape[0]
 
     mask = np.eye(n)*2
@@ -46,7 +46,7 @@ def nx_blossum_postprocessing(matrix: np.ndarray) -> np.ndarray:
     
     return y_out
 
-def blossom_postprocessing(matrix: np.ndarray) -> np.ndarray: 
+def blossom_postprocessing(matrix: np.ndarray, sequence: str) -> np.ndarray: 
     n = matrix.shape[0]
 
     mask = np.eye(n)*2
@@ -69,7 +69,7 @@ def blossom_postprocessing(matrix: np.ndarray) -> np.ndarray:
     
     return y_out
 
-def blossom_weak(matrix: np.ndarray, treshold: float = 0.5) -> np.ndarray: 
+def blossom_weak(matrix: np.ndarray, sequence: str, treshold: float = 0.5) -> np.ndarray: 
     matrix[matrix < treshold] = 0
 
     pairs = blossom.max_weight_matching_matrix(matrix)
