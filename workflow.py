@@ -40,7 +40,7 @@ def make_complete_set():
                os.path.join('data', 'familymap.pkl'),
                os.path.join('figures', 'length_distribution.png'),
                os.path.join('figures', 'family_distribution.png')]
-    options = {"memory":"64gb", "walltime":"24:00:00"}
+    options = {"memory":"16gb", "walltime":"48:00:00"}
     spec = """python3 scripts/complete_dataset.py
     tar -czf data/test_files.tar.gz data/test_files
     rm -r data/test_files
