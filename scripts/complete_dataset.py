@@ -7,7 +7,16 @@ from functools import partial
 from utils import prepare_data
 from utils import plots
 
-def get_folder_size(folder: str):
+def get_folder_size(folder: str) -> float:
+    """
+    Calculate the size of a folder in GB
+
+    Parameters:
+    - folder (str): The path to the folder to calculate the size of.
+
+    Returns:
+    float: The size of the folder in GB.
+    """
     total_size = 0
     for dirpath, dirnames, filenames in os.walk(folder):
         for f in filenames:
@@ -15,16 +24,35 @@ def get_folder_size(folder: str):
             total_size += os.path.getsize(fp)
     
     gb = total_size/1024/1024/1024
-    return total_size
+    return gb
 
-def getFamily(file_name: str):
+def getFamily(file_name: str) -> str:
   '''
   Returns the family of a file in the RNAStralign data set, based on folder structure
+
+  Parameters:
+  - file_name (str): The path to the file to extract the family from.
+  
+  Returns:
+  str: The family of the file.
+
   '''
   return '_'.join(file_name.split(os.sep)[5].split('_')[:-1])
 
 
 def process_file(file: str, output_folder: str):
+    """
+    Converts a file from the RNAStralign data set to a pickle file containing a namedtuple with the data.
+    The data in the named tuple is the input and output matrices, the length of the sequence, the family and the name of the file.
+    Output is saved in the output folder.
+
+    Parameters:
+    - file (str): The path to the file to process.
+    - output_folder (str): The path to the folder to save the output to.
+
+    Returns:
+    int: 1 if the file was processed successfully, None if an error occurred.
+    """
     try: 
         length = prepare_data.getLength(file)
         if length == 0:
@@ -54,8 +82,17 @@ def process_file(file: str, output_folder: str):
         return
 
 
-def process_and_save(file_list: list, output_folder: str): 
+def process_and_save(file_list: list, output_folder: str) -> None: 
     """
+    Process a list of files from the RNAStralign data set and save the output to a folder.
+    The conversion is done in parallel using multiprocessing.
+
+    Parameters:
+    - file_list (list): A list of file paths to process.
+    - output_folder (str): The path to the folder to save the output to.
+
+    Returns:
+    - None
     """
     total_files = len(file_list)
 

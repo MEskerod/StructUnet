@@ -2,9 +2,29 @@ import os, pickle
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
+import pandas as pd
 
 
-def plot_families(file_dict: dict, output_file = None):
+def plot_families(file_dict: dict, output_file = None) -> None:
+  """
+  Plots the distribution of data (families) based on the given file dictionary.
+
+  Parameters:
+  - file_dict (dict): A dictionary containing file lists for each data set.
+  - output_file (str, optional): The path to save the plot as an image file. Defaults to None.
+
+  Returns:
+  - None
+
+  This function takes a dictionary `file_dict` where the keys represent data set names and the values are lists of files.
+  It plots the distribution of data (families) based on the files in the dictionary.
+  The resulting plot shows the density of each family across different data sets.
+
+  If `output_file` is provided, the plot is saved as an image file at the specified path.
+  """
+  # Function code here
+def plot_families(file_dict: dict, output_file = None) -> None:
+
   file_dict = {key:item for key, item in file_dict.items() if len(item)>0}
 
   file_lists = [item for _, item in file_dict.items()]
@@ -47,7 +67,23 @@ def plot_families(file_dict: dict, output_file = None):
     plt.savefig(output_file, bbox_inches = 'tight')
 
 
-def plot_len_histogram(file_dict: dict, output_file = None):
+def plot_len_histogram(file_dict: dict, output_file = None) -> None:
+  """
+  Takes a dictionary of file lists and produces a histogram of the distribution of lengths of sequences.
+
+  Parameters:
+  - file_dict (dict): A dictionary where the keys are data set names and the values are lists of file paths.
+  - output_file (str, optional): The file path to save the histogram plot. If not provided, the plot will be displayed.
+
+  Returns:
+  - None
+
+  Example usage:
+  >>> file_dict = {'Data Set 1': ['file1.pkl', 'file2.pkl'], 'Data Set 2': ['file3.pkl']}
+  >>> plot_len_histogram(file_dict, output_file='histogram.png')
+  """
+def plot_len_histogram(file_dict: dict, output_file = None) -> None:
+
   file_dict = {key:item for key, item in file_dict.items() if len(item)>0}
 
   file_lists = [item for key, item in file_dict.items()]
@@ -84,28 +120,78 @@ def plot_len_histogram(file_dict: dict, output_file = None):
 
 
 
-def adjacent_values(min, max, q1, q3):
-  iqr = q3-q1
+def adjacent_values(min: float, max: float, q1: float, q3: float) -> tuple:
+  """
+  Calculate the lower and upper adjacent values for a given range.
+
+  Args:
+    min (float): The minimum value of the range.
+    max (float): The maximum value of the range.
+    q1 (float): The first quartile value.
+    q3 (float): The third quartile value.
+
+  Returns:
+    tuple: A tuple containing the lower and upper adjacent values.
+
+  """
+  iqr = q3 - q1
   upper_adjacent_value = np.clip(q3 + 1.5 * iqr, q3, max)
   lower_adjacent_value = np.clip(q1 - 1.5 * iqr, min, q1)
   return lower_adjacent_value, upper_adjacent_value
 
-def find_outliers(df, lower_bounds, upper_bounds):
+def find_outliers(df: pd.DataFrame, lower_bounds: list, upper_bounds:list) -> list:
+  """
+  Finds outliers in a DataFrame based on lower and upper bounds for each column.
+
+  Args:
+    df (pd.DataFrame): The DataFrame to search for outliers.
+    lower_bounds (list): A list of lower bounds for each column.
+    upper_bounds (list): A list of upper bounds for each column.
+
+  Returns:
+    list: A list of lists containing the outliers for each column.
+  """
   filtered_data = []
   for i, column in enumerate(df.columns):
     filtered_data.append(list(df[column][(df[column] < lower_bounds[i]) | (df[column] > upper_bounds[i])]))
   return filtered_data
 
-def set_axis_style(ax, labels, ylabel):
-    ax.set_yticks(np.arange(1, len(labels) + 1), labels=labels)
-    ax.set_ylim(0.25, len(labels) + 0.75)
-    ax.set_ylabel(ylabel)
-    ax.tick_params(axis= 'both', which = 'both', bottom = False, left = False)
-    ax.grid(axis = 'x', linestyle = '--', alpha = 0.3, zorder = 0)
-    ax.set_axisbelow(True)
-    plt.box(False)
+def set_axis_style(ax, labels: list, ylabel: str) -> None:
+  """
+  Set the style of the axis in a matplotlib plot.
 
-def violin_plot(df, ylabel, cmap = 'Accent', outputfile = None):
+  Parameters:
+  - ax (matplotlib.axes.Axes): The axes object to modify.
+  - labels (list): The labels for the y-axis ticks.
+  - ylabel (str): The label for the y-axis.
+
+  Returns:
+  None
+  """
+  ax.set_yticks(np.arange(1, len(labels) + 1), labels=labels, fontsize = 12)
+  ax.tick_params(axis='x', labelsize = 12)
+  ax.set_ylim(0.25, len(labels) + 0.75)
+  ax.set_ylabel(ylabel, fontsize = 10)
+  ax.tick_params(axis= 'both', which = 'both', bottom = False, left = False)
+  ax.grid(axis = 'x', linestyle = '--', alpha = 0.3, zorder = 0)
+  ax.set_axisbelow(True)
+
+def violin_plot(df: pd.DataFrame, ylabel: str, cmap='Accent', outputfile=None) -> None:
+  """
+  Generate a violin plot for the given DataFrame.
+
+  Parameters:
+  - df (pd.DataFrame): The DataFrame containing the data to be plotted.
+  - ylabel (str): The label for the y-axis.
+  - cmap (str, optional): The colormap to be used for coloring the violins. Defaults to 'Accent'.
+  - outputfile (str, optional): The file path to save the plot. If not provided, the plot will be displayed.
+
+  Returns:
+  None
+  """
+  #Reverse order of columns such that the first column is the top of the plot
+  df = df[df.columns[::-1]]
+  
   cmap = mpl.colormaps[cmap].colors
 
   categories = len(df.columns)
@@ -133,6 +219,10 @@ def violin_plot(df, ylabel, cmap = 'Accent', outputfile = None):
   inds = np.arange(1, len(medians) + 1)
   ax.scatter(medians, inds, marker='|', color='white', s=30, zorder=3)
 
+  #Add text for mean
+  for i, mean_val in enumerate(df.mean()): 
+    ax.text(1.005, inds[i], f"{mean_val:.3f}", ha='left', fontsize = 12)
+
   #Add boxes
   ax.hlines(inds, quartile1, quartile3, color='k', linestyle='-', lw=5, zorder = 2.5)
   #Add whiskers
@@ -145,6 +235,7 @@ def violin_plot(df, ylabel, cmap = 'Accent', outputfile = None):
   #Set style for the axes
   labels = [name.split('_')[0] for name in df.columns]
   set_axis_style(ax, labels, ylabel)
+  plt.box(False)
 
   plt.subplots_adjust(bottom=0.15, wspace=0.05)
 
@@ -152,6 +243,5 @@ def violin_plot(df, ylabel, cmap = 'Accent', outputfile = None):
 
   if outputfile: 
     plt.savefig(outputfile, dpi = 300, bbox_inches = 'tight')
-  
   plt.show()
      
