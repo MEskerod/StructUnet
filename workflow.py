@@ -51,7 +51,6 @@ def make_complete_set():
 
 def hyper_parametersearch(): 
     inputs = [os.path.join('data', 'complete_set.tar.gz'),
-              os.path.join('data', 'familymap.pkl'),
               os.path.join('data', 'train.pkl'),
               os.path.join('data', 'valid.pkl')]
     outputs = ['hyperparameter_log.txt']
@@ -65,11 +64,21 @@ def hyper_parametersearch():
 def train_model(): 
     inputs = []
     outputs = []
-    options = {"memory":"64gb", "walltime":"72:00:00"} #NOTE - Think about memory and walltime
+    options = {"memory":"16gb", "walltime":"72:00:00"} #NOTE - Think about memory and walltime
     spec = """mdir data/complete_set
     tar -xzf data/complete_set.tar.gz -C data/complete_set
     python3 scripts/train_model.py
     rm -r data/complete_set"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+def evaluate_nn(): 
+    inputs = [os.path.join('data', 'test_files.tar.gz')] #FIXME - Add path to model
+    outputs = [os.path.join('results', 'evaluation_nn.csv'),
+               os.path.join('figures', 'evaluation_nn.png')]
+    options = {"memory":"16gb", "walltime":"24:00:00"} #NOTE - Think about memory and walltime
+    spec = """tar -xzf data/test_files.tar.gz -C data/test_files
+    python3 scripts/evaluate_nn.py
+    rm -r data/test_files"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 
@@ -87,10 +96,6 @@ gwf.target_from_template('time_postprocess', postprocess_time())
 gwf.target_from_template('time_convert', convert_time())
 
 
-
-
 ## FOR TRAINING THE ON THE ENTIRE DATA SET
-#Convert entire data set
 gwf.target_from_template('convert_data', make_complete_set())
-
 gwf.target_from_template('hyperparameter_search', hyper_parametersearch())
