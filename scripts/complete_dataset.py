@@ -7,6 +7,16 @@ from functools import partial
 from utils import prepare_data
 from utils import plots
 
+def get_folder_size(folder: str):
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(folder):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            total_size += os.path.getsize(fp)
+    
+    gb = total_size/1024/1024/1024
+    return total_size
+
 def getFamily(file_name: str):
   '''
   Returns the family of a file in the RNAStralign data set, based on folder structure
@@ -106,4 +116,8 @@ if __name__ == "__main__":
         
     plots.plot_families({"train":train, "valid":valid, "test":test}, output_file='figures/family_distribution.png')
     plots.plot_len_histogram({"train":train, "valid":valid, "test":test}, output_file='figures/length_distribution.png')
+
+    print("DONE", file=sys.stdout)
+    print(f"Size of folder for training: {get_folder_size('data/complete_set'):.2f} GB", file=sys.stdout)
+    print(f"Size of folder for testing: {get_folder_size('data/test_files'):.2f} GB", file=sys.stdout)
      
