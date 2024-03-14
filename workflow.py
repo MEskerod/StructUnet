@@ -33,7 +33,6 @@ def convert_time():
 def make_complete_set(): 
     inputs = [os.path.join('data', 'RNAStralign.tar.gz')]
     outputs = [os.path.join('data', 'complete_set.tar.gz'),
-               os.path.join('data', 'test_files.tar.gz'),
                os.path.join('data', 'train.pkl'),
                os.path.join('data', 'valid.pkl'),
                os.path.join('data', 'test.pkl'),
@@ -42,34 +41,23 @@ def make_complete_set():
     options = {"memory":"16gb", "walltime":"48:00:00", "account":"RNA_Unet", "cores":4}
     spec = """python3 scripts/complete_dataset.py
     tar -czf data/test_files.tar.gz data/test_files
-    rm -r data/test_files
-    tar -czf data/complete_set.tar.gz data/complete_set
-    rm -r data/complete_set"""
+    rm -r data/test_files"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)    
 
 
 def hyper_parametersearch(): 
-    inputs = [os.path.join('data', 'complete_set.tar.gz'),
-              os.path.join('data', 'train.pkl'),
+    inputs = [os.path.join('data', 'train.pkl'),
               os.path.join('data', 'valid.pkl')]
     outputs = ['hyperparameter_log.txt']
     options = {"memory":"64gb", "walltime":"72:00:00", "account":"RNA_Unet"} #NOTE - Think about memory
-    spec = """cd data
-    tar -xzf complete_set.tar.gz
-    cd ..
-    python3 scripts/hyperparameter_search.py
-    rm -r data/complete_set"""
+    spec = """python3 scripts/hyperparameter_search.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def train_model(): 
     inputs = []
     outputs = []
     options = {"memory":"16gb", "walltime":"72:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
-    spec = """cd data
-    tar -xzf complete_set.tar.gz
-    cd ..
-    python3 scripts/train_model.py
-    rm -r data/complete_set"""
+    spec = """python3 scripts/train_model.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def evaluate_nn(): 
