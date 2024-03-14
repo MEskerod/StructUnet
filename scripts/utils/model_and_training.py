@@ -9,15 +9,32 @@ from torch.utils.data import Dataset
 RNA = namedtuple('RNA', 'input output length family name sequence')
 
 #### LOSS FUNCTIONS AND ERROR METRICS ####
-def dice_loss(inputs, targets, smooth=1e-5):
+def dice_loss(inputs: torch.Tensor, targets: torch.Tensor, smooth: float=1e-7) -> torch.Tensor:
+  """
+  Calculate the dice loss for a batch of inputs and targets
+
+  Parameters:
+  - inputs (torch.Tensor): The input tensor.
+  - targets (torch.Tensor): The target tensor.
+  - smooth (float): A small number to avoid division by zero. Default is 1e-5.
+
+  Returns:
+  torch.Tensor: The dice loss.
+  """
   intersection = torch.sum(targets * inputs, dim=(1,2,3))
   sum_of_squares_pred = torch.sum(torch.square(inputs), dim=(1,2,3))
   sum_of_squares_true = torch.sum(torch.square(targets), dim=(1,2,3))
   dice = (2 * intersection + smooth) / (sum_of_squares_pred + sum_of_squares_true + smooth)
   return 1-dice
 
-def f1_score(inputs, targets, epsilon=1e-7, treshold = 0.5):
+def f1_score(inputs: torch.Tensor, targets: torch.Tensor, epsilon: float=1e-7, treshold:float = 0.5) -> torch.Tensor:
     """
+    Calculate the F1 score for a batch of inputs and targets
+
+    Parameters:
+    - inputs (torch.Tensor): The input tensor.
+    - targets (torch.Tensor): The target tensor.
+    - epsilon (float): A small number to avoid division by zero. Default is 1e-7.
     """
     # Ensure tensors have the same shape
     assert inputs.shape == targets.shape
@@ -40,21 +57,34 @@ def f1_score(inputs, targets, epsilon=1e-7, treshold = 0.5):
     return f1
 
 #### OPTIMIZER ####
-def adam_optimizer(model, lr, weight_decay = 0):
+def adam_optimizer(model: nn.Module, lr: float, weight_decay: float = 0.0) -> torch.optim.Optimizer:
+  """
+  Wrapper for the Adam optimizer
+
+  Parameters:
+  - model (nn.Module): The model to optimize.
+  - lr (float): The learning rate.
+  - weight_decay (float): The weight decay. Default is 0.0.
+
+  Returns:
+  torch.optim.Optimizer: The Adam optimizer.
+  """
   return torch.optim.Adam(model.parameters(), lr=lr, weight_decay = weight_decay)
 
 ### OTHER FUNCTIONS ###
 class ImageToImageDataset(Dataset):
     """
-
+    Dataset class for image to image translation
+    For each sample, the dataset returns a tuple of input and output images
+    Is initialized with a list of file paths to pickle files containing the data
     """
-    def __init__(self, file_list):
+    def __init__(self, file_list: list) -> None:
         self.file_list = file_list
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.file_list)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> tuple:
       data = pickle.load(open(self.file_list[idx], 'rb'))
       
       input_image = data.input
@@ -66,23 +96,27 @@ class ImageToImageDataset(Dataset):
 ### MODEL ARCHITECTURES ###
 class DynamicPadLayer(nn.Module):
   """
+  Layer for dynamic padding
+  For the RNA Unet, the input size must be divisible by a number of times equal to the stride product (stride*stride*....*stride = stride_product)
+  Adds zero padding at bottom and right of the input tensor to make the input a compatible size
   """
   def __init__(self, stride_product):
     super(DynamicPadLayer, self).__init__()
     self.stride_product = stride_product
 
-  def forward(self, x):
+  def forward(self, x: torch.Tensor) -> torch.Tensor:
     input_size = x.shape[2]
     padding = self.calculate_padding(input_size, self.stride_product)
     return nn.functional.pad(x, padding)
 
-  def calculate_padding(self, input_size, stride_product):
+  def calculate_padding(self, input_size: int, stride_product: int) -> tuple:
     p = stride_product - input_size % stride_product
     return (0, p, 0, p)
 
 class MaxPooling(nn.Module):
   """
-  Layer for max pooling
+  Wrapper for the max pooling layer
+  The wrapper is needed to make the pooling layer have the same inputs as convolutional layers
   """
   def __init__(self, in_channels, out_channels, kernel_size=2, stride=2, padding=0):
     super(MaxPooling, self).__init__()
@@ -95,14 +129,20 @@ class MaxPooling(nn.Module):
 class RNA_Unet(nn.Module):
     def __init__(self, channels=32, in_channels=8, output_channels=1, negative_slope = 0.01, pooling = MaxPooling):
         """
-        args:
-        num_channels: length of the one-hot encoding vector
-        num_hidden_channels: number of channels in the hidden layers of both encoder and decoder
+        Pytorch implementation of a Unet for RNA secondary structure prediction
+
+        Parameters:
+        - channels (int): number of channels in the first hidden layer.
+        - in_channels (int): number of channels in the input layer
+        - output_channels (int): number of channels in the output layer
+        - negative_slope (float): negative slope for the LeakyReLU activation function
+        - pooling (nn.Module): the pooling layer to use
         """
         super(RNA_Unet, self).__init__()
 
         self.negative_slope = negative_slope
 
+        #Add padding layer to make input size compatible with the Unet
         self.pad = DynamicPadLayer(2**4)
 
         # Encoder
@@ -230,7 +270,7 @@ class RNA_Unet(nn.Module):
 
 
     def forward(self, x):
-        dim = x.shape[2]
+        dim = x.shape[2] #Keep track of the original dimension of the input to remove padding at the end
         x = self.pad(x)
 
         #Encoder
@@ -273,9 +313,17 @@ class RNA_Unet(nn.Module):
 
 
 ### EVALUATION FUNCTIONS ###
-def evaluate(y_pred, y_true, epsilon: float=1e-10): 
+def evaluate(y_pred: torch.Tensor, y_true: torch.Tensor, epsilon: float=1e-10) -> tuple: 
     """
-    epsilon is a small number that is added to avoid potential division by 0 
+    Function to evaluate the performance of a model based on precision, recall and F1 score
+
+    Parameters:
+    - y_pred (torch.Tensor): The predicted output matrix
+    - y_true (torch.Tensor): The true output matrix
+    - epsilon (float): A small number to avoid division by zero. Default is 1e-10.
+
+    Returns:
+    tuple: A tuple containing the precision, recall and F1 score
     """
     
     TP = torch.sum(y_true * y_pred) #True positive

@@ -9,29 +9,26 @@ def plot_families(file_dict: dict, output_file = None) -> None:
   """
   Plots the distribution of data (families) based on the given file dictionary.
 
+  This function takes a dictionary `file_dict` where the keys represent data set names and the values are lists of files.
+  It plots the distribution of data (families) based on the files in the dictionary.
+  The resulting plot shows the density of each family across different data sets.
+
+  If `output_file` is provided, the plot is saved as an image file at the specified path.
+
   Parameters:
   - file_dict (dict): A dictionary containing file lists for each data set.
   - output_file (str, optional): The path to save the plot as an image file. Defaults to None.
 
   Returns:
   - None
-
-  This function takes a dictionary `file_dict` where the keys represent data set names and the values are lists of files.
-  It plots the distribution of data (families) based on the files in the dictionary.
-  The resulting plot shows the density of each family across different data sets.
-
-  If `output_file` is provided, the plot is saved as an image file at the specified path.
   """
-  # Function code here
-def plot_families(file_dict: dict, output_file = None) -> None:
-
   file_dict = {key:item for key, item in file_dict.items() if len(item)>0}
 
   file_lists = [item for _, item in file_dict.items()]
   data_set = [key for key, _ in file_dict.items()]
 
+  # Make a dictionary of RNA families and their distribution across data sets
   RNA_families = {}
-
   for index, file_list in enumerate(file_lists):
     for file in file_list:
       family = pickle.load(open(file, 'rb')).family
@@ -40,6 +37,7 @@ def plot_families(file_dict: dict, output_file = None) -> None:
       
       RNA_families[family][index] += 1
 
+  #Sorts the families based on the total number of sequences across all data sets
   RNA_families = sorted({family:item for family, item in RNA_families.items() if item != ([0]*len(file_lists))}.items(), key=lambda x:x[1])
   values = [[f[1][i]/len(file_lists[i]) for i in range(len(file_lists))] for f in RNA_families]
   families = [" ".join(f[0].split('_')) for f in RNA_families]
@@ -82,16 +80,15 @@ def plot_len_histogram(file_dict: dict, output_file = None) -> None:
   >>> file_dict = {'Data Set 1': ['file1.pkl', 'file2.pkl'], 'Data Set 2': ['file3.pkl']}
   >>> plot_len_histogram(file_dict, output_file='histogram.png')
   """
-def plot_len_histogram(file_dict: dict, output_file = None) -> None:
 
   file_dict = {key:item for key, item in file_dict.items() if len(item)>0}
 
-  file_lists = [item for key, item in file_dict.items()]
-  data_set = [key for key, item in file_dict.items()]
+  file_lists = [item for _, item in file_dict.items()]
+  data_set = [key for key, _ in file_dict.items()]
 
   # Takes a list of .pkl files and produces a histogram of the distribution of lengths of sequences
   lengths = []
-
+  #Get the lengths of the sequences for each data set
   for file_list in file_lists:
     l = []
     for file in file_list:
@@ -124,14 +121,14 @@ def adjacent_values(min: float, max: float, q1: float, q3: float) -> tuple:
   """
   Calculate the lower and upper adjacent values for a given range.
 
-  Args:
-    min (float): The minimum value of the range.
-    max (float): The maximum value of the range.
-    q1 (float): The first quartile value.
-    q3 (float): The third quartile value.
+  Parameters:
+  - min (float): The minimum value of the range.
+  - max (float): The maximum value of the range.
+  - q1 (float): The first quartile value.
+  - q3 (float): The third quartile value.
 
   Returns:
-    tuple: A tuple containing the lower and upper adjacent values.
+  - tuple: A tuple containing the lower and upper adjacent values.
 
   """
   iqr = q3 - q1
@@ -143,13 +140,13 @@ def find_outliers(df: pd.DataFrame, lower_bounds: list, upper_bounds:list) -> li
   """
   Finds outliers in a DataFrame based on lower and upper bounds for each column.
 
-  Args:
-    df (pd.DataFrame): The DataFrame to search for outliers.
-    lower_bounds (list): A list of lower bounds for each column.
-    upper_bounds (list): A list of upper bounds for each column.
+  Parameters:
+  - df (pd.DataFrame): The DataFrame to search for outliers.
+  - lower_bounds (list): A list of lower bounds for each column.
+  - upper_bounds (list): A list of upper bounds for each column.
 
   Returns:
-    list: A list of lists containing the outliers for each column.
+  - list: A list of lists containing the outliers for each column.
   """
   filtered_data = []
   for i, column in enumerate(df.columns):
@@ -194,8 +191,8 @@ def violin_plot(df: pd.DataFrame, ylabel: str, cmap='Accent', outputfile=None) -
   
   cmap = mpl.colormaps[cmap].colors
 
+  # Get number of categories to define the size of the plot
   categories = len(df.columns)
-
   fig, ax = plt.subplots(figsize = (10, categories))
 
   parts = ax.violinplot(df, showmeans=False, showmedians = False, showextrema = False, vert = False)
@@ -219,7 +216,7 @@ def violin_plot(df: pd.DataFrame, ylabel: str, cmap='Accent', outputfile=None) -
   inds = np.arange(1, len(medians) + 1)
   ax.scatter(medians, inds, marker='|', color='white', s=30, zorder=3)
 
-  #Add text for mean
+  #Add value as text for mean
   for i, mean_val in enumerate(df.mean()): 
     ax.text(1.005, inds[i], f"{mean_val:.3f}", ha='left', fontsize = 12)
 

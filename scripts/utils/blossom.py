@@ -1,8 +1,11 @@
 from itertools import repeat
-
 import numpy as np
-##########################################################################################
-    
+   
+"""
+THE FOLLOWING CODE IS SOURCED FROM THE NETWORKX LIBRARY, WHICH IS LICENSED UNDER THE 3-CLAUSE BSD LICENSE.
+THE CODE IS SLIGHTLY MODIFIED TO WORK WITH ONLY NUMPY ARRAYS INSTEAD OF NETWORKX GRAPHS.
+"""
+
 
 
 def matching_dict_to_set(matching):
@@ -37,23 +40,14 @@ def max_weight_matching_matrix(G: np.array):
     The cardinality of a matching is the number of matched edges.
 
     Parameters
-    ----------
-    G : Graph
+    - G : Graph in the form of a numpy array
 
     Returns
-    -------
-    matching : set
-        A maximal matching of the graph.
-
+    - matching (set): A maximal matching of the graph.
     
     Notes
     -----
     This function takes time O(number_of_nodes ** 3).
-
-    If all edge weights are integers, the algorithm uses only integer
-    computations.  If floating point weights are used, the algorithm
-    could return a slightly suboptimal matching due to numeric
-    precision errors.
 
     This method is based on the "blossom" method for finding augmenting
     paths and the "primal-dual" method for finding a matching of maximum

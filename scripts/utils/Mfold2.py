@@ -5,14 +5,16 @@ import pandas as pd
 ####### HELP FUNCTIONS #######
 
 
-def declare_global_variable(seq, M) -> None: 
+def declare_global_variable(seq: str, M: np.ndarray) -> None: 
     """
     Declares the global variables used troughout all the other functions. 
 
-    Args: 
-        - b_stacking: Is stacking retained for bulge loops of size 1 [True/False] (default = False)
-        - closing: Is closing penalty added for GU/UG and AU/UA base pairs that closses interior loops [True/False] (default = False)
-        - asymmetry: Is a penalty added for asymmetric interior loops [True/False] (default = False)
+    Parameters:
+    - seq (str): The RNA sequence to fold
+    - M (np.ndarray): The energy matrix used to calculate the energy of the different basepairs
+
+    Returns:
+    - None
     """
     global basepairs, sequence, matrix, parameters, asymmetric_penalty_function
 
@@ -46,9 +48,12 @@ def make_asymmetric_penalty(f: list, penalty_max: int) -> callable:
 
     This functions returns a function that uses the given parameters to calculate the penalty for asymmetric loops of given size
 
-    args: 
-        - f: list that gives the values from f(0) to f(m_max). 
-        - penalty_max: that maximum penalty that can be addded to ad asymmetric interior loop
+    Parameters: 
+    - f: list that gives the values from f(0) to f(m_max). 
+    - penalty_max: that maximum penalty that can be addded to ad asymmetric interior loop
+
+    Returns:
+    - asymmetry_func: The function that calculates the penalty for asymmetric loops
     """
 
     M_max = len(f)
@@ -71,9 +76,12 @@ def loop_greater_10(loop_type: str, length: int) -> float:
     Calculates the energy parameters for loops with a size greater than 10 
     The parameter is calculated as described in 'Improved predictions of secondary structures for RNA'
 
-    Args: 
-        loop_type: type of loop to calculate energy for (HL, IL or BL)
-        length: length of the loop
+    Parameters: 
+    - loop_type (str): type of loop to calculate energy for (HL, IL or BL)
+    - length (int): length of the loop
+
+    Returns:
+    - G (float): The energy of the loop
     """
     R = 0.001987 #In kcal/(mol*K)
     T = 310.15 #In K
@@ -84,11 +92,19 @@ def loop_greater_10(loop_type: str, length: int) -> float:
     return G
 
 ### LOOP ENERGIES ###
-def stacking(i: int, j: int, V: np.array) -> float: 
+def stacking(i: int, j: int, V: np.ndarray) -> float: 
     """
     Find the energy parameter for basepairing of Sij and Si+1j-1, which results in basepair stacking
     If Si+1 and Sj+1 cannot basepair the energy is infinity
     Allows for Watson-Crick basepairs and wobble basepairs
+
+    Parameters:
+    - i (int): The start index of the subsequence
+    - j (int): The end index of the subsequence
+    - V (np.ndarray): The V matrix
+
+    Returns:
+    - energy (float): The energy of the basepairing
     """
 
     prev_bp = sequence[i+1] + sequence[j-1]   
@@ -96,7 +112,7 @@ def stacking(i: int, j: int, V: np.array) -> float:
     #If previous bases can form a base pair stacking is possible
     if matrix[i+1, j-1] and prev_bp in basepairs: 
         current_bp = sequence[i] + sequence[j]
-        energy = round(parameters[1].at[current_bp, prev_bp] + V[i+1, j-1], 5)
+        energy = parameters[1].at[current_bp, prev_bp] + V[i+1, j-1]
     
     else: 
         energy = float('inf')
@@ -106,6 +122,15 @@ def stacking(i: int, j: int, V: np.array) -> float:
 def bulge_loop_3end(i: int, j: int, V: np.array) -> tuple[float, int]: 
     """
     Find the energy parameter of introducing a bulge loop on the 3' end of the strand 
+
+    Parameters:
+    - i (int): The start index of the subsequence
+    - j (int): The end index of the subsequence
+    - V (np.ndarray): The V matrix
+
+    Returns:
+    - energy (float): The energy of the bulge loop
+    - ij (int): The index of the subsequence that gives the minimum energy
     """
     energy = float('inf')
     ij = None
@@ -126,11 +151,20 @@ def bulge_loop_3end(i: int, j: int, V: np.array) -> tuple[float, int]:
                 energy = BL_energy
                 ij = jp
     
-    return round(energy, 5), ij
+    return energy, ij
 
-def bulge_loop_5end(i: int, j: int, V: np.array) -> tuple[float, int]:
+def bulge_loop_5end(i: int, j: int, V: np.ndarray) -> tuple[float, int]:
     """
-    Find the energy parameter of introducing a bulge loop on the 5' end of the strand 
+    Find the energy parameter of introducing a bulge loop on the 5' end of the strand
+
+    Parameters:
+    - i (int): The start index of the subsequence
+    - j (int): The end index of the subsequence
+    - V (np.ndarray): The V matrix
+
+    Returns:
+    - energy (float): The energy of the bulge loop 
+    - ij (int): The index of the subsequence that gives the minimum energy
     """
     energy = float('inf')
     ij = None
@@ -151,11 +185,20 @@ def bulge_loop_5end(i: int, j: int, V: np.array) -> tuple[float, int]:
                 energy = BL_energy
                 ij = ip
 
-    return round(energy, 5), ij
+    return energy, ij
 
-def interior_loop(i: int, j: int, V: np.array) -> tuple[float, tuple[int, int]]: 
+def interior_loop(i: int, j: int, V: np.ndarray) -> tuple[float, tuple[int, int]]: 
     """
     Find the energy parameter of adding a interior loop
+
+    Parameters:
+    - i (int): The start index of the subsequence
+    - j (int): The end index of the subsequence
+    - V (np.ndarray): The V matrix
+
+    Returns:
+    - energy (float): The energy of the interior loop
+    - ij (tuple[int, int]): The indices of the subsequence that gives the minimum energy
     """
     
     energy = float('inf')
@@ -185,23 +228,38 @@ def interior_loop(i: int, j: int, V: np.array) -> tuple[float, tuple[int, int]]:
                     energy = IL_energy
                     ij = (ip, jp)
     
-    return round(energy, 5), ij
+    return energy, ij
 
 def find_E1(i: int, j: int) -> float:
     """
     E1 are the energy of base pairing between Si and Sj with one internal edge (hairpin loop) 
+
+    Parameters:
+    - i (int): The start index of the subsequence
+    - j (int): The end index of the subsequence
+
+    Returns:
+    - energy (float): The energy of the basepairing
     """
     size = j-i-1    
 
     energy = parameters[0].at[size,"HL"] if size <= 10 else loop_greater_10("HL", size)
 
-    return round(energy, 5)
+    return energy
 
-def find_E2(i: int, j: int, V: np.array) -> float: 
+def find_E2(i: int, j: int, V: np.ndarray) -> float: 
     """
     E2 is the energy of basepairing between i and j and i' and j' resulting in two internal edges (stacking, bulge loop or internal loop)
     i<i'<j'<j
     Returns the minimum of the 3 options  
+
+    Parameters:
+    - i (int): The start index of the subsequence
+    - j (int): The end index of the subsequence
+    - V (np.ndarray): The V matrix
+
+    Returns:
+    - energy (float): The minimum energy of the basepairing given that two internal edges are formed
     """
     energy = min(stacking(i, j, V), 
                  bulge_loop_3end(i, j, V)[0], 
@@ -209,11 +267,20 @@ def find_E2(i: int, j: int, V: np.array) -> float:
                  interior_loop(i, j, V)[0])
     return energy
 
-def find_E3(i: int, j: int, W: np.array) -> float: 
+def find_E3(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]: 
     """
     E3 is the energy of a structure that contains more than two internal edges (bifurcating loop)
     The energy is the energy of the sum of the substructures 
     i+1<i'<j-2
+
+    Parameters:
+    - i (int): The start index of the subsequence
+    - j (int): The end index of the subsequence
+    - W (np.ndarray): The W matrix
+
+    Returns:
+    - energy (float): The energy of the bifurcating loop
+    - ij (tuple[int, int]): The indices of the subsequence that gives the minimum energy
     """
     energy = float('inf')
     ij = None
@@ -222,14 +289,23 @@ def find_E3(i: int, j: int, W: np.array) -> float:
     for ip in range(i+2, j-2):  
         loop_energy = W[i+1, ip] + W[ip+1, j-1]
         if loop_energy < energy: 
-            energy = round(loop_energy, 5)
+            energy = loop_energy
             ij = (ip, ip+1)
     return energy, ij
 
-def find_E4(i: int, j: int, W: np.array) -> tuple[float, tuple[int, int]]: 
+def find_E4(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]: 
     """
     E4 is the energy when i and j are both in base pairs, but not with each other. 
     It find the minimum of combinations of two possible subsequences containing i and j
+
+    Parameters:
+    - i (int): The start index of the subsequence
+    - j (int): The end index of the subsequence
+    - W (np.ndarray): The W matrix
+
+    Returns:
+    - energy (float): The energy of the basepairing
+    - ij (tuple[int, int]): The indices of the subsequence that gives the minimum energy
     """
     energy = float('inf')
     ij = None
@@ -238,15 +314,22 @@ def find_E4(i: int, j: int, W: np.array) -> tuple[float, tuple[int, int]]:
         subsequence_energy = W[i, ip] + W[ip+1, j]
         
         if subsequence_energy < energy: 
-            energy = round(subsequence_energy, 5)
+            energy = subsequence_energy
             ij = (ip, ip+1)
 
     return energy, ij
 
-def penta_nucleotides(W: np.array, V: np.array) -> None:
+def penta_nucleotides(W: np.ndarray, V: np.ndarray) -> None:
     """
     Fills out the first entries in the matrices V and W 
     The shortest possible subsequences are of length 5 and can only form hairpin loops of size 3 if i and j basepair
+
+    Parameters:
+    - W (np.ndarray): The W matrix
+    - V (np.ndarray): The V matrix
+
+    Returns:
+    - None
     """
     N = len(sequence)
 
@@ -259,9 +342,18 @@ def penta_nucleotides(W: np.array, V: np.array) -> None:
             V[i,j] = W[i,j] = parameters[0].at[3, "HL"] 
 
 ### FILL V AND W ###
-def compute_V(i: int, j: int, W: np.array, V: np.array) -> None: 
+def compute_V(i: int, j: int, W: np.ndarray, V: np.ndarray) -> None: 
     """
     Computes the minimization over E1, E2 and E3, which will give the value at V[i,j]
+
+    Parameters:
+    - i (int): The start index of the subsequence
+    - j (int): The end index of the subsequence
+    - W (np.ndarray): The W matrix
+    - V (np.ndarray): The V matrix
+
+    Returns:
+    - None
     """
 
     if matrix[i, j] and sequence[i]+sequence[j] in basepairs:
@@ -274,20 +366,26 @@ def compute_V(i: int, j: int, W: np.array, V: np.array) -> None:
 
     V[i, j] = v
 
-def compute_W(i: int, j: int, W: np.array, V: np.array) -> None:
+def compute_W(i: int, j: int, W: np.ndarray, V: np.ndarray) -> None:
     """
     Computes the minimization over possibilities for W and fills out the entry at W[i,j]
      Possibilities are: 
     - i or j in a structure (W[i+1, j] or W[i, j-1])
     - i and j basepair with each other (V[i,j])
     - i and j both base pair but not with each other (E4)
+
+    Parameters:
+    - i (int): The start index of the subsequence
+    - j (int): The end index of the subsequence
+    - W (np.ndarray): The W matrix
+    - V (np.ndarray): The V matrix
     """
     w = min(W[i+1,j], W[i,j-1], V[i,j], find_E4(i, j, W)[0])
 
     W[i,j] = w
 
 
-def fold_rna() -> tuple[np.array, np.array]: 
+def fold_rna() -> tuple[np.ndarray, np.ndarray]: 
     """
     Fills out the W and V matrices to find the fold that gives the minimum free energy
     Follows Mfold as desribed by M. Zuker
@@ -296,6 +394,12 @@ def fold_rna() -> tuple[np.array, np.array]:
     If i and j are not able to basepair the energy will be infinity (not a possible structure)
 
     The W matrix contains the minimum free energy for the subsequences i and j where base pairing between i and j is not nessecary.
+
+    Only base pairs that have a non-zero value in the M matrix are considered.
+
+    Returns:
+    - W (np.ndarray): The W matrix
+    - V (np.ndarray): The V matrix
     """
     N = len(sequence)
     W, V = np.full([N, N], float('inf')), np.full([N, N], float('inf'))
@@ -314,9 +418,15 @@ def fold_rna() -> tuple[np.array, np.array]:
 
     return W, V
 
-def find_optimal(W: np.array) -> float: 
+def find_optimal(W: np.ndarray) -> float: 
     """
     Find the final energy of the folded RNA
+
+    Parameters:
+    - W (np.ndarray): The W matrix
+
+    Returns:
+    - min_energy (float): The final energy of the folded RNA
     """
     return W[0, -1]
 
@@ -324,7 +434,14 @@ def find_optimal(W: np.array) -> float:
 def backtrack(W: np.ndarray, V: np.ndarray) -> str: 
     """
     Backtracks trough the W, V matrices to find the final fold
-    Returns the fold as a dotbracket structure
+    Returns the fold as a list of tuples containing the indices of the basepairs
+
+    Parameters:
+    - W (np.ndarray): The W matrix
+    - V (np.ndarray): The V matrix
+
+    Returns:
+    - pairs (list): The secondary structure of the RNA
     """
     pairs = []
 
@@ -384,14 +501,23 @@ def backtrack(W: np.ndarray, V: np.ndarray) -> str:
             ij = find_E4(i,j,W)[1] 
             trace_W(i, ij[0]), trace_W(ij[1], j)
     
-    #Fill out db
+    #Fill out the pairs list with the secondary structure
     trace_W(i, j)
 
     return pairs
 
 
-def Mfold(sequence: str, matrix: np.ndarray): 
+def Mfold(sequence: str, matrix: np.ndarray) -> list: 
     """
+    Folds a RNA sequence using Mfold as described by M. Zuker
+    Uses the matrix as constraints for which basepairs are allowed
+
+    Parameters:
+    - sequence (str): The RNA sequence to fold
+    - matrix (np.ndarray): The energy matrix used to calculate the energy of the different basepairs
+
+    Returns:
+    - fold (list): The secondary structure of the RNA
     """
     declare_global_variable(sequence, matrix)
 

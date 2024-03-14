@@ -4,8 +4,6 @@ import random as rd
 from fnmatch import fnmatch
 from collections import defaultdict, namedtuple
 
-from torch.utils.data import Dataset
-
 def read_ct(file: str) -> tuple:
     """
     Takes a .ct file and returns the sequence as a string and a list pairing state of each base (0 = unpaired)

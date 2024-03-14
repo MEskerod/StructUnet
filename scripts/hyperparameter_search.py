@@ -1,21 +1,27 @@
-import torch, os, pickle, logging, sys, time
-
-from collections import namedtuple
-
-from sklearn.model_selection import KFold
+import torch, pickle, logging, sys, time
 
 import numpy as np
 
-from torch.utils.data import DataLoader
-import torch.nn as nn
-import torch.nn.functional as F
-
-import utils
-
+from collections import namedtuple
+from sklearn.model_selection import KFold
+from torch.utils.data import DataLoader, Dataset
 from utils import model_and_training as utils
 
 ### FUNCTIONS ###
-def train_model_on_fold(train_set, val_set, device, parameters, num_epochs):
+def train_model_on_fold(train_set: Dataset, val_set: Dataset, device: str, parameters: dict, num_epochs: int) -> float:
+  """
+  Function that trains a model on a single fold of the data set and evaluates it on the validation set.
+
+  Parameters:
+  - train_set (Dataset): Pytorch dataset containing the training data
+  - val_set (Dataset): Pytorch dataset containing the validation data
+  - device (str): The device to train the model on (either 'cuda' or 'cpu')
+  - parameters (dict): Dictionary containing the hyperparameters to use for training
+  - num_epochs (int): The number of epochs to train the model
+
+  Returns:
+  - float: The average loss on the validation set after training
+  """
   #Define data loaders
   train_fold_loader = DataLoader(train_set, batch_size=1, shuffle=True)
   val_fold_loader = DataLoader(val_set, batch_size=1)
@@ -54,7 +60,7 @@ def train_model_on_fold(train_set, val_set, device, parameters, num_epochs):
   val_loss = val_loss/len(val_fold_loader)
   return val_loss
 
-def Kfold_cv(parameters: dict, device, train_set, num_epochs, k=5):
+def Kfold_cv(parameters: dict, device: str, train_set, num_epochs, k=5):
     start_time = time.time()
     val_losses = 0.0
 
@@ -77,13 +83,12 @@ def Kfold_cv(parameters: dict, device, train_set, num_epochs, k=5):
     #Return average validation loss
     return sum(val_losses)/k
 
-def adaptive_hyperparameter_search(train_set, num_epochs, lr_range, weight_decay_range, conv2_filters_range, use_cuda = True, trials = 10, k = 5):
+def adaptive_hyperparameter_search(train_set: Dataset, num_epochs: int, lr_range: list, weight_decay_range: list, conv2_filters_range: list, use_cuda: bool = True, trials: int = 10, k: int = 5) -> dict:
   """
-  Function that performs adaptive hyperparameter search for RNAUnet using CuPy (if cuda available)
+  Function that performs adaptive hyperparameter search for RNAUnet
 
-  Args:
+  Parameters:
   - train_set: Pytorch training data set
-  - val_set: Pytorch validation data set
   - num_epochs: Maximum number of epochs to train the model
   - lr_range: Range og learning rate to search
   - weight_decay_range: Range of weight decay values to search
