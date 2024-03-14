@@ -39,13 +39,11 @@ def make_complete_set():
                os.path.join('data', 'test.pkl'),
                os.path.join('figures', 'length_distribution.png'),
                os.path.join('figures', 'family_distribution.png')]
-    options = {"memory":"16gb", "walltime":"4:00:00", "account":"RNA_Unet"} #NOTE - Change back to 16gb, 48, "cores":4
-    #spec = """python3 scripts/complete_dataset.py
-    #tar -czf data/test_files.tar.gz data/test_files
-    #rm -r data/test_files
-    #tar -czf data/complete_set.tar.gz data/complete_set
-    #rm -r data/complete_set"""
-    spec = """tar -czf data/complete_set.tar.gz data/complete_set
+    options = {"memory":"16gb", "walltime":"48:00:00", "account":"RNA_Unet", "cores":4}
+    spec = """python3 scripts/complete_dataset.py
+    tar -czf data/test_files.tar.gz data/test_files
+    rm -r data/test_files
+    tar -czf data/complete_set.tar.gz data/complete_set
     rm -r data/complete_set"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)    
 

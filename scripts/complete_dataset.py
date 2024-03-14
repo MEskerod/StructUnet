@@ -113,44 +113,40 @@ if __name__ == "__main__":
         
     RNA = namedtuple('RNA', 'input output length family name sequence')
 
-    #tar_file_path = 'data/RNAStralign.tar.gz'
+    tar_file_path = 'data/RNAStralign.tar.gz'
 
-    #temp_dir = tempfile.mkdtemp()
+    temp_dir = tempfile.mkdtemp()
 
-    #try: 
-    #    with tarfile.open(tar_file_path, 'r:gz') as tar: 
-    #        print("Extract files", file=sys.stdout)
-    #        tar.extractall(temp_dir)
+    try: 
+        with tarfile.open(tar_file_path, 'r:gz') as tar: 
+            print("Extract files", file=sys.stdout)
+            tar.extractall(temp_dir)
         
-    #    file_list = prepare_data.list_all_files(temp_dir)
-    #    print(f'Total of {len(file_list)} files where extracted\n', file=sys.stdout)
+        file_list = prepare_data.list_all_files(temp_dir)
+        print(f'Total of {len(file_list)} files where extracted\n', file=sys.stdout)
 
-    #    print("Convert matrices\n", file=sys.stdout)
-    #    process_and_save(file_list, "data/complete_set")
+        print("Convert matrices\n", file=sys.stdout)
+        process_and_save(file_list, "data/complete_set")
         
-    #finally:
-    #    shutil.rmtree(temp_dir)
+    finally:
+        shutil.rmtree(temp_dir)
         
 
-    #print("Splitting data", file=sys.stdout)
+    print("Splitting data", file=sys.stdout)
 
-    #file_list = [os.path.join('data', 'complete_set', file) for file in os.listdir('data/complete_set')]
+    file_list = [os.path.join('data', 'complete_set', file) for file in os.listdir('data/complete_set')]
 
-    #train, valid, test = prepare_data.split_data(file_list, validation_ratio=0.1, test_ratio=0.1)
+    train, valid, test = prepare_data.split_data(file_list, validation_ratio=0.1, test_ratio=0.1)
 
-    #pickle.dump(train, open('data/train.pkl', 'wb'))
-    #pickle.dump(valid, open('data/valid.pkl', 'wb'))
+    pickle.dump(train, open('data/train.pkl', 'wb'))
+    pickle.dump(valid, open('data/valid.pkl', 'wb'))
 
-    #print("Move test files to different folder")
-    #os.makedirs("data/test_files", exist_ok=True)
-    #for file in test: 
-    #    shutil.move(file, "data/test_files")
+    print("Move test files to different folder")
+    os.makedirs("data/test_files", exist_ok=True)
+    for file in test: 
+        shutil.move(file, "data/test_files")
 
-    #test = [os.path.join('data', 'test_files', os.path.basename(file)) for file in test]    
-    #TODO -  remove following 3 line
-    train = pickle.load(open('data/train.pkl', 'rb'))
-    valid = pickle.load(open('data/valid.pkl', 'rb'))
-    test = [os.path.join('data', 'test_files', file) for file in os.listdir('data/test_files')]
+    test = [os.path.join('data', 'test_files', os.path.basename(file)) for file in test]    
     pickle.dump(test, open('data/test.pkl', 'wb'))
 
     print(f"FILES FOR TRAINING: {len(train)} for training, {len(valid)} for validation", file=sys.stdout)
