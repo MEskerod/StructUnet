@@ -1,6 +1,9 @@
+import heapq
+
 import numpy as np
 
 from functools import cached_property
+from enum import IntEnum
 
 class HotSpot: 
     def __init__(self, pairs, energy) -> None:
@@ -100,7 +103,91 @@ class Tree:
         parent.children.append(node)
         self.nodes[node.level].append(node)
         
+class Trace(IntEnum):
+    STOP = 0
+    LEFT = 1
+    DOWN = 2
+    DIAG = 3
 
+
+def smith_waterman(seq1, matrix, k=10, treshold = 0.4):
+    """
+    """
+    top_cells = []
+    heapq.heapify(top_cells)
+    
+    basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
+
+    #seq2 = seq1[::-1]
+    N = len(seq1)
+
+    # Initialize the scoring matrix.
+    score_matrix = np.zeros((N + 1, N + 1))
+    tracing_matrix = np.zeros((N + 1, N + 1))
+
+    #Calculating the scores for all cells in the matrix
+    for l in range(5, N): 
+        for i in range(1, N-4):
+            j = i + l 
+            if j > N:
+                break
+            # It is necesary to substract one from indices into scoring matrix, since it doesn't have the 0 row and column
+            #Calculate match score
+            diagonal = score_matrix[i+1, j-1] + matrix[i, j-2] if (seq1[i] + seq1[j-2]) in basepairs else -float('inf')
+            #Calculate gaps scores - should ensure that only gaps of size 1 are allowed
+            vertical = score_matrix[i+1, j] - matrix[i-2, j-1] if ((tracing_matrix[i+1, j] != Trace.DOWN)  and (tracing_matrix[i+1, j] != Trace.LEFT and tracing_matrix[i+1, j-1] != Trace.DOWN)) else -float('inf')
+            horizontal = score_matrix[i, j-1] - matrix[i-1, j-2] if ((tracing_matrix[i, j-1] != Trace.LEFT) and (tracing_matrix[i+1, j] != Trace.DOWN and tracing_matrix[i+1, j-1] != Trace.LEFT) ) else -float('inf')
+
+            #Update the score matrix
+            score_matrix[i, j] = max(0, diagonal, vertical, horizontal)
+
+            #Fill the tracing matrix
+            if score_matrix[i, j] == 0: 
+                tracing_matrix[i, j] = Trace.STOP
+            elif score_matrix[i, j] == diagonal: 
+                tracing_matrix[i, j] = Trace.DIAG
+            elif score_matrix[i, j] == vertical: 
+                tracing_matrix[i, j] = Trace.DOWN
+            elif score_matrix[i, j] == horizontal: 
+                tracing_matrix[i, j] = Trace.LEFT
+            
+            #Update queue of top cells
+            if score_matrix[i, j] > treshold: 
+                if len(top_cells) < k: 
+                    heapq.heappush(top_cells, (score_matrix[i, j], (i, j)))
+                else:
+                    # If heap is fuk, compare the smallest value with the new value
+                    min_value, _ = top_cells[0]
+                    if score_matrix[i, j] > min_value: 
+                        heapq.heappop(top_cells) #Pop smallest value
+                        heapq.heappush(top_cells, (score_matrix[i, j], (i, j)))
+    print(score_matrix)
+    print(top_cells)
+    
+    return top_cells, tracing_matrix
+
+def traceback_smith_waterman(trace_matrix, i, j, sequence):
+    """
+    """
+    pairs = []
+    db = ['?']*(len(sequence)+1)
+    while trace_matrix[i, j] != Trace.STOP: 
+        if trace_matrix[i, j] == Trace.DIAG: 
+            i += 1
+            j -= 1
+            pairs.append((i, j))
+            print('PAIR', end=' ')
+        elif trace_matrix[i, j] == Trace.DOWN: 
+            i += 1
+            db[i] = '.'
+            print('DOWN', end=' ')
+        elif trace_matrix[i, j] == Trace.LEFT: 
+            j -= 1
+            db[j] = '.'
+            print('LEFT', end=' ')
+
+    print('\n')
+    return pairs
 
 
 def initialize_tree(sequence, matrix, k=20):
@@ -177,4 +264,12 @@ for sublist in pairs:
 #print(tree)
 #tree.print_tree()
 
-print(tree.nodes[1][0].bases)
+top, trace = smith_waterman(sequence, matrix, k=5, treshold = 0.1)
+
+#print(trace)
+
+#print(top, trace)
+
+for score, (i, j) in top: 
+    print(i,j, score)
+    print(traceback_smith_waterman(trace, i, j, sequence))
