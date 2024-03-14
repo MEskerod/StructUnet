@@ -38,12 +38,10 @@ def make_complete_set():
                os.path.join('data', 'test.pkl'),
                os.path.join('figures', 'length_distribution.png'),
                os.path.join('figures', 'family_distribution.png')]
-    options = {}
-    #options = {"memory":"16gb", "walltime":"48:00:00", "account":"RNA_Unet", "cores":4}
-    #spec = """python3 scripts/complete_dataset.py
-    #tar -czf data/test_files.tar.gz data/test_files
-    #rm -r data/test_files"""
-    spec = """cat workflow.py"""
+    options = {"memory":"16gb", "walltime":"48:00:00", "account":"RNA_Unet", "cores":4}
+    spec = """python3 scripts/complete_dataset.py
+    tar -czf data/test_files.tar.gz data/test_files
+    rm -r data/test_files"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)    
 
 
