@@ -132,22 +132,29 @@ if __name__ == "__main__":
     #    shutil.rmtree(temp_dir)
         
 
-    print("Splitting data", file=sys.stdout)
+    #print("Splitting data", file=sys.stdout)
 
-    file_list = [os.path.join('data', 'complete_set', file) for file in os.listdir('data/complete_set')]
+    #file_list = [os.path.join('data', 'complete_set', file) for file in os.listdir('data/complete_set')]
 
-    train, valid, test = prepare_data.split_data(file_list, validation_ratio=0.1, test_ratio=0.1)
+    #train, valid, test = prepare_data.split_data(file_list, validation_ratio=0.1, test_ratio=0.1)
 
-    pickle.dump(train, open('data/train.pkl', 'wb'))
-    pickle.dump(valid, open('data/valid.pkl', 'wb'))
+    #pickle.dump(train, open('data/train.pkl', 'wb'))
+    #pickle.dump(valid, open('data/valid.pkl', 'wb'))
+
+    #print("Move test files to different folder")
+    #os.makedirs("data/test_files", exist_ok=True)
+    #for file in test: 
+    #    shutil.move(file, "data/test_files")
+
+    #test = [os.path.join('data', 'test_files', os.path.basename(file)) for file in test]    
+    #TODO -  remove following 3 line
+    train = pickle.load(open('data/train.pkl', 'rb'))
+    valid = pickle.load(open('data/valid.pkl', 'rb'))
+    test = [os.path.join('data', 'test_files', file) for file in os.listdir('data/test_files')]
     pickle.dump(test, open('data/test.pkl', 'wb'))
 
-    print("Move test files to different folder")
-    os.makedirs("data/test_files", exist_ok=True)
-    for file in test: 
-        shutil.move(file, "data/test_files")
-
     print(f"FILES FOR TRAINING: {len(train)} for training, {len(valid)} for validation", file=sys.stdout)
+    print(f"FILES FOR TESTING: {len(test)}", file=sys.stdout)
 
     print("\nPlotting data distribution", file=sys.stdout)
         
