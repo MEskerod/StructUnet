@@ -44,19 +44,10 @@ def make_complete_set():
     rm -r data/test_files"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)    
 
-
-def hyper_parametersearch(): 
-    inputs = [os.path.join('data', 'train.pkl'),
-              os.path.join('data', 'valid.pkl')]
-    outputs = ['hyperparameter_log.txt']
-    options = {"memory":"64gb", "walltime":"72:00:00", "account":"RNA_Unet"} #NOTE - Think about memory
-    spec = """python3 scripts/hyperparameter_search.py"""
-    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
-
 def train_model(): 
     inputs = []
     outputs = []
-    options = {"memory":"16gb", "walltime":"72:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    options = {"memory":"16gb", "walltime":"72:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
     spec = """python3 scripts/train_model.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
@@ -89,4 +80,3 @@ gwf.target_from_template('time_convert', convert_time())
 
 ## FOR TRAINING THE ON THE ENTIRE DATA SET
 gwf.target_from_template('convert_data', make_complete_set())
-gwf.target_from_template('hyperparameter_search', hyper_parametersearch())
