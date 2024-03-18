@@ -1,4 +1,4 @@
-import heapq
+import heapq, sys
 
 import numpy as np
 
@@ -110,7 +110,7 @@ class Trace(IntEnum):
     DIAG = 3
 
 
-def smith_waterman(seq1, matrix, k=10, treshold = 0.4):
+def smith_waterman(seq1, matrix, k=10, treshold = 2.0):
     """
     """
     top_cells = []
@@ -122,21 +122,23 @@ def smith_waterman(seq1, matrix, k=10, treshold = 0.4):
     N = len(seq1)
 
     # Initialize the scoring matrix.
-    score_matrix = np.zeros((N + 1, N + 1))
-    tracing_matrix = np.zeros((N + 1, N + 1))
+    score_matrix = np.zeros((N+1, N+1))
+    tracing_matrix = np.zeros((N+1, N+1))
 
     #Calculating the scores for all cells in the matrix
-    for l in range(5, N): 
-        for i in range(1, N-4):
-            j = i + l 
-            if j > N:
+    for l in range(4, N): 
+        for i in range(N-l+1):
+            j = i + l - 1
+
+            if j > N: #Should not go there, but just in case
                 break
-            # It is necesary to substract one from indices into scoring matrix, since it doesn't have the 0 row and column
+
+            # It is necesary to substract one to i indices into matrix, since it doesn't have the 0 row and column
             #Calculate match score
-            diagonal = score_matrix[i+1, j-1] + matrix[i, j-2] if (seq1[i] + seq1[j-2]) in basepairs else -float('inf')
-            #Calculate gaps scores - should ensure that only gaps of size 1 are allowed
-            vertical = score_matrix[i+1, j] - matrix[i-2, j-1] if ((tracing_matrix[i+1, j] != Trace.DOWN)  and (tracing_matrix[i+1, j] != Trace.LEFT and tracing_matrix[i+1, j-1] != Trace.DOWN)) else -float('inf')
-            horizontal = score_matrix[i, j-1] - matrix[i-1, j-2] if ((tracing_matrix[i, j-1] != Trace.LEFT) and (tracing_matrix[i+1, j] != Trace.DOWN and tracing_matrix[i+1, j-1] != Trace.LEFT) ) else -float('inf')
+            diagonal = score_matrix[i+1, j-1] + matrix[i, j-1] if (seq1[i] + seq1[j-1]) in basepairs else -float('inf')
+            #Calculate gaps scores - should ensure that only gaps of size 1 (on one or both strands) are allowed
+            vertical = score_matrix[i+1, j] - max(0.5, matrix[i, j]) if (not(tracing_matrix[i+1, j] == Trace.LEFT and tracing_matrix[i+1, j-1] == Trace.DOWN)) and (not tracing_matrix[i+1, j]==Trace.DOWN) else -float('inf')
+            horizontal = score_matrix[i, j-1] - max(0.5, matrix[i-1, j-1]) if (not (tracing_matrix[i, j-1]==Trace.DOWN and tracing_matrix[i+1, j-1] == Trace.LEFT)) and (not tracing_matrix[i, j-1] == Trace.LEFT) else -float('inf')
 
             #Update the score matrix
             score_matrix[i, j] = max(0, diagonal, vertical, horizontal)
@@ -146,66 +148,47 @@ def smith_waterman(seq1, matrix, k=10, treshold = 0.4):
                 tracing_matrix[i, j] = Trace.STOP
             elif score_matrix[i, j] == diagonal: 
                 tracing_matrix[i, j] = Trace.DIAG
+                #Update queue of top cells
+                if score_matrix[i, j] > treshold: 
+                    if len(top_cells) < k: 
+                        heapq.heappush(top_cells, (score_matrix[i, j], (i, j)))
+                    else:
+                        # If heap is full, compare the smallest value with the new value
+                        min_value, _ = top_cells[0]
+                        if score_matrix[i, j] > min_value: 
+                            heapq.heappop(top_cells) #Pop smallest value
+                            heapq.heappush(top_cells, (score_matrix[i, j], (i, j)))
             elif score_matrix[i, j] == vertical: 
                 tracing_matrix[i, j] = Trace.DOWN
             elif score_matrix[i, j] == horizontal: 
                 tracing_matrix[i, j] = Trace.LEFT
-            
-            #Update queue of top cells
-            if score_matrix[i, j] > treshold: 
-                if len(top_cells) < k: 
-                    heapq.heappush(top_cells, (score_matrix[i, j], (i, j)))
-                else:
-                    # If heap is fuk, compare the smallest value with the new value
-                    min_value, _ = top_cells[0]
-                    if score_matrix[i, j] > min_value: 
-                        heapq.heappop(top_cells) #Pop smallest value
-                        heapq.heappush(top_cells, (score_matrix[i, j], (i, j)))
-    print(score_matrix)
-    print(top_cells)
     
     return top_cells, tracing_matrix
 
-def traceback_smith_waterman(trace_matrix, i, j, sequence):
+def traceback_smith_waterman(trace_matrix, i, j):
     """
     """
     pairs = []
-    db = ['?']*(len(sequence)+1)
     while trace_matrix[i, j] != Trace.STOP: 
         if trace_matrix[i, j] == Trace.DIAG: 
             i += 1
             j -= 1
-            pairs.append((i, j))
-            print('PAIR', end=' ')
+            pairs.append((i-1, j))
         elif trace_matrix[i, j] == Trace.DOWN: 
             i += 1
-            db[i] = '.'
-            print('DOWN', end=' ')
         elif trace_matrix[i, j] == Trace.LEFT: 
             j -= 1
-            db[j] = '.'
-            print('LEFT', end=' ')
 
-    print('\n')
     return pairs
 
 
 def initialize_tree(sequence, matrix, k=20):
     """
     """
-
-    def find_initial_hotspots():
-        N = len(sequence)
-
-        for i in range(N): 
-            for j in range(i+4, N): 
-                pass
-        return
-    
-    hotspots = find_initial_hotspots()
+    hotspots, trace = smith_waterman(sequence, matrix, k)
     tree = Tree()
-    for hotspot in hotspots: 
-        tree.add_node(tree.root, hotspot)
+    for score, (i, j) in hotspots: 
+        tree.add_node(tree.root, [HotSpot(traceback_smith_waterman(trace, i, j), score)])
 
     return tree
 
@@ -246,7 +229,7 @@ def hotknots(matrix, sequence, k=20):
 
 
 
-sequence = 'GGCCGGCAUGGUCCCAGCCUCCUCGCUGGCGCCGGCUGGGCAACAUUCCGAGGGGACCGUCCCCUGGGUAAUGGCGAAUGGGACCCA'
+sequence = 'GGCCGGCAUGGUCCCAGCCUCCUCGCUGGCGCCGGCUGGGCAACAUUCCCAGGGGACCGUCCCCUGGGUAAUGGCGAAUGGGACCCA'
 
 pairs = [[(1, 37), (2, 36), (3, 35), (4, 34), (5, 33), (6, 32), (7, 31)],
          [(10, 86), (11, 85), (12, 84), (13, 83), (14, 82), (15, 81), (16, 80)],
@@ -257,19 +240,7 @@ matrix = np.zeros((len(sequence), len(sequence)))
 for i, j in [pair for sublist in pairs for pair in sublist]:
     matrix[i-1, j-1] = matrix[j-1, i-1] = 1
 
-tree = Tree()
-for sublist in pairs: 
-    tree.add_node(tree.root, [HotSpot(sublist, 0.8)])
+tree = initialize_tree(sequence, matrix, k=20)
 
-#print(tree)
-#tree.print_tree()
-
-top, trace = smith_waterman(sequence, matrix, k=5, treshold = 0.1)
-
-#print(trace)
-
-#print(top, trace)
-
-for score, (i, j) in top: 
-    print(i,j, score)
-    print(traceback_smith_waterman(trace, i, j, sequence))
+print(tree)
+tree.print_tree()
