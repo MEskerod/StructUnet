@@ -12,7 +12,7 @@ class HotSpot:
         
 
     def __repr__(self) -> str:
-        pass
+        return self.__str__()
 
     def __str__(self) -> str:
         return f'HotSpot with {len(self.pairs)} pairs and energy {self.energy}'
@@ -34,7 +34,7 @@ class Node:
         self.hotspots = hotspots
     
     def __str__(self) -> str:
-        return str(self.hotspots)
+        return f'{self.hotspots}'
     
     def __repr__(self) -> str:
         return self.__str__()
@@ -137,8 +137,8 @@ def smith_waterman(seq1, matrix, k=10, treshold = 2.0):
             #Calculate match score
             diagonal = score_matrix[i+1, j-1] + matrix[i, j-1] if (seq1[i] + seq1[j-1]) in basepairs else -float('inf')
             #Calculate gaps scores - should ensure that only gaps of size 1 (on one or both strands) are allowed
-            vertical = score_matrix[i+1, j] - max(0.5, matrix[i, j]) if (not(tracing_matrix[i+1, j] == Trace.LEFT and tracing_matrix[i+1, j-1] == Trace.DOWN)) and (not tracing_matrix[i+1, j]==Trace.DOWN) else -float('inf')
-            horizontal = score_matrix[i, j-1] - max(0.5, matrix[i-1, j-1]) if (not (tracing_matrix[i, j-1]==Trace.DOWN and tracing_matrix[i+1, j-1] == Trace.LEFT)) and (not tracing_matrix[i, j-1] == Trace.LEFT) else -float('inf')
+            vertical = score_matrix[i+1, j] - 0.5 if (not(tracing_matrix[i+1, j] == Trace.LEFT and tracing_matrix[i+1, j-1] == Trace.DOWN)) and (not tracing_matrix[i+1, j]==Trace.DOWN) else -float('inf')
+            horizontal = score_matrix[i, j-1] - 0.5 if (not (tracing_matrix[i, j-1]==Trace.DOWN and tracing_matrix[i+1, j-1] == Trace.LEFT)) and (not tracing_matrix[i, j-1] == Trace.LEFT) else -float('inf')
 
             #Update the score matrix
             score_matrix[i, j] = max(0, diagonal, vertical, horizontal)
@@ -192,16 +192,100 @@ def initialize_tree(sequence, matrix, k=20):
 
     return tree
 
-def grow_tree(tree, sequence, matrix, k=20):
+def constrained_structure(constrained, N): 
     """
     """
-    def build_node(node): 
-        return
-    
-    for node in tree.nodes[1]: 
-        build_node(node)
+    #Constrained structure of a sequence with a set of basepairs 
+    structure = ['_'] * N
+    for base in constrained:
+        structure[base] = '.'
 
-    return tree
+    return ''.join(structure)
+
+def identify_hotspots(structure: str, matrix: np.ndarray, k=20, treshold = 2.0):
+    """
+    """
+
+    #Identify hotspots that doesn't have more than one gap between opening brackets
+    prelim_hotspots = []
+    current_stem = [[]]
+    number_hotspots = 0
+    len_current_hotspot = 0
+    in_hotspot = False
+
+    for i, s in enumerate(structure):
+        if s == '(':
+            in_hotspot = True
+            current_stem[number_hotspots].append([i])
+        
+        elif s == '.':
+            if in_hotspot and structure[i-1] == '.' and current_stem[number_hotspots] != []:
+                current_stem.append([])
+                number_hotspots += 1
+        
+        elif s == ')': 
+            in_hotspot = False
+
+            if len_current_hotspot == 0:
+                current_stem = current_stem[:-1]
+                number_hotspots -= 1
+                len_current_hotspot = len(current_stem[number_hotspots]) 
+            
+            current_stem[number_hotspots][len_current_hotspot-1].append(i)
+            len_current_hotspot -= 1
+
+            if len_current_hotspot == 0:
+                number_hotspots -= 1
+                len_current_hotspot = len(current_stem[number_hotspots])
+                
+                if number_hotspots < 0:
+                    for hotspot in current_stem:
+                        prelim_hotspots.append(hotspot)
+                    current_stem = [[]]
+                    len_current_hotspot = 0
+                    in_hotspot = False
+                    number_hotspots = 0
+
+    #Identify larger gaps between closing brackets and break the hotspots
+    valid_hotspots = []
+    for hotspot in prelim_hotspots: 
+        breaking_points = []
+        for i in range(len(hotspot)-1):
+            if hotspot[i][1] - hotspot[i+1][1] > 2: 
+                breaking_points.append(i)
+        #Split based on indices
+        if breaking_points:
+            prev_index = 0
+            for i in breaking_points: 
+                valid_hotspots.append(hotspot[prev_index:i+1])
+                prev_index = i+1
+            valid_hotspots.append(hotspot[prev_index:])
+        else: 
+            valid_hotspots.append(hotspot)
+    
+    #Get energy of hotspots and eliminate those under treshold
+    #Return top k hotspots
+    print(valid_hotspots)
+    hotspots = []
+    for hotspot in valid_hotspots:
+        #Get energy
+        energy = 0
+        for i, pair in enumerate(hotspot): 
+            energy += matrix[pair[0], pair[1]]
+            if i > 0: 
+                if pair[0] - hotspot[i-1][0] > 1: 
+                    energy -= 0.5
+                if hotspot[i-1][1] - pair[1] > 1:
+                    energy -= 0.5
+        if energy > treshold:
+            hotspots.append(HotSpot(hotspot, energy))
+
+    def sort_func(h):
+        return h.energy
+    
+    hotspots.sort(key=sort_func, reverse=True)
+            
+    return hotspots[:k]
 
 def SeqStr(S, H): 
     """
@@ -211,6 +295,25 @@ def SeqStr(S, H):
     #Mfold/SimFold is used to obtain the energy of the segmeents 
     #SeqStr is the union of the energies of the l segments and the hotspots in H
     return 
+
+def grow_tree(level, tree, sequence, matrix, k=20):
+    """
+    """
+    N = len(sequence)
+    def build_node(node): 
+        constraints = constrained_structure(node.bases, N)
+        #Use constraints and SimFold to obtain the structure of the sequence
+        struture = ''
+        hotspots = identify_hotspots(structure)
+        #Use SeqStr to identify whether the hotspots are good or not
+        #Grow tree based on good hotspots
+        return
+    
+    for node in tree.nodes[level]: 
+        build_node(node)
+
+    return tree
+
 
 def output_structure(tree):
     """
@@ -229,7 +332,7 @@ def hotknots(matrix, sequence, k=20):
 
 
 
-sequence = 'GGCCGGCAUGGUCCCAGCCUCCUCGCUGGCGCCGGCUGGGCAACAUUCCCAGGGGACCGUCCCCUGGGUAAUGGCGAAUGGGACCCA'
+sequence = "GGCCGGCAUGGUCCCAGCCUCCUCGCUGGCGCCGGCUGGGCAACAUUCCCAGGGGACCGUCCCCUGGGUAAUGGCGAAUGGGACCCA"
 
 pairs = [[(1, 37), (2, 36), (3, 35), (4, 34), (5, 33), (6, 32), (7, 31)],
          [(10, 86), (11, 85), (12, 84), (13, 83), (14, 82), (15, 81), (16, 80)],
@@ -244,3 +347,11 @@ tree = initialize_tree(sequence, matrix, k=20)
 
 print(tree)
 tree.print_tree()
+
+print(tree.nodes[1][0].bases)
+
+structure = '(((((((.........(((........))))))))))..((..((((((((((((.....)))))))).))))))............' 
+
+print(structure)
+
+print(identify_hotspots(structure, matrix, k=20))
