@@ -26,7 +26,6 @@ class HotSpot:
 
 
 
-
 class Node: 
     def __init__(self, hotspots = None) -> None:
         self.level = None
@@ -265,7 +264,6 @@ def identify_hotspots(structure: str, matrix: np.ndarray, k=20, treshold = 2.0):
     
     #Get energy of hotspots and eliminate those under treshold
     #Return top k hotspots
-    print(valid_hotspots)
     hotspots = []
     for hotspot in valid_hotspots:
         #Get energy
@@ -296,20 +294,29 @@ def SeqStr(S, H):
     #SeqStr is the union of the energies of the l segments and the hotspots in H
     return 
 
-def grow_tree(level, tree, sequence, matrix, k=20):
+def grow_tree(tree, sequence, matrix, k=20):
     """
     """
     N = len(sequence)
-    def build_node(node): 
+    L = [node.hotspots for node in tree.root.children]
+    print(L)
+
+    def build_node(node, L): 
         constraints = constrained_structure(node.bases, N)
         #Use constraints and SimFold to obtain the structure of the sequence
         struture = ''
-        hotspots = identify_hotspots(structure)
-        #Use SeqStr to identify whether the hotspots are good or not
+        hotspots = identify_hotspots(structure, matrix, k)
+        L = L + hotspots
+        for hotspot in hotspots: 
+            L = L
+            #Use SeqStr to identify whether the hotspots are good or not
         #Grow tree based on good hotspots
+        if node.children:
+            for child in node.children: 
+                build_node(child, L)
         return
-    
-    for node in tree.nodes[level]: 
+ 
+    for node in tree.root.children: 
         build_node(node)
 
     return tree
@@ -333,6 +340,7 @@ def hotknots(matrix, sequence, k=20):
 
 
 sequence = "GGCCGGCAUGGUCCCAGCCUCCUCGCUGGCGCCGGCUGGGCAACAUUCCCAGGGGACCGUCCCCUGGGUAAUGGCGAAUGGGACCCA"
+"...............................___..................................................___"
 
 pairs = [[(1, 37), (2, 36), (3, 35), (4, 34), (5, 33), (6, 32), (7, 31)],
          [(10, 86), (11, 85), (12, 84), (13, 83), (14, 82), (15, 81), (16, 80)],
@@ -354,4 +362,9 @@ structure = '(((((((.........(((........))))))))))..((..((((((((((((.....)))))))
 
 print(structure)
 
-print(identify_hotspots(structure, matrix, k=20))
+#print(identify_hotspots(structure, matrix, k=20))
+
+
+grow_tree(tree, sequence, matrix, k=20)
+
+
