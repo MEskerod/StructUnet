@@ -37,7 +37,7 @@ def make_complete_set():
                os.path.join('data', 'test.pkl'),
                os.path.join('figures', 'length_distribution.png'),
                os.path.join('figures', 'family_distribution.png')]
-    options = {"memory":"16gb", "walltime":"48:00:00", "account":"RNA_Unet", "cores":4}
+    options = {"memory":"16gb", "walltime":"6:00:00", "account":"RNA_Unet", "cores":4}
     spec = """python3 scripts/complete_dataset.py
     tar -czf data/test_files.tar.gz data/test_files"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)    
@@ -54,7 +54,7 @@ def train_model():
 def predict_hotknots(file): 
     inputs = [file]
     outputs = [os.path.join('steps', 'hotknots', os.path.basename(file))]
-    options = {"memory":"8gb", "walltime":"2:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    options = {"memory":"24gb", "walltime":"2:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
     spec = """python3 ../HotKnots/hotknots.py {file} steps/hotknots/{output}""".format(file = file, output = os.path.basename(file))
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
