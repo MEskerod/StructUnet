@@ -89,7 +89,7 @@ gwf.target_from_template('train_model', train_model())
 
 
 #Predicting with other methods for comparison
-test_files = pickle.load(open('data/test.pkl', 'rb'))
-test_files = test_files[:1]
-for i, file in enumerate(test_files): 
-    gwf.target_from_template(f'predict_hotknots_file_no_{i}', predict_hotknots(file))
+#test_files = pickle.load(open('data/test.pkl', 'rb'))
+#test_files = test_files[:1]
+#for i, file in enumerate(test_files): 
+#    gwf.target_from_template(f'predict_hotknots_file_no_{i}', predict_hotknots(file))
