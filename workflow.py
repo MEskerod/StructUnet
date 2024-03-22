@@ -46,17 +46,18 @@ def make_complete_set():
 
 def train_model(): 
     inputs = []
-    outputs = []
-    options = {"memory":"16gb", "walltime":"72:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
-    spec = """python3 scripts/train_model.py"""
+    outputs = ['RNA_Unet.pth']
+    options = {"memory":"16gb", "walltime":"3:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
+    spec = """python3 scripts/training.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+### EVALUATION ###
 
 def predict_hotknots(file): 
     inputs = [os.path.join('data', file)]
     outputs = [os.path.join('steps', 'hotknots', os.path.basename(file))]
-    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
-    spec = """mkdir -p steps/hotknots
-    python3 ../HotKnots/hotknots.py data/{file} steps/hotknots/{file}""".format(file = file)
+    options = {"memory":"8gb", "walltime":"2:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    spec = """python3 ../HotKnots/hotknots.py data/{file} steps/hotknots/{file}""".format(file = file)
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def evaluate_nn(): 
@@ -87,8 +88,10 @@ gwf.target_from_template('time_convert', convert_time())
 ## FOR TRAINING THE ON THE ENTIRE DATA SET
 gwf.target_from_template('convert_data', make_complete_set())
 
+gwf.target_from_template('train_model', train_model())
+
 
 #Predicting with other methods for comparison
 test_files = pickle.load(open('data/test_files.pkl', 'rb'))
 for file in test_files: 
-    pass
+    gwf.target_from_template(f'predict_hotknots_{os.path.basename(file)}', predict_hotknots(file))
