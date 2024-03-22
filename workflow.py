@@ -39,8 +39,7 @@ def make_complete_set():
                os.path.join('figures', 'family_distribution.png')]
     options = {"memory":"16gb", "walltime":"48:00:00", "account":"RNA_Unet", "cores":4}
     spec = """python3 scripts/complete_dataset.py
-    tar -czf data/test_files.tar.gz data/test_files
-    rm -r data/test_files"""
+    tar -czf data/test_files.tar.gz data/test_files"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)    
 
 def train_model(): 
@@ -65,8 +64,7 @@ def evaluate_nn():
                os.path.join('figures', 'evaluation_nn.png')]
     options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
     spec = """
-    python3 scripts/evaluate_nn.py
-    rm -r data/test_files"""
+    python3 scripts/evaluate_nn.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) #TODO - Add some commands!
 
 
