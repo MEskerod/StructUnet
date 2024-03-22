@@ -92,6 +92,6 @@ gwf.target_from_template('train_model', train_model())
 
 
 #Predicting with other methods for comparison
-test_files = pickle.load(open('data/test_files.pkl', 'rb'))
+test_files = pickle.load(open('data/test.pkl', 'rb'))
 for file in test_files: 
     gwf.target_from_template(f'predict_hotknots_{os.path.basename(file)}', predict_hotknots(file))
