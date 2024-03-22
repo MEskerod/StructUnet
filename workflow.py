@@ -32,8 +32,7 @@ def convert_time():
 ### TRAINING ###
 def make_complete_set(): 
     inputs = [os.path.join('data', 'RNAStralign.tar.gz')]
-    outputs = [os.path.join('data', 'complete_set.tar.gz'),
-               os.path.join('data', 'train.pkl'),
+    outputs = [os.path.join('data', 'train.pkl'),
                os.path.join('data', 'valid.pkl'),
                os.path.join('data', 'test.pkl'),
                os.path.join('figures', 'length_distribution.png'),
@@ -57,7 +56,7 @@ def predict_hotknots(file):
     inputs = [file]
     outputs = [os.path.join('steps', 'hotknots', os.path.basename(file))]
     options = {"memory":"8gb", "walltime":"2:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
-    spec = """python3 ../HotKnots/hotknots.py data/{file} steps/hotknots/{file}""".format(file = file)
+    spec = """python3 ../HotKnots/hotknots.py {file} steps/hotknots/{file}""".format(file = file)
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def evaluate_nn(): 
