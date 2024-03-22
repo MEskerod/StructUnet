@@ -56,7 +56,7 @@ def predict_hotknots(file):
     inputs = [file]
     outputs = [os.path.join('steps', 'hotknots', os.path.basename(file))]
     options = {"memory":"8gb", "walltime":"2:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
-    spec = """python3 ../HotKnots/hotknots.py {file} steps/hotknots/{file}""".format(file = file)
+    spec = """python3 ../HotKnots/hotknots.py {file} steps/hotknots/{output}""".format(file = file, output = os.path.basename(file))
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def evaluate_nn(): 
