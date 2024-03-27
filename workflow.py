@@ -54,8 +54,8 @@ def train_model():
 def predict_hotknots(file): 
     inputs = [file]
     outputs = [os.path.join('steps', 'hotknots', os.path.basename(file))]
-    options = {"memory":"64gb", "walltime":"2:00:00", "account":"RNA_Unet"} 
-    spec = """python3 ../HotKnots/hotknots.py {file} steps/hotknots/{output}""".format(file = file, output = os.path.basename(file))
+    options = {"memory":"64gb", "walltime":"5:00:00", "account":"RNA_Unet"} 
+    spec = """python3 ../HotKnots/hotknots.py "{file}" "steps/hotknots/{output}" """.format(file = file, output = os.path.basename(file))
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def evaluate_nn(): 
