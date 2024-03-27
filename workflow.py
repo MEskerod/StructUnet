@@ -45,7 +45,7 @@ def make_complete_set():
 def train_model(): 
     inputs = []
     outputs = ['RNA_Unet.pth']
-    options = {"memory":"16gb", "walltime":"3:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
+    options = {"memory":"16gb", "walltime":"5:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
     spec = """python3 scripts/training.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
@@ -54,7 +54,7 @@ def train_model():
 def predict_hotknots(file): 
     inputs = [file]
     outputs = [os.path.join('steps', 'hotknots', os.path.basename(file))]
-    options = {"memory":"24gb", "walltime":"2:00:00", "account":"RNA_Unet"} 
+    options = {"memory":"64gb", "walltime":"2:00:00", "account":"RNA_Unet"} 
     spec = """python3 ../HotKnots/hotknots.py {file} steps/hotknots/{output}""".format(file = file, output = os.path.basename(file))
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
