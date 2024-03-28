@@ -89,6 +89,31 @@ gwf.target_from_template('convert_data', make_complete_set())
 
 
 #Predicting with other methods for comparison
-test_files = pickle.load(open('data/test.pkl', 'rb'))
+test_files = pickle.load(open('data/test_small.pkl', 'rb'))
 for i, file in enumerate(test_files): 
     gwf.target_from_template(f'predict_hotknots_file_no_{i}', predict_hotknots(file))
+
+
+
+def remove(file): 
+    inputs = [file]
+    outputs = []
+    options = {} 
+    spec = """rm {file}""".format(file = file)
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) #TODO - Add some commands!
+
+test_files = pickle.load(open('data/test.pkl', 'rb'))
+excluded = ([1282, 1287, 1288, 1289, 1290, 1291, 1292, 1294, 1295, 1297, 1298, 1299, 1300, 1302, 1303, 1304, 1305, 1306, 1307, 1308, 1309] + list(range(2036, 2186)) + list(range(2020, 2035)) +
+list(range(1964, 2019)) + list(range(1940, 1963)) + list(range(1917, 1939)) + list(range(1914, 1915)) + list(range(1908,  1913)) + list(range(1901, 1907)) + list(range(1870, 1900)) + 
+[1868, 1865, 1866] + list(range(1855,  1864)) + list(range(1831,  1854)) + list(range(1742, 1830)) + list(range(1721, 1741)) + list(range(1718, 1720)) + list(range(1710,  1717)) +
+list(range(1683,  1709)) + list(range(1601,  1682)) + list(range(1555,  1600)) + list(range(1532,  1554)) + list(range(1502,  1530)) + list(range(1417,  1501)) + list(range(1385,  1416)) +
+list(range(1327,  1382)) + list(range(1317, 1326)) + list(range(1311, 1316)))
+
+
+
+for i in excluded: 
+    file = os.path.join('steps', 'hotknots', os.path.basename(test_files[i]))
+    #gwf.target_from_template(f'remove_{i}', remove(file))
+
+
+
