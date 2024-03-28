@@ -95,21 +95,7 @@ test_files = pickle.load(open('data/test.pkl', 'rb'))
 for i, file in enumerate(test_files): 
     if i in excluded: 
         continue
-    #gwf.target_from_template(f'predict_hotknots_file_no_{i}', predict_hotknots(file))
-
-
-
-def remove(file): 
-    inputs = [file]
-    outputs = []
-    options = {} 
-    spec = """rm {file}""".format(file = file)
-    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) #TODO - Add some commands!
-
-
-for i in excluded: 
-    file = os.path.join('steps', 'hotknots', os.path.basename(test_files[i]))
-    gwf.target_from_template(f'remove_{i}', remove(file))
+    gwf.target_from_template(f'predict_hotknots_file_no_{i}', predict_hotknots(file))
 
 
 
