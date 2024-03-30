@@ -172,7 +172,7 @@ if __name__ == "__main__":
     train = pickle.load(open('data/train.pkl', 'rb'))
     valid = pickle.load(open('data/valid.pkl', 'rb'))
 
-    RNA_data = namedtuple('RNA_data', 'input output length family name pairs')
+    RNA = namedtuple('RNA', 'input output length family name sequence')
 
     train_dataset = utils.ImageToImageDataset(train)
     valid_dataset = utils.ImageToImageDataset(valid)

@@ -88,7 +88,7 @@ class ImageToImageDataset(Dataset):
       data = pickle.load(open(self.file_list[idx], 'rb'))
       
       input_image = data.input
-      output_image = data.output
+      output_image = data.output 
 
       return input_image, output_image
     
@@ -127,7 +127,7 @@ class MaxPooling(nn.Module):
   
 
 class RNA_Unet(nn.Module):
-    def __init__(self, channels=32, in_channels=8, output_channels=1, negative_slope = 0.01, pooling = MaxPooling):
+    def __init__(self, channels=64, in_channels=8, output_channels=1, negative_slope = 0.01, pooling = MaxPooling):
         """
         Pytorch implementation of a Unet for RNA secondary structure prediction
 
