@@ -85,7 +85,7 @@ gwf.target_from_template('time_convert', convert_time())
 ## FOR TRAINING THE ON THE ENTIRE DATA SET
 gwf.target_from_template('convert_data', make_complete_set())
 
-#gwf.target_from_template('train_model', train_model())
+gwf.target_from_template('train_model', train_model())
 
 
 
