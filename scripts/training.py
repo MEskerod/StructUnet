@@ -138,10 +138,10 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
 
         logging.info(f"Epoch {epoch+1}/{epochs}: Train loss: {train_loss_history[-1]:.4f}, Train F1: {train_F1_history[-1]:.4f}, Validation loss: {valid_loss_history[-1]:.4f}, Validation F1: {valid_F1_history[-1]:.4f}")
         if epoch > 0:
-            show_history(train_loss_history, valid_loss_history, title = 'Loss', outputfile = 'training_log/loss_history.png')
-            show_history(train_F1_history, valid_F1_history, title = 'F1 score', outputfile = 'training_log/F1_history.png')
+            show_history(train_loss_history, valid_loss_history, title = 'Loss', outputfile = 'steps/training_log/loss_history.png')
+            show_history(train_F1_history, valid_F1_history, title = 'F1 score', outputfile = 'steps/training_log/F1_history.png')
         
-        show_matrices(input, target, output, output_file = 'training_log/matrix_example.png')
+        show_matrices(input, target, output, output_file = 'steps/training_log/matrix_example.png')
 
         if val_loss < best_score:
            best_score = val_loss
@@ -166,11 +166,11 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
 
 
 if __name__ == "__main__":
-    os.makedirs('training_log', exist_ok=True)
-    logging.basicConfig(filename='training_log/training_log.txt', level=logging.INFO)
+    os.makedirs('steps/training_log', exist_ok=True)
+    logging.basicConfig(filename='steps/training_log/training_log.txt', level=logging.INFO)
     
     train = pickle.load(open('data/train.pkl', 'rb'))
-    valid = pickle.load(open('data/val.pkl', 'rb'))
+    valid = pickle.load(open('data/valid.pkl', 'rb'))
 
     RNA_data = namedtuple('RNA_data', 'input output length family name pairs')
 
