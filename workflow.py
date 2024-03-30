@@ -54,7 +54,7 @@ def train_model():
 def predict_hotknots(file): 
     inputs = [file]
     outputs = [os.path.join('steps', 'hotknots', os.path.basename(file))]
-    options = {"memory":"512gb", "walltime":"8:00:00", "account":"RNA_Unet"} 
+    options = {"memory":"64gb", "walltime":"3:00:00", "account":"RNA_Unet"} 
     spec = """python3 ../HotKnots/hotknots.py "{file}" "steps/hotknots/{output}" """.format(file = file, output = os.path.basename(file))
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
@@ -95,7 +95,7 @@ test_files = pickle.load(open('data/test.pkl', 'rb'))
 for i, file in enumerate(test_files): 
     if i in excluded: 
         continue
-    gwf.target_from_template(f'predict_hotknots_file_no_{i}', predict_hotknots(file))
+    #gwf.target_from_template(f'predict_hotknots_file_no_{i}', predict_hotknots(file))
 
 
 
