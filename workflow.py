@@ -44,7 +44,7 @@ def make_complete_set():
 
 def train_model(): 
     inputs = []
-    outputs = ['RNA_Unet.pth']
+    outputs = ['RNA_Unet_gpu.pth']
     options = {"memory":"32gb", "walltime":"5:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     nvidia-smi -L
@@ -54,7 +54,7 @@ def train_model():
 
 def train_model_cpu(): 
     inputs = []
-    outputs = ['RNA_Unet.pth']
+    outputs = ['RNA_Unet_cpu.pth']
     options = {"memory":"32gb", "walltime":"48:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime and test GPU
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     echo "Training neural network"
