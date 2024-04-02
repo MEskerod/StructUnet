@@ -82,7 +82,7 @@ def show_matrices(inputs, observed, predicted, treshold=0.5, output_file = None)
   plt.close()
 
 
-def fit_model(model, train_dataset, validtion_dataset, name, patience = 5, lr = 0.01, weigth_decay = 0, optimizer =utils.adam_optimizer, loss_function = utils.dice_loss, epochs = 50, batch_size = 1): 
+def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, weigth_decay = 0, optimizer =utils.adam_optimizer, loss_function = utils.dice_loss, epochs = 50, batch_size = 1): 
     """
     """
     best_score = float('inf')
@@ -146,16 +146,16 @@ def fit_model(model, train_dataset, validtion_dataset, name, patience = 5, lr = 
 
         logging.info(f"Epoch {epoch+1}/{epochs}: Train loss: {train_loss_history[-1]:.4f}, Train F1: {train_F1_history[-1]:.4f}, Validation loss: {valid_loss_history[-1]:.4f}, Validation F1: {valid_F1_history[-1]:.4f}")
         if epoch > 0:
-            show_history(train_loss_history, valid_loss_history, title = 'Loss', outputfile = f'steps/training_log_{name}/loss_history.png')
-            show_history(train_F1_history, valid_F1_history, title = 'F1 score', outputfile = f'steps/training_log_{name}/F1_history.png')
+            show_history(train_loss_history, valid_loss_history, title = 'Loss', outputfile = f'steps/training_log/loss_history.png')
+            show_history(train_F1_history, valid_F1_history, title = 'F1 score', outputfile = f'steps/training_log/F1_history.png')
         
-        show_matrices(input, target, output, output_file = f'steps/training_log_{name}/matrix_example.png')
+        show_matrices(input, target, output, output_file = f'steps/training_log/matrix_example.png')
 
         if val_loss < best_score:
            best_score = val_loss
            early_stopping_counter = 0
            #Save model
-           torch.save(model.state_dict(), f'RNA_Unet_{name}.pth')
+           torch.save(model.state_dict(), f'RNA_Unet.pth')
         else: 
            early_stopping_counter += 1
         
@@ -169,14 +169,14 @@ def fit_model(model, train_dataset, validtion_dataset, name, patience = 5, lr = 
 
     data = {"train_loss": train_loss_history, "train_F1": train_F1_history, "valid_loss": valid_loss_history, "valid_F1": valid_F1_history}
     df = pd.DataFrame(data)
-    df.to_csv(f'results/training_history_{name}.csv')
+    df.to_csv(f'results/training_history.csv')
 
 
 
 if __name__ == "__main__":
     name = sys.argv[1]
-    os.makedirs(f'steps/training_log_{name}', exist_ok=True)
-    logging.basicConfig(filename=f'steps/training_log_{name}/training_log.txt', level=logging.INFO)
+    os.makedirs(f'steps/training_log', exist_ok=True)
+    logging.basicConfig(filename=f'steps/training_log/training_log.txt', level=logging.INFO)
     
     train = pickle.load(open('data/train.pkl', 'rb'))
     valid = pickle.load(open('data/valid.pkl', 'rb'))

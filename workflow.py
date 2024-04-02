@@ -44,12 +44,18 @@ def make_complete_set():
 
 def train_model(): 
     inputs = []
-    outputs = ['RNA_Unet_gpu.pth']
-    options = {"memory":"32gb", "walltime":"5:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
-    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    outputs = ['RNA_Unet.pth']
+    options = {"memory":"24gb", "walltime":"10:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
+    spec = """CONDA_BASE=$(conda info --base)
+    source $CONDA_BASE/etc/profile.d/conda.sh
+    conda activate RNA_Unet
+
+    echo "Job ID: $SLURM_JOB_ID\n"
     nvidia-smi -L
+    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+    nvcc --version
     echo "Training neural network"
-    python3 scripts/training.py gpu"""
+    python3 scripts/training.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def train_model_cpu(): 
