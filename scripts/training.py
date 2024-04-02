@@ -1,4 +1,4 @@
-import torch, os, pickle, logging
+import torch, os, pickle, logging, sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -80,7 +80,7 @@ def show_matrices(inputs, observed, predicted, treshold=0.5, output_file = None)
   plt.close()
 
 
-def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, weigth_decay = 0, optimizer =utils.adam_optimizer, loss_function = utils.dice_loss, epochs = 50, batch_size = 1): 
+def fit_model(model, train_dataset, validtion_dataset, log_path, patience = 5, lr = 0.01, weigth_decay = 0, optimizer =utils.adam_optimizer, loss_function = utils.dice_loss, epochs = 50, batch_size = 1): 
     """
     """
     best_score = float('inf')
@@ -138,10 +138,10 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
 
         logging.info(f"Epoch {epoch+1}/{epochs}: Train loss: {train_loss_history[-1]:.4f}, Train F1: {train_F1_history[-1]:.4f}, Validation loss: {valid_loss_history[-1]:.4f}, Validation F1: {valid_F1_history[-1]:.4f}")
         if epoch > 0:
-            show_history(train_loss_history, valid_loss_history, title = 'Loss', outputfile = 'steps/training_log/loss_history.png')
-            show_history(train_F1_history, valid_F1_history, title = 'F1 score', outputfile = 'steps/training_log/F1_history.png')
+            show_history(train_loss_history, valid_loss_history, title = 'Loss', outputfile = log_path+'/loss_history.png')
+            show_history(train_F1_history, valid_F1_history, title = 'F1 score', outputfile = log_path+'/F1_history.png')
         
-        show_matrices(input, target, output, output_file = 'steps/training_log/matrix_example.png')
+        show_matrices(input, target, output, output_file = log_path+'/matrix_example.png')
 
         if val_loss < best_score:
            best_score = val_loss
@@ -166,8 +166,10 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
 
 
 if __name__ == "__main__":
-    os.makedirs('steps/training_log', exist_ok=True)
-    logging.basicConfig(filename='steps/training_log/training_log.txt', level=logging.INFO)
+    name = sys.argv[1]
+    log_path = f'steps/training_log_{name}'
+    os.makedirs(log_path, exist_ok=True)
+    logging.basicConfig(filename=log_path + '/training_log.txt', level=logging.INFO)
     
     train = pickle.load(open('data/train.pkl', 'rb'))
     valid = pickle.load(open('data/valid.pkl', 'rb'))
@@ -179,4 +181,4 @@ if __name__ == "__main__":
 
     model = utils.RNA_Unet()
 
-    fit_model(model, train_dataset, valid_dataset, epochs=1)
+    fit_model(model, train_dataset, valid_dataset, log_path, epochs=1)
