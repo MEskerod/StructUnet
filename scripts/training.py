@@ -1,4 +1,6 @@
-import torch, os, pickle, logging, sys, tqdm
+import torch, os, pickle, logging, sys
+
+from tqdm import tqdm
 
 import matplotlib.pyplot as plt
 import numpy as np
