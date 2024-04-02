@@ -1,4 +1,4 @@
-import torch, os, pickle, logging, sys
+import torch, os, pickle, logging, sys, tqdm
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -100,6 +100,8 @@ def fit_model(model, train_dataset, validtion_dataset, name, patience = 5, lr = 
     logging.info(f"Training model with {len(train_dl)} training samples and {len(valid_dl)} validation samples. Device: {device}")
 
     for epoch in range(epochs): 
+        progress_bar = tqdm(total = len(train_dl), desc = f'Training of epoch {epoch+1}', unit = 'batch')
+
         running_loss, running_F1 = 0.0, 0.0
         model.train()
 
@@ -118,6 +120,10 @@ def fit_model(model, train_dataset, validtion_dataset, name, patience = 5, lr = 
 
             running_loss += loss.item()
             running_F1 += utils.f1_score(output, target).item()
+
+            progress_bar.update(1)
+        
+        progress_bar.close()
         
         #Validation loss (only after each epoch)
         valid_loss, valid_F1 = 0.0, 0.0

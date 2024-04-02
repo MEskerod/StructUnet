@@ -55,7 +55,7 @@ def train_model():
 def train_model_cpu(): 
     inputs = []
     outputs = ['RNA_Unet_cpu.pth']
-    options = {"memory":"32gb", "walltime":"48:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime and test GPU
+    options = {"memory":"32gb", "walltime":"32:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime and test GPU
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     echo "Training neural network"
     python3 scripts/training.py cpu"""
