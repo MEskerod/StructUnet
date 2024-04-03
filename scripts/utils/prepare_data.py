@@ -32,7 +32,7 @@ def read_ct(file: str) -> tuple:
 
     for line in lines:
         sequence += line[1].upper() #Make sure the sequence is in upper case
-        pairs.append(int(line[4])-1) if line[4] != '0' else pairs.append(0)
+        pairs.append(int(line[4])-1) if line[4] != '0' else pairs.append(None)
 
     # Make sure the sequence is the same length as the pairs list
     assert len(sequence) == len(pairs)
@@ -305,7 +305,7 @@ def make_matrix_from_basepairs(pairs: list) -> torch.Tensor:
     N = len(pairs)
     matrix = np.full((N,N), 0, dtype="float32")
 
-    pairs = [p if p else index for index, p in enumerate(pairs)]
+    pairs = [p if isinstance(p, int) else index for index, p in enumerate(pairs)]
 
     for i in range(N):
         matrix[i, pairs[i]] = 1 
