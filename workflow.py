@@ -79,7 +79,7 @@ def predict_hotknots(file):
 def predict_ufold(files): 
     inputs = [os.path.join('data', 'train_under_600.pkl')]
     outputs = [file.replace('data/test_files', 'steps/Ufold') for file in files]
-    options = {"memory":"64gb", "walltime":"3:00:00", "account":"RNA_Unet"} #FIXME - Think about memory and walltime
+    options = {"memory":"64gb", "walltime":"24:00:00", "account":"RNA_Unet"} #FIXME - Think about memory and walltime
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/small_scripts/under_600_fasta.py
     mv input.txt ../UFOLD/data
