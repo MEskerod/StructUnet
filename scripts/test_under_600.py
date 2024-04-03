@@ -15,7 +15,7 @@ if __name__ == '__main__':
     print(f"Total files: {len(train)}")
     print("Finding files under 600")
 
-    progress = tqdm.tqdm(total=len(train), unit = 'files')
+    progress = tqdm(total=len(train), unit = 'files')
     
     for i, file in enumerate(train): 
         length = pickle.load(open(file, 'rb')).length
