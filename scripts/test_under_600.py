@@ -10,7 +10,7 @@ if __name__ == '__main__':
     files_idx = []
 
 
-    train = pickle.load(open('data/train.pkl', 'rb'))
+    train = pickle.load(open('data/test.pkl', 'rb'))
 
     print(f"Total files: {len(train)}")
     print("Finding files under 600")
@@ -28,5 +28,6 @@ if __name__ == '__main__':
     
 
     print(f"Files under 600: {len(files_idx)}")
+    print(f"Files over 600: {len(train) - len(files_idx)}")
 
     pickle.dump(files_idx, open('data/train_under_600.pkl', 'wb'))
