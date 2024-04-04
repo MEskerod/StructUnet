@@ -81,8 +81,7 @@ def predict_ufold(files):
     outputs = [file.replace('data/test_files', 'steps/Ufold') for file in files]
     options = {"memory":"64gb", "walltime":"24:00:00", "account":"RNA_Unet"} #FIXME - Think about memory and walltime
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    python3 scripts/small_scripts/under_600_fasta.py
-    mv input.txt ../UFOLD/data
+    python -c "with open('../UFOLD/data/input.txt', 'w') as f: f.write({files})"
 
     CONDA_BASE=$(conda info --base)
     source $CONDA_BASE/etc/profile.d/conda.sh
@@ -90,7 +89,7 @@ def predict_ufold(files):
 
     python3 ../UFOLD/ufold_predict.py
     mv ../UFOLD/results/* steps/Ufold/
-    rm ../UFOLD/data/input.txt"""
+    rm ../UFOLD/data/input.txt""".format(files = '\n'.join(files))
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def evaluate_nn(): 
