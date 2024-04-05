@@ -70,9 +70,11 @@ def predict_hotknots(file):
 def predict_ufold(files): 
     inputs = [os.path.join('data', 'train_under_600.pkl')]
     outputs = [file.replace('data/test_files', 'steps/Ufold') for file in files]
-    options = {"memory":"32gb", "walltime":"24:00:00", "account":"RNA_Unet"} #FIXME - Think about memory and walltime
+    options = {"memory":"32gb", "walltime":"2:00:00", "account":"RNA_Unet"} #FIXME - Think about memory and walltime
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    python -c "with open('input.txt', 'w') as f: f.write({files})"
+    echo "{files}"
+    
+    echo "{files}" > input.txt
 
     CONDA_BASE=$(conda info --base)
     source $CONDA_BASE/etc/profile.d/conda.sh
@@ -128,7 +130,7 @@ for i, file in enumerate(test_files):
 
 
 #Ufold
-files = [test_files[i] for i in under_600]
+files = [test_files[i] for i in under_600[:5]]
 gwf.target_from_template(f'predict_ufold_file', predict_ufold(files))
 
 
