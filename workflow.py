@@ -81,8 +81,8 @@ def predict_ufold(files):
     conda activate UFold
 
     python3 ../UFOLD/ufold_predict.py
-    mv results/* steps/Ufold/
-    rm -r results
+    mv results_Ufold/* steps/Ufold/
+    rm -r results_Ufold
     rm input.txt""".format(files = '\n'.join(files))
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
