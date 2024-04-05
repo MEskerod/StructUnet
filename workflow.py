@@ -130,7 +130,7 @@ for i, file in enumerate(test_files):
 
 
 #Ufold
-files = [test_files[i] for i in under_600[:5]]
+files = [test_files[i] for i in under_600]
 gwf.target_from_template(f'predict_ufold_file', predict_ufold(files))
 
 
