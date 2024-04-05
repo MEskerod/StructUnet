@@ -70,10 +70,8 @@ def predict_hotknots(file):
 def predict_ufold(files): 
     inputs = [os.path.join('data', 'train_under_600.pkl')]
     outputs = [file.replace('data/test_files', 'steps/Ufold') for file in files]
-    options = {"memory":"32gb", "walltime":"2:00:00", "account":"RNA_Unet"} #FIXME - Think about memory and walltime
+    options = {"memory":"32gb", "walltime":"12:00:00", "account":"RNA_Unet"} #FIXME - Think about memory and walltime
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    echo "{files}"
-    
     echo "{files}" > input.txt
 
     CONDA_BASE=$(conda info --base)
