@@ -1,4 +1,4 @@
-import torch, os, pickle, logging, sys
+import torch, os, pickle, logging
 
 from tqdm import tqdm
 
@@ -174,7 +174,6 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
 
 
 if __name__ == "__main__":
-    name = sys.argv[1]
     os.makedirs(f'steps/training_log', exist_ok=True)
     logging.basicConfig(filename=f'steps/training_log/training_log.txt', level=logging.INFO)
     
