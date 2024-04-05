@@ -45,7 +45,7 @@ def make_complete_set():
 def train_model(): 
     inputs = []
     outputs = ['RNA_Unet.pth']
-    options = {"memory":"24gb", "walltime":"06:30:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
+    options = {"memory":"24gb", "walltime":"10:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
     spec = """CONDA_BASE=$(conda info --base)
     source $CONDA_BASE/etc/profile.d/conda.sh
     conda activate RNA_Unet
