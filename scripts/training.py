@@ -187,4 +187,4 @@ if __name__ == "__main__":
 
     model = utils.RNA_Unet()
 
-    fit_model(model, train_dataset, valid_dataset, name, epochs=1)
+    fit_model(model, train_dataset, valid_dataset, epochs=1)

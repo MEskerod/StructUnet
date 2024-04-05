@@ -58,15 +58,6 @@ def train_model():
     python3 scripts/training.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def train_model_cpu(): 
-    inputs = []
-    outputs = ['RNA_Unet_cpu.pth']
-    options = {"memory":"32gb", "walltime":"32:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime and test GPU
-    spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    echo "Training neural network"
-    python3 scripts/training.py cpu"""
-    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
-
 ### EVALUATION ###
 
 def predict_hotknots(file): 
@@ -79,17 +70,18 @@ def predict_hotknots(file):
 def predict_ufold(files): 
     inputs = [os.path.join('data', 'train_under_600.pkl')]
     outputs = [file.replace('data/test_files', 'steps/Ufold') for file in files]
-    options = {"memory":"64gb", "walltime":"24:00:00", "account":"RNA_Unet"} #FIXME - Think about memory and walltime
+    options = {"memory":"32gb", "walltime":"24:00:00", "account":"RNA_Unet"} #FIXME - Think about memory and walltime
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    python -c "with open('../UFOLD/data/input.txt', 'w') as f: f.write({files})"
+    python -c "with open('input.txt', 'w') as f: f.write({files})"
 
     CONDA_BASE=$(conda info --base)
     source $CONDA_BASE/etc/profile.d/conda.sh
     conda activate UFold
 
     python3 ../UFOLD/ufold_predict.py
-    mv ../UFOLD/results/* steps/Ufold/
-    rm ../UFOLD/data/input.txt""".format(files = '\n'.join(files))
+    mv results/* steps/Ufold/
+    rm -r results
+    rm input.txt""".format(files = '\n'.join(files))
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def evaluate_nn(): 
@@ -120,8 +112,6 @@ gwf.target_from_template('time_convert', convert_time())
 gwf.target_from_template('convert_data', make_complete_set())
 
 gwf.target_from_template('train_model', train_model())
-
-gwf.target_from_template('train_model_cpu', train_model_cpu())
 
 
 
