@@ -275,41 +275,41 @@ class RNA_Unet(nn.Module):
 
         #Encoder
         xe1 = self.e1(x)
-        xp1 = self.pool1(xe1)
+        x = self.pool1(xe1)
 
-        xe2 = self.e2(xp1)
-        xp2 = self.pool2(xe2)
+        xe2 = self.e2(x)
+        x = self.pool2(xe2)
 
-        xe3 = self.e3(xp2)
-        xp3 = self.pool3(xe3)
+        xe3 = self.e3(x)
+        x = self.pool3(xe3)
 
-        xe4 = self.e4(xp3)
-        xp4 = self.pool4(xe4)
+        xe4 = self.e4(x)
+        x = self.pool4(xe4)
 
-        xe5 = self.e5(xp4)
+        x = self.e5(x)
 
         #Decoder
-        xu1 = self.upconv1(xe5)
-        xu11 = torch.cat([xu1, xe4], dim=1)
-        xd1 = self.d1(xu11)
+        x = self.upconv1(x)
+        x = torch.cat([x, xe4], dim=1)
+        x = self.d1(x)
 
-        xu2 = self.upconv2(xd1)
-        xu22 = torch.cat([xu2, xe3], dim=1)
-        xd2 = self.d2(xu22)
+        x = self.upconv2(x)
+        x = torch.cat([x, xe3], dim=1)
+        x = self.d2(x)
 
-        xu3 = self.upconv3(xd2)
-        xu33 = torch.cat([xu3, xe2], dim=1)
-        xd3 = self.d3(xu33)
+        x = self.upconv3(x)
+        x = torch.cat([x, xe2], dim=1)
+        x = self.d3(x)
 
-        xu4 = self.upconv4(xd3)
-        xu44 = torch.cat([xu4, xe1], dim=1)
-        xd4 = self.d4(xu44)
+        x = self.upconv4(x)
+        x = torch.cat([x, xe1], dim=1)
+        x = self.d4(x)
 
-        out = self.out(xd4)
+        x = self.out(x)
 
-        out = out[:, :, :dim, :dim]
+        x = x[:, :, :dim, :dim]
 
-        return out
+        return x
 
 
 ### EVALUATION FUNCTIONS ###

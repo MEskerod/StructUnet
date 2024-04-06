@@ -60,6 +60,7 @@ def process_file(file: str, output_folder: str):
         
         family = getFamily(file)
         sequence, pairs = prepare_data.read_ct(file)
+        length = len(sequence)
         input_matrix = prepare_data.make_matrix_from_sequence_8(sequence)
         output_matrix = prepare_data.make_matrix_from_basepairs(pairs)
 
