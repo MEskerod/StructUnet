@@ -119,7 +119,7 @@ def predict_cnnfold(files):
     inputs = ['data/test.pkl']
     outputs = [file.replace('data/test_files', 'steps/CNNfold') for file in files]
     options = {"memory":"32gb", "walltime":"12:00:00", "account":"RNA_Unet"}
-    """echo "Job ID: $SLURM_JOB_ID\n"
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
 
     python3 ../CNNfold/predict.py
     mv results_CNNfold/* steps/CNNfold/
