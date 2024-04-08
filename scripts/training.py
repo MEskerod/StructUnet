@@ -171,7 +171,8 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
     df = pd.DataFrame(data)
     df.to_csv(f'results/training_history.csv')
 
-
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 if __name__ == "__main__":
     os.makedirs(f'steps/training_log', exist_ok=True)
@@ -186,5 +187,7 @@ if __name__ == "__main__":
     valid_dataset = utils.ImageToImageDataset(valid)
 
     model = utils.RNA_Unet()
+
+    #logging.info(f"Model has {count_parameters(model)} trainable parameters.")
 
     fit_model(model, train_dataset, valid_dataset, epochs=1)
