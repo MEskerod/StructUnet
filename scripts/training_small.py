@@ -155,7 +155,7 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
            best_score = val_loss
            early_stopping_counter = 0
            #Save model
-           torch.save(model.state_dict(), f'RNA_Unet.pth')
+           torch.save(model.state_dict(), f'RNA_Unet_small.pth')
         else: 
            early_stopping_counter += 1
         

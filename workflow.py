@@ -60,7 +60,7 @@ def train_model():
 
 def train_model_small(): 
     inputs = []
-    outputs = ['RNA_Unet.pth']
+    outputs = ['RNA_Unet_small.pth']
     options = {"memory":"24gb", "walltime":"10:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
     spec = """CONDA_BASE=$(conda info --base)
     source $CONDA_BASE/etc/profile.d/conda.sh
@@ -76,7 +76,7 @@ def train_model_small():
 
 def train_model_small_cpu(): 
     inputs = []
-    outputs = ['RNA_Unet.pth']
+    outputs = ['RNA_Unet_small.pth']
     options = {"memory":"24gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime and test GPU
     spec = """
     echo "Job ID: $SLURM_JOB_ID\n"
