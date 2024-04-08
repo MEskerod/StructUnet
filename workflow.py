@@ -7,7 +7,8 @@ def make_experiment_data(matrix_type):
     inputs = [os.path.join('data', 'RNAStralign.tar.gz')]
     outputs = [os.path.join('data', f'experiment{matrix_type}.tar.gz')]
     options = {"memory":"16gb", "walltime":"03:00:00", "account":"RNA_Unet"}
-    spec = """python3 scripts/experiment_files.py {matrix_type}
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/experiment_files.py {matrix_type}
     tar -czf data/experiment{matrix_type}.tar.gz data/experiment{matrix_type}
     rm -r data/experiment{matrix_type}""".format(matrix_type = matrix_type)
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
@@ -17,7 +18,8 @@ def postprocess_time():
     outputs = [os.path.join('results', 'postprocess_time.csv'),
                os.path.join('figures', 'postprocess_time.png')]
     options = {"memory": "16gb", "walltime": "36:00:00", "account":"RNA_Unet", "cores": 4}
-    spec = """python3 scripts/time_postprocessing.py"""
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/time_postprocessing.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def convert_time(): 
@@ -25,7 +27,8 @@ def convert_time():
     outputs = [os.path.join('results', 'convert_time.csv'),
                os.path.join('figures', 'convert_time.png')]
     options = {"memory": "16gb", "walltime": "24:00:00", "account":"RNA_Unet"}
-    spec = """python3 scripts/time_matrix_conversion.py"""
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/time_matrix_conversion.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 
@@ -38,7 +41,8 @@ def make_complete_set():
                os.path.join('figures', 'length_distribution.png'),
                os.path.join('figures', 'family_distribution.png')]
     options = {"memory":"16gb", "walltime":"6:00:00", "account":"RNA_Unet", "cores":4}
-    spec = """python3 scripts/complete_dataset.py
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/complete_dataset.py
     tar -czf data/test_files.tar.gz data/test_files"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)    
 
@@ -90,13 +94,14 @@ def predict_hotknots(file):
     inputs = [file]
     outputs = [os.path.join('steps', 'hotknots', os.path.basename(file))]
     options = {"memory":"64gb", "walltime":"3:00:00", "account":"RNA_Unet"} 
-    spec = """python3 ../HotKnots/hotknots.py "{file}" "steps/hotknots/{output}" """.format(file = file, output = os.path.basename(file))
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 ../HotKnots/hotknots.py "{file}" "steps/hotknots/{output}" """.format(file = file, output = os.path.basename(file))
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def predict_ufold(files): 
     inputs = [os.path.join('data', 'train_under_600.pkl')]
     outputs = [file.replace('data/test_files', 'steps/Ufold') for file in files]
-    options = {"memory":"32gb", "walltime":"12:00:00", "account":"RNA_Unet"} #FIXME - Think about memory and walltime
+    options = {"memory":"32gb", "walltime":"3:00:00", "account":"RNA_Unet"} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     echo "{files}" > input.txt
 
@@ -110,12 +115,24 @@ def predict_ufold(files):
     rm input.txt""".format(files = '\n'.join(files))
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
+def predict_cnnfold(files): 
+    inputs = ['data/test.pkl']
+    outputs = [file.replace('data/test_files', 'steps/CNNfold') for file in files]
+    options = {"memory":"32gb", "walltime":"12:00:00", "account":"RNA_Unet"}
+    """echo "Job ID: $SLURM_JOB_ID\n"
+
+    python3 ../CNNfold/predict.py
+    mv results_CNNfold/* steps/CNNfold/
+    rm -r results_CNNfold"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+
 def evaluate_nn(): 
     inputs = [os.path.join('data', 'test_files.tar.gz')] #FIXME - Add path to model
     outputs = [os.path.join('results', 'evaluation_nn.csv'),
                os.path.join('figures', 'evaluation_nn.png')]
     options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
-    spec = """
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/evaluate_nn.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) #TODO - Add some commands!
 
@@ -156,6 +173,9 @@ for i, file in enumerate(test_files):
 
 #Ufold
 files = [test_files[i] for i in under_600]
-gwf.target_from_template(f'predict_ufold_file', predict_ufold(files))
+gwf.target_from_template(f'predict_ufold', predict_ufold(files))
+
+#CNNfold
+gwf.target_from_template(f'predict_cnnfold', predict_cnnfold(test_files))
 
 

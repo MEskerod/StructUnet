@@ -5,6 +5,8 @@ import torch
 import torch.optim as optim
 from torch.utils import data
 
+import numpy as np
+
 from itertools import product
 
 from Network import U_Net as FCNNet
