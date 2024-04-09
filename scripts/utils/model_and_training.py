@@ -148,107 +148,107 @@ class RNA_Unet(nn.Module):
         # Encoder
         self.e1 = nn.Sequential(
            nn.Conv2d(in_channels, channels, kernel_size=3, padding=1),
-           nn.BatchNorm2d(channels),
+           nn.BatchNorm2d(channels, affine=False),
            nn.LeakyReLU(negative_slope=negative_slope),
            nn.Conv2d(channels, channels, kernel_size=3, padding=1),
-           nn.BatchNorm2d(channels),
+           nn.BatchNorm2d(channels, affine=False),
            nn.LeakyReLU(negative_slope=negative_slope),
         )
         self.pool1 = pooling(channels, channels, kernel_size=2, stride=2)
 
         self.e2 = nn.Sequential(
             nn.Conv2d(channels, channels*2, kernel_size=3, padding=1),
-            nn.BatchNorm2d(channels*2),
+            nn.BatchNorm2d(channels*2, affine=False),
             nn.LeakyReLU(negative_slope=negative_slope),
             nn.Conv2d(channels*2, channels*2, kernel_size=3, padding=1),
-            nn.BatchNorm2d(channels*2),
+            nn.BatchNorm2d(channels*2, affine=False),
             nn.LeakyReLU(negative_slope=negative_slope),
         )
         self.pool2 = pooling(channels*2, channels*2, kernel_size=2, stride=2)
 
         self.e3 = nn.Sequential(
             nn.Conv2d(channels*2, channels*4, kernel_size=3, padding=1),
-            nn.BatchNorm2d(channels*4),
+            nn.BatchNorm2d(channels*4, affine=False),
             nn.LeakyReLU(negative_slope=negative_slope),
             nn.Conv2d(channels*4, channels*4, kernel_size=3, padding=1),
-            nn.BatchNorm2d(channels*4),
+            nn.BatchNorm2d(channels*4, affine=False),
             nn.LeakyReLU(negative_slope=negative_slope),
         )
         self.pool3 = pooling(channels*4, channels*4, kernel_size=2, stride=2)
 
         self.e4 = nn.Sequential(
             nn.Conv2d(channels*4, channels*8, kernel_size=3, padding=1),
-            nn.BatchNorm2d(channels*8),
+            nn.BatchNorm2d(channels*8, affine=False),
             nn.LeakyReLU(negative_slope=negative_slope),
             nn.Conv2d(channels*8, channels*8, kernel_size=3, padding=1),
-            nn.BatchNorm2d(channels*8),
+            nn.BatchNorm2d(channels*8, affine=False),
             nn.LeakyReLU(negative_slope=negative_slope),
         )
         self.pool4 = pooling(channels*8, channels*8, kernel_size=2, stride=2)
 
         self.e5 = nn.Sequential(
             nn.Conv2d(channels*8, channels*16, kernel_size=3, padding=1),
-            nn.BatchNorm2d(channels*16),
+            nn.BatchNorm2d(channels*16, affine=False),
             nn.LeakyReLU(negative_slope=negative_slope),
             nn.Conv2d(channels*16, channels*16, kernel_size=3, padding=1),
-            nn.BatchNorm2d(channels*16),
+            nn.BatchNorm2d(channels*16, affine=False),
             nn.LeakyReLU(negative_slope=negative_slope),
         )
 
         #Decoder
         self.upconv1 = nn.Sequential(
             nn.ConvTranspose2d(channels*16, channels*8, kernel_size=2, stride=2),
-            nn.BatchNorm2d(channels*8),
+            nn.BatchNorm2d(channels*8, affine=False),
             nn.LeakyReLU(negative_slope=negative_slope),
         )
         self.d1 = nn.Sequential(
            nn.Conv2d(channels*16, channels*8, kernel_size=3, padding=1),
-           nn.BatchNorm2d(channels*8),
+           nn.BatchNorm2d(channels*8, affine=False),
            nn.LeakyReLU(negative_slope=negative_slope),
            nn.Conv2d(channels*8, channels*8, kernel_size=3, padding=1),
-           nn.BatchNorm2d(channels*8),
+           nn.BatchNorm2d(channels*8, affine=False),
            nn.LeakyReLU(negative_slope=negative_slope),
         )
         
         self.upconv2 = nn.Sequential(
             nn.ConvTranspose2d(channels*8, channels*4, kernel_size=2, stride=2),
-            nn.BatchNorm2d(channels*4),
+            nn.BatchNorm2d(channels*4, affine=False),
             nn.LeakyReLU(negative_slope=negative_slope),
         )
         self.d2 = nn.Sequential(
            nn.Conv2d(channels*8, channels*4, kernel_size=3, padding=1),
-           nn.BatchNorm2d(channels*4),
+           nn.BatchNorm2d(channels*4, affine=False),
            nn.LeakyReLU(negative_slope=negative_slope),
            nn.Conv2d(channels*4, channels*4, kernel_size=3, padding=1),
-           nn.BatchNorm2d(channels*4),
+           nn.BatchNorm2d(channels*4, affine=False),
            nn.LeakyReLU(negative_slope=negative_slope),
         )
 
         self.upconv3 = nn.Sequential(
             nn.ConvTranspose2d(channels*4, channels*2, kernel_size=2, stride=2),
-            nn.BatchNorm2d(channels*2),
+            nn.BatchNorm2d(channels*2, affine=False),
             nn.LeakyReLU(negative_slope=negative_slope),
         )
         self.d3 = nn.Sequential(
            nn.Conv2d(channels*4, channels*2, kernel_size=3, padding=1),
-           nn.BatchNorm2d(channels*2),
+           nn.BatchNorm2d(channels*2, affine=False),
            nn.LeakyReLU(negative_slope=negative_slope),
            nn.Conv2d(channels*2, channels*2, kernel_size=3, padding=1),
-           nn.BatchNorm2d(channels*2),
+           nn.BatchNorm2d(channels*2, affine=False),
            nn.LeakyReLU(negative_slope=negative_slope),
         )
 
         self.upconv4 = nn.Sequential(
             nn.ConvTranspose2d(channels*2, channels, kernel_size=2, stride=2),
-            nn.BatchNorm2d(channels),
+            nn.BatchNorm2d(channels, affine=False),
             nn.LeakyReLU(negative_slope=negative_slope),
         )
         self.d4 = nn.Sequential(
            nn.Conv2d(channels*2, channels, kernel_size=3, padding=1),
-           nn.BatchNorm2d(channels),
+           nn.BatchNorm2d(channels, affine=False),
            nn.LeakyReLU(negative_slope=negative_slope),
            nn.Conv2d(channels, channels, kernel_size=3, padding=1),
-           nn.BatchNorm2d(channels),
+           nn.BatchNorm2d(channels, affine=False),
            nn.LeakyReLU(negative_slope=negative_slope),
         )
 
@@ -264,9 +264,9 @@ class RNA_Unet(nn.Module):
           gain = nn.init.calculate_gain("leaky_relu", self.negative_slope)
           nn.init.xavier_uniform_(layer.weight, gain=gain)
           nn.init.zeros_(layer.bias)
-        elif isinstance(layer, nn.BatchNorm2d):
-          nn.init.constant_(layer.weight, 1)
-          nn.init.constant_(layer.bias, 0)
+        #elif isinstance(layer, nn.BatchNorm2d):
+        #  nn.init.constant_(layer.weight, 1)
+        #  nn.init.constant_(layer.bias, 0)
 
 
     def forward(self, x):
