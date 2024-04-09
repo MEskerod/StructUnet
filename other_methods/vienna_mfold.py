@@ -69,10 +69,10 @@ if __name__ == "__main__":
 	
     os.makedirs('steps/vienna_mfold', exist_ok=True)
     
-    test = pickle.load(open('data/test.pkl', 'rb'), file=sys.stdout)
+    test = pickle.load(open('data/test.pkl', 'rb'))
 
     print("Predicting RNA secondary structure using ViennaRNA")
-    progress_bar = tqdm(total=len(test), desc="Predicting vienna mfold", unit="file")
+    progress_bar = tqdm(total=len(test), desc="Predicting vienna mfold", unit="file", file=sys.stdout)
     for file in test: 
         progress_bar.update(1)
         sequence = pickle.load(open(file, 'rb')).sequence
