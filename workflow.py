@@ -133,6 +133,7 @@ def predict_vienna(files):
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     
     python3 other_methods/vienna_mfold.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 
 
