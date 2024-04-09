@@ -1,4 +1,4 @@
-import torch, os, pickle, logging
+import torch, os, pickle, logging, sys
 
 from tqdm import tqdm
 
@@ -107,35 +107,47 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
         running_loss, running_F1 = 0.0, 0.0
         model.train()
 
-        for input, target in train_dl: 
-            input, target = input.to(device), target.to(device).unsqueeze(1) #Since the model expects a channel dimension target needs to be unsqueezed
+        try:
+          for input, target in train_dl: 
+              #input, target = input.to(device), target.to(device).unsqueeze(1) #Since the model expects a channel dimension target needs to be unsqueezed
+              input, target = input.to(device), target.unsqueeze(1) #Since the model expects a channel dimension target needs to be unsqueezed
 
-            #Forward pass
-            opt.zero_grad()
-            output = model(input)
+              #Forward pass
+              opt.zero_grad()
+              output = model(input)
 
-            loss = loss_function(output, target)
+              output = output.cpu()
+              loss = loss_function(output, target)
+              loss = loss.to(device)
             
-            #Backward pass
-            loss.backward()
-            opt.step()
+              #Backward pass
+              loss.backward()
+              opt.step()
 
-            running_loss += loss.item()
-            running_F1 += utils.f1_score(output, target).item()
+              running_loss += loss.item()
+              running_F1 += utils.f1_score(output, target).item()
 
-            progress_bar.update(1)
+              progress_bar.update(1)
+        except Exception as e:
+          print(e, file=sys.stderr)
+          print("Input shape:", input.shape, file=sys.stderr)
+          print("Target shape:", target.shape, file=sys.stderr)
+          sys.exit(1)    
+        
         
         progress_bar.close()
+        
+        show_matrices(input, target, output, output_file = f'steps/training_log_small/matrix_example.png')
         
         #Validation loss (only after each epoch)
         valid_loss, valid_F1 = 0.0, 0.0
         with torch.no_grad():
-            for valid_input, valid_target in valid_dl: 
-                valid_input, valid_target = valid_input.to(device), valid_target.to(device).unsqueeze(1)
+            for input, target in valid_dl: 
+                input, target = input.to(device), target.to(device).unsqueeze(1)
 
-                valid_output = model(valid_input)
-                valid_loss += loss_function(valid_output, valid_target).item()
-                valid_F1 += utils.f1_score(valid_output, valid_target).item()
+                output = model(input)
+                valid_loss += loss_function(output, target).item()
+                valid_F1 += utils.f1_score(output, target).item()
         
         val_loss = valid_loss/len(valid_dl)
         
@@ -149,7 +161,6 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
             show_history(train_loss_history, valid_loss_history, title = 'Loss', outputfile = f'steps/training_log_small/loss_history.png')
             show_history(train_F1_history, valid_F1_history, title = 'F1 score', outputfile = f'steps/training_log_small/F1_history.png')
         
-        show_matrices(input, target, output, output_file = f'steps/training_log_small/matrix_example.png')
 
         if val_loss < best_score:
            best_score = val_loss

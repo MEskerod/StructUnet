@@ -65,7 +65,7 @@ def train_model():
 def train_model_small(): 
     inputs = []
     outputs = ['RNA_Unet_small.pth']
-    options = {"memory":"24gb", "walltime":"10:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
+    options = {"memory":"16gb", "walltime":"10:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
     spec = """CONDA_BASE=$(conda info --base)
     source $CONDA_BASE/etc/profile.d/conda.sh
     conda activate RNA_Unet
@@ -101,7 +101,7 @@ def predict_hotknots(file):
 def predict_ufold(files): 
     inputs = [os.path.join('data', 'train_under_600.pkl')]
     outputs = [file.replace('data/test_files', 'steps/Ufold') for file in files]
-    options = {"memory":"32gb", "walltime":"3:00:00", "account":"RNA_Unet"} 
+    options = {"memory":"16gb", "walltime":"3:00:00", "account":"RNA_Unet"} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     echo "{files}" > input.txt
 
@@ -116,12 +116,12 @@ def predict_ufold(files):
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def predict_cnnfold(files): 
-    inputs = ['data/test.pkl']
+    inputs = [file for file in files]
     outputs = [file.replace('data/test_files', 'steps/CNNfold') for file in files]
-    options = {"memory":"32gb", "walltime":"12:00:00", "account":"RNA_Unet"}
+    options = {"memory":"16gb", "walltime":"32:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
 
-    python3 ../CNNfold/predict.py
+    python3 ../CNNfold/cnnfold_predic.py
     mv results_CNNfold/* steps/CNNfold/
     rm -r results_CNNfold"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
