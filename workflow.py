@@ -121,7 +121,7 @@ def predict_cnnfold(files):
     options = {"memory":"16gb", "walltime":"32:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
 
-    python3 ../CNNfold/cnnfold_predic.py
+    python3 ../CNNfold/cnnfold_predict.py
     mv results_CNNfold/* steps/CNNfold/
     rm -r results_CNNfold"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
