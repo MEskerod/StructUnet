@@ -143,9 +143,10 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
         valid_loss, valid_F1 = 0.0, 0.0
         with torch.no_grad():
             for input, target in valid_dl: 
-                input, target = input.to(device), target.to(device).unsqueeze(1)
+                input, target = input.to(device), target.unsqueeze(1)
 
                 output = model(input)
+                output = output.cpu()
                 valid_loss += loss_function(output, target).item()
                 valid_F1 += utils.f1_score(output, target).item()
         
