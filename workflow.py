@@ -85,6 +85,7 @@ def train_model_small_cpu():
     spec = """
     echo "Job ID: $SLURM_JOB_ID\n"
     echo "Training neural network"
+    export PYTORCH_CUDA_ALLOC_CONF=expand
     python3 scripts/training_small.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
