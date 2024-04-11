@@ -173,7 +173,7 @@ gwf.target_from_template(f'predict_vienna', predict_vienna(test_files))
 methods_under600 = ['hotknots', 'Ufold']
 methods = ['CNNfold', 'vienna_mfold', 'RNAUnet']
 
-gwf.target_from_template('evaluate_nn', evaluate_nn(test_files))
-gwf.target_from_template('compare_methods', compare_methods(methods_under600, files, methods, test_files))
+#gwf.target_from_template('evaluate_nn', evaluate_nn(test_files))
+#gwf.target_from_template('compare_methods', compare_methods(methods_under600, files, methods, test_files))
 
 
