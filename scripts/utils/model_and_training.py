@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset
-from scipy.signal import convolve2d
+#from scipy.signal import convolve2d
 
 RNA = namedtuple('RNA', 'input output length family name sequence')
 
