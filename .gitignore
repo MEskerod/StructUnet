@@ -1,4 +1,11 @@
-data/*
+data/experiment8.tar.gz
+data/experiment9.tar.gz
+data/experiment17.tar.gz
+data/RNAStralign.tar.gz
+data/complete_set/*
+data/complete_set.tar.gz
+data/test_files/*
+data/test_files.tar.gz
 
 __pycache__
 */__pycache__
