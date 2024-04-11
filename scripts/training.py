@@ -1,5 +1,6 @@
 import torch, os, pickle, logging, sys
 
+import torch.utils
 from tqdm import tqdm
 
 import matplotlib.pyplot as plt
@@ -13,7 +14,19 @@ from torch.utils.data import DataLoader
 import utils.model_and_training as utils
 
 
-def show_history(train_history, valid_history, title = None, outputfile = None):
+def show_history(train_history: list, valid_history: list, title = None, outputfile = None) -> None:
+    """
+    Plots the training and validation history of a model.
+
+    Parameters:
+    - train_history (list): List of training history values (loss, F1 score, etc.).
+    - valid_history (list): List of validation history values (loss, F1 score, etc.).
+    - title (str): Title of the plot. Is also used as label for the y-axis.
+    - outputfile (str): Path to save the plot as an image file.
+
+    Returns:
+    - None
+    """
     assert len(train_history) == len(valid_history)
     
     x = list(range(1, len(train_history)+1))
@@ -32,8 +45,15 @@ def show_history(train_history, valid_history, title = None, outputfile = None):
         plt.savefig(outputfile, bbox_inches = 'tight')
     plt.show()
 
-def onehot_to_image(array: np.ndarray):
+def onehot_to_image(array: np.ndarray) -> np.ndarray:
   """
+  Converts a one-hot encoded array with 8 channels to an RGB image.
+
+  Parameters:
+  - array (np.ndarray): A 3D NumPy array with shape (height, width, 8).
+
+  Returns:
+  - np.ndarray: A 3D NumPy array with shape (height, width, 3) representing an RGB image.
   """
   channel_to_color = {0: [255, 255, 255], #invalid pairing = white
                       1: [64, 64, 64], #unpaired = gray
@@ -54,8 +74,19 @@ def onehot_to_image(array: np.ndarray):
 
   return rgb_image
 
-def show_matrices(inputs, observed, predicted, treshold=0.5, output_file = None):
+def show_matrices(inputs: torch.Tensor, observed: torch.Tensor, predicted: torch.Tensor, treshold=0.5, output_file = None) -> None:
   """
+  Plots the input, observed, predicted, and binary predicted matrices side by side.
+
+  Parameters:
+  - inputs (torch.Tensor): The input matrix.
+  - observed (torch.Tensor): The observed matrix.
+  - predicted (torch.Tensor): The predicted matrix.
+  - treshold (float): The treshold to use for the binary predicted matrix. Default is 0.5.
+  - output_file (str): OPTIONAL. Path to save the plot as an image file. If None, the plot is displayed.
+
+  Returns:
+  - None
   """
   fig, axs = plt.subplots(1, 4, figsize=(6,2))
   
@@ -75,15 +106,33 @@ def show_matrices(inputs, observed, predicted, treshold=0.5, output_file = None)
   plt.tight_layout()
 
   if output_file:
-    plt.savefig(output_file)
+    plt.savefig(output_file, bbox_inches = 'tight')
   else:
     plt.show()
 
   plt.close()
 
 
-def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, weigth_decay = 0, optimizer =utils.adam_optimizer, loss_function = utils.dice_loss, epochs = 60, batch_size = 1): 
+def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience: int = 5, lr: float = 0.01, weigth_decay: float = 0.0, optimizer =utils.adam_optimizer, loss_function = utils.dice_loss, epochs: int = 60, batch_size: int = 1) -> dict: 
     """
+    Trains a model on a training dataset and validates it on a validation dataset.
+    Is implemented with early stopping. 
+    The best model is saved as 'RNA_Unet.pth'.
+
+    Parameters:
+    - model (torch.nn.Module): The model to train.
+    - train_dataset (torch.utils.data.Dataset): The training dataset.
+    - validtion_dataset (torch.utils.data.Dataset): The validation dataset.
+    - patience (int): The number of epochs without improvement before stopping training. Default is 5.
+    - lr (float): The learning rate for the optimizer. Default is 0.01.
+    - weigth_decay (float): The weight decay for the optimizer. Default is 0.
+    - optimizer (function): The optimizer to use. Default is utils.adam_optimizer.
+    - loss_function (function): The loss function to use. Default is utils.dice_loss.
+    - epochs (int): The number of epochs to train. Default is 60.
+    - batch_size (int): The batch size for training. Default is 1.
+
+    Returns:
+    - dict: A dictionary with the training history. Keys are 'train_loss', 'train_F1', 'valid_loss', 'valid_F1'.
     """
     best_score = float('inf')
     early_stopping_counter = 0
@@ -110,7 +159,6 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
 
         try:
           for input, target in train_dl: 
-              #input, target = input.to(device), target.to(device).unsqueeze(1) #Since the model expects a channel dimension target needs to be unsqueezed
               input, target = input.to(device), target.unsqueeze(1) #Since the model expects a channel dimension target needs to be unsqueezed
 
               #Forward pass
@@ -138,7 +186,7 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
         
         progress_bar.close()
         
-        show_matrices(input, target, output, output_file = f'steps/training_log/matrix_example.png')
+        show_matrices(input, target, output, output_file = 'steps/training_log/matrix_example.png')
         
         #Validation loss (only after each epoch)
         logging.info("Start validation...")
@@ -164,8 +212,8 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
 
         logging.info(f"Epoch {epoch+1}/{epochs}: Train loss: {train_loss_history[-1]:.4f}, Train F1: {train_F1_history[-1]:.4f}, Validation loss: {valid_loss_history[-1]:.4f}, Validation F1: {valid_F1_history[-1]:.4f}")
         if epoch > 0:
-            show_history(train_loss_history, valid_loss_history, title = 'Loss', outputfile = f'steps/training_log/loss_history.png')
-            show_history(train_F1_history, valid_F1_history, title = 'F1 score', outputfile = f'steps/training_log/F1_history.png')
+            show_history(train_loss_history, valid_loss_history, title = 'Loss', outputfile = 'steps/training_log/loss_history.png')
+            show_history(train_F1_history, valid_F1_history, title = 'F1 score', outputfile = 'steps/training_log/F1_history.png')
         
 
         if val_loss < best_score:
@@ -183,17 +231,19 @@ def fit_model(model, train_dataset, validtion_dataset, patience = 5, lr = 0.01, 
             logging.info(f'EARLY STOPPING TRIGGERED: No improvement in {patience} epochs. Stopping training.')
             break
     
-
+    #Save data to csv
     data = {"train_loss": train_loss_history, "train_F1": train_F1_history, "valid_loss": valid_loss_history, "valid_F1": valid_F1_history}
     df = pd.DataFrame(data)
-    df.to_csv(f'results/training_history.csv')
+    df.to_csv('results/training_history.csv')
+
+    return data
 
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 if __name__ == "__main__":
-    os.makedirs(f'steps/training_log', exist_ok=True)
+    os.makedirs('steps/training_log', exist_ok=True)
     logging.basicConfig(filename=f'steps/training_log/training_log.txt', level=logging.INFO)
     
     train = pickle.load(open('data/train.pkl', 'rb'))
