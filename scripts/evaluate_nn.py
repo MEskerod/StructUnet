@@ -41,6 +41,8 @@ if __name__ == "__main__":
     columns = ['family', 'length', 'nn'] + [f'{name}_{metric}' for name in funcs for metric in ['precision', 'recall', 'f1']] #FIXME - Add HotKnots
     df = pd.DataFrame(index = range(len(file_list)), columns = columns)
     
+    #FIXME - Add evaluation of methods!!
+    #FIXME - Change output of model to numpy 
     for i, file in enumerate(file_list): 
         data = pickle.load(open(file, 'rb'))
         predicted = model(data.input.unsqueeze(0))
