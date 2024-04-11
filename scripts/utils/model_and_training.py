@@ -2,9 +2,13 @@ import pickle
 
 from collections import namedtuple
 
+import numpy as np
+
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import Dataset
+from scipy.signal import convolve2d
 
 RNA = namedtuple('RNA', 'input output length family name sequence')
 
@@ -313,7 +317,7 @@ class RNA_Unet(nn.Module):
 
 
 ### EVALUATION FUNCTIONS ###
-def evaluate(y_pred: torch.Tensor, y_true: torch.Tensor, epsilon: float=1e-10) -> tuple: 
+def evaluate(y_pred: torch.Tensor, y_true: torch.Tensor, epsilon: float=1e-10, allow_shift = False, include_unpaired = False) -> tuple: 
     """
     Function to evaluate the performance of a model based on precision, recall and F1 score
 
@@ -321,14 +325,36 @@ def evaluate(y_pred: torch.Tensor, y_true: torch.Tensor, epsilon: float=1e-10) -
     - y_pred (torch.Tensor): The predicted output matrix
     - y_true (torch.Tensor): The true output matrix
     - epsilon (float): A small number to avoid division by zero. Default is 1e-10.
+    - allow_shift (bool): If True, the function will allow for a 1 bp shift in the predicted matrix. Default is False.
+    - include_unpaired (bool): If True, the function will include unpaired bases (values on the diagonal) in the evaluation. Default is False.
 
     Returns:
     tuple: A tuple containing the precision, recall and F1 score
     """
+    assert y_pred.shape == y_true.shape
     
-    TP = torch.sum(y_true * y_pred) #True positive
-    FP = torch.sum((1 - y_true) * y_pred) #False postive
-    FN = torch.sum(y_true * (1-y_pred)) #False negative
+    if include_unpaired: 
+       mask = np.ones_like(y_true)
+    else: 
+       mask = np.ones_like(y_true) - np.eye(y_true.shape[-1])
+    
+    y_pred = y_pred * mask
+    y_true = y_true * mask
+
+    if allow_shift:
+      kernel = np.array([[0, 1, 0], 
+                         [1, 1, 1], 
+                         [0, 1, 0]]) 
+      y_pred_filtered = (convolve2d(y_pred, kernel, mode='same')>0).astype(float)
+      FN = np.sum(y_true * (1-y_pred_filtered))
+    else:
+      FN = np.sum(y_true * (1-y_pred))
+    
+    pred_P = y_pred.sum()
+    true_P = y_true.sum()
+
+    TP = true_P - FN
+    FP = pred_P - TP
 
     precision = TP / (TP + FP + epsilon)
     recall = TP / (TP + FN + epsilon)
