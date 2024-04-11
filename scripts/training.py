@@ -44,6 +44,7 @@ def show_history(train_history: list, valid_history: list, title = None, outputf
     if outputfile:
         plt.savefig(outputfile, bbox_inches = 'tight')
     plt.show()
+    plt.close()
 
 def onehot_to_image(array: np.ndarray) -> np.ndarray:
   """
@@ -143,6 +144,17 @@ def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience
     opt = optimizer(model, lr, weigth_decay)
 
     train_loss_history, train_F1_history, valid_loss_history, valid_F1_history = [], [], [], []
+    start_epoch = 0
+
+    if os.path.exists('results/training_history.csv'):
+        logging.info('Loading previous training history...')
+        df = pd.read_csv('results/training_history.csv')
+        train_loss_history = df['train_loss'].tolist()
+        train_F1_history = df['train_F1'].tolist()
+        valid_loss_history = df['valid_loss'].tolist()
+        valid_F1_history = df['valid_F1'].tolist()
+        start_epoch = len(train_loss_history)
+        logging.info(f'Starting training from epoch {start_epoch}.')
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
@@ -150,7 +162,7 @@ def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience
 
     logging.info(f"Training model with {len(train_dl)} training samples and {len(valid_dl)} validation samples. Device: {device}")
 
-    for epoch in range(epochs): 
+    for epoch in range(start_epoch, epochs): 
         logging.info(f"\nStarting epoch {epoch+1}/{epochs}")
         progress_bar = tqdm(total = len(train_dl), desc = f'Training of epoch {epoch+1}', unit = 'batch')
 
@@ -214,6 +226,10 @@ def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience
         if epoch > 0:
             show_history(train_loss_history, valid_loss_history, title = 'Loss', outputfile = 'steps/training_log/loss_history.png')
             show_history(train_F1_history, valid_F1_history, title = 'F1 score', outputfile = 'steps/training_log/F1_history.png')
+        
+        data = {"train_loss": train_loss_history, "train_F1": train_F1_history, "valid_loss": valid_loss_history, "valid_F1": valid_F1_history}
+        df = pd.DataFrame(data)
+        df.to_csv('results/training_history.csv')
         
 
         if val_loss < best_score:
