@@ -121,7 +121,7 @@ def predict_vienna(files):
 def predict_nussinov(files):
     inputs = [file for file in files]
     outputs = [file.replace('data/test_files', 'steps/nussinov') for file in files]
-    options = {"memory":"16gb", "walltime":"6:00:00", "account":"RNA_Unet"}
+    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 other_methods/nussinov.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
@@ -181,9 +181,10 @@ for i, file in enumerate(test_files):
         continue
 
 files = [test_files[i] for i in under_600]
-gwf.target_from_template(f'predict_ufold', predict_ufold(files))
-gwf.target_from_template(f'predict_cnnfold', predict_cnnfold(test_files))
-gwf.target_from_template(f'predict_vienna', predict_vienna(test_files))
+gwf.target_from_template('predict_ufold', predict_ufold(files))
+gwf.target_from_template('predict_cnnfold', predict_cnnfold(test_files))
+gwf.target_from_template('predict_vienna', predict_vienna(test_files))
+gwf.target_from_template('predict_nussinov', predict_nussinov(test_files))
 
 
 methods_under600 = ['hotknots', 'Ufold']
