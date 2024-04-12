@@ -118,6 +118,14 @@ def predict_vienna(files):
     python3 other_methods/vienna_mfold.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
+def predict_nussinov(files):
+    inputs = [file for file in files]
+    outputs = [file.replace('data/test_files', 'steps/nussinov') for file in files]
+    options = {"memory":"16gb", "walltime":"6:00:00", "account":"RNA_Unet"}
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 other_methods/nussinov.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
 
 def evaluate_postprocessing(files): 
     inputs = [os.path.join('RNA_Unet.pth')] + files
