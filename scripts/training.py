@@ -11,7 +11,8 @@ from collections import namedtuple
 
 from torch.utils.data import DataLoader
 
-import utils.model_and_training as utils
+#import utils.model_and_training as utils
+from utils.model_and_training import RNA_Unet, adam_optimizer, dice_loss, f1_score, ImageToImageDataset
 
 
 def show_history(train_history: list, valid_history: list, title = None, outputfile = None) -> None:
@@ -114,7 +115,7 @@ def show_matrices(inputs: torch.Tensor, observed: torch.Tensor, predicted: torch
   plt.close()
 
 
-def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience: int = 5, lr: float = 0.01, weigth_decay: float = 0.0, optimizer =utils.adam_optimizer, loss_function = utils.dice_loss, epochs: int = 60, batch_size: int = 1) -> dict: 
+def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience: int = 5, lr: float = 0.01, weigth_decay: float = 0.0, optimizer =adam_optimizer, loss_function = dice_loss, epochs: int = 60, batch_size: int = 1) -> dict: 
     """
     Trains a model on a training dataset and validates it on a validation dataset.
     Is implemented with early stopping. 
@@ -154,7 +155,9 @@ def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience
         valid_loss_history = df['valid_loss'].tolist()
         valid_F1_history = df['valid_F1'].tolist()
         start_epoch = len(train_loss_history)
-        logging.info(f'Starting training from epoch {start_epoch}.')
+        best_score = min(valid_loss_history)
+        early_stopping_counter = len(valid_loss_history) - valid_loss_history.index(best_score) - 1
+        logging.info(f'Starting training from epoch {start_epoch+1}.')
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
@@ -186,7 +189,7 @@ def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience
               opt.step()
 
               running_loss += loss.item()
-              running_F1 += utils.f1_score(output, target).item()
+              running_F1 += f1_score(output, target).item()
 
               progress_bar.update(1)
         except Exception as e:
@@ -211,7 +214,7 @@ def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience
                 output = model(input)
                 output = output.cpu()
                 valid_loss += loss_function(output, target).item()
-                valid_F1 += utils.f1_score(output, target).item()
+                valid_F1 += f1_score(output, target).item()
                 progress_bar.update(1)
         progress_bar.close()
         
@@ -267,13 +270,13 @@ if __name__ == "__main__":
 
     RNA = namedtuple('RNA', 'input output length family name sequence')
 
-    train_dataset = utils.ImageToImageDataset(train)
-    valid_dataset = utils.ImageToImageDataset(valid)  
+    train_dataset = ImageToImageDataset(train)
+    valid_dataset = ImageToImageDataset(valid)  
 
-    model = utils.RNA_Unet(channels=32)
+    model = RNA_Unet(channels=32)
     if os.path.exists('RNA_Unet.pth'):
         model.load_state_dict(torch.load('RNA_Unet.pth'))
-        logging.info('Model loaded from RNA_Unet.pth')
+        logging.info('\nModel loaded from RNA_Unet.pth')
 
     logging.info(f"Model has {count_parameters(model)} trainable parameters.")
 

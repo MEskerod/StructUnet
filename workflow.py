@@ -46,8 +46,8 @@ def make_complete_set():
     tar -czf data/test_files.tar.gz data/test_files"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)    
 
-def train_model_small(): 
-    inputs = []
+def train_model_small(files): 
+    inputs = [file for file in files]
     outputs = ['RNA_Unet.pth']
     options = {"memory":"8gb", "walltime":"168:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
     spec = """CONDA_BASE=$(conda info --base)
@@ -61,6 +61,14 @@ def train_model_small():
     export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     echo "Training neural network"
     python3 scripts/training.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+def test_model(files): 
+    inputs = ['RNA_Unet.pth'] + files
+    outputs = ['results/test_scores.csv'] + [file.replace('data/test_files', 'steps/RNA_Unet') for file in files] #TODO - Add paths for plots and change path to csv
+    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/predict_test.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 ### EVALUATION ###
@@ -111,13 +119,13 @@ def predict_vienna(files):
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 
-def evaluate_nn(files): 
+def evaluate_postprocessing(files): 
     inputs = [os.path.join('RNA_Unet.pth')] + files
-    outputs = [os.path.join('results', 'evaluation_nn.csv'),
+    outputs = [os.path.join('results', 'evaluation_nn.csv'), #TODO - Fix paths to output
                os.path.join('figures', 'evaluation_nn.png')]
     options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    python3 scripts/evaluate_nn.py"""
+    python3 scripts/evaluate_postprocessing.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) #TODO - Add some commands!
 
 def compare_methods(methods_under600, files_under600, methods, files):
@@ -150,7 +158,7 @@ gwf.target_from_template('time_convert', convert_time())
 ## FOR TRAINING THE ON THE ENTIRE DATA SET
 gwf.target_from_template('convert_data', make_complete_set())
 
-gwf.target_from_template('train_RNAUnet', train_model_small())
+gwf.target_from_template('train_RNAUnet', train_model_small(files = pickle.load(open('data/train.pkl', 'rb')) + pickle.load(open('data/valid.pkl', 'rb'))))
 
 
 
@@ -173,7 +181,8 @@ gwf.target_from_template(f'predict_vienna', predict_vienna(test_files))
 methods_under600 = ['hotknots', 'Ufold']
 methods = ['CNNfold', 'vienna_mfold', 'RNAUnet']
 
-#gwf.target_from_template('evaluate_nn', evaluate_nn(test_files))
+#gwf.target_from_template('compare_postprocessing', evaluate_postprocessing(test_files))
+#gwf.target_from_template('evaluate_RNAUnet', test_model(test_files))
 #gwf.target_from_template('compare_methods', compare_methods(methods_under600, files, methods, test_files))
 
 

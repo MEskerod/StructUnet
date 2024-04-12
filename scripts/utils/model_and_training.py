@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset
-#from scipy.signal import convolve2d
+from scipy.signal import convolve2d
 
 RNA = namedtuple('RNA', 'input output length family name sequence')
 
@@ -346,9 +346,9 @@ def evaluate(y_pred: torch.Tensor, y_true: torch.Tensor, epsilon: float=1e-10, a
                          [1, 1, 1], 
                          [0, 1, 0]]) 
       y_pred_filtered = (convolve2d(y_pred, kernel, mode='same')>0).astype(float)
-      FN = np.sum(y_true * (1-y_pred_filtered))
+      FN = (y_true * (1-y_pred_filtered)).sum()
     else:
-      FN = np.sum(y_true * (1-y_pred))
+      FN = (y_true * (1-y_pred)).sum()
     
     pred_P = y_pred.sum()
     true_P = y_true.sum()

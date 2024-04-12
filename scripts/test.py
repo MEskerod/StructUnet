@@ -53,7 +53,7 @@ def make_ct_file_1(tmpdir):
 ### FUNCTIONS FOR PREPARING/HANDLING DATA
 def test_read_ct(make_ct_file_1):
     sequence = 'CGUGUCAGGUCCGGAAGGAAGCAGCACUAAC'
-    pairs = [0, 26, 25, 24, 23, 0, 0, 0, 0, 18, 17, 16, 0, 0, 0, 0, 11, 10, 9, 0, 0, 0, 0, 4, 3, 2, 1, 0, 0, 0, 0]
+    pairs = [None, 26, 25, 24, 23, None, None, None, None, 18, 17, 16, None, None, None, None, 11, 10, 9, None, None, None, None, 4, 3, 2, 1, None, None, None, None]
 
     assert (sequence, pairs) == prep.read_ct(make_ct_file_1)
 
@@ -153,7 +153,7 @@ def test_output_matrix():
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 ],
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 ],
                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ]], dtype='float32')
-    assert np.all(output1 == prep.make_matrix_from_basepairs([0, 26, 25, 24, 23, 0, 0, 0, 0, 18, 17, 16, 0, 0, 0, 0, 11, 10, 9, 0, 0, 0, 0, 4, 3, 2, 1, 0, 0, 0, 0]).numpy())
+    assert np.all(output1 == prep.make_matrix_from_basepairs([None, 26, 25, 24, 23, None, None, None, None, 18, 17, 16, None, None, None, None, 11, 10, 9, None, None, None, None, 4, 3, 2, 1, None, None, None, None]).numpy())
 
 ### ERROR METRICS ###
 
@@ -292,20 +292,20 @@ def test_Mfold():
 ### EVALUATION ###
 def test_evaluation(): 
     # Test functionality
-    y_pred = torch.tensor([1, 1, 1, 1])
-    y_true = torch.tensor([1, 0, 1, 0])
+    y_pred = np.array([1, 1, 1, 1])
+    y_true = np.array([1, 0, 1, 0])
 
-    precision, recall, F1 = train.evaluate(y_pred, y_true)
+    precision, recall, F1 = train.evaluate(y_pred, y_true, include_unpaired=True)
 
     assert round(precision, 1) == 0.5
     assert round(recall, 1) == 1
     assert round(F1, 2) == 0.67
 
     #Test zero-case
-    y_pred = torch.tensor([0, 0, 0, 0])
-    y_true = torch.tensor([1, 1, 1, 1])
+    y_pred = np.array([0, 0, 0, 0])
+    y_true = np.array([1, 1, 1, 1])
 
-    precision, recall, F1 = train.evaluate(y_pred, y_true)
+    precision, recall, F1 = train.evaluate(y_pred, y_true, include_unpaired=True)
 
     assert round(precision) == 0
     assert round(recall) == 0
@@ -329,7 +329,7 @@ def test_evaluation():
                            [0, 0, 0, 0], 
                            [1, 1, 1, 1],
                            [0, 0, 0, 0]])
-    precision, recall, F1 = train.evaluate(y_pred, y_true)
+    precision, recall, F1 = train.evaluate(y_pred, y_true, include_unpaired=True)
     assert round(precision, 2) == 0.5
     assert round(recall, 2) == 0.5
     assert round(F1, 2) == 0.5
