@@ -82,7 +82,7 @@ def predict_hotknots(file):
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def predict_ufold(files): 
-    inputs = [os.path.join('data', 'train_under_600.pkl')]
+    inputs = [files]
     outputs = [file.replace('data/test_files', 'steps/Ufold') for file in files]
     options = {"memory":"16gb", "walltime":"3:00:00", "account":"RNA_Unet"} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
