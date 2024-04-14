@@ -41,9 +41,11 @@ def show_history(train_history: list, valid_history: list, title = None, outputf
     ax.legend()
     ax.grid(axis = 'y', linestyle = '--')
     ax.set_axisbelow(True)
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
     plt.tight_layout()
     if outputfile:
-        plt.savefig(outputfile, bbox_inches = 'tight')
+        plt.savefig(outputfile, bbox_inches = 'tight', dpi=300)
     plt.show()
     plt.close()
 
