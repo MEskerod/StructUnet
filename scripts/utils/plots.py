@@ -1,6 +1,7 @@
 import os, pickle
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from matplotlib.lines import Line2D
 import numpy as np
 import pandas as pd
 
@@ -113,6 +114,54 @@ def plot_len_histogram(file_dict: dict, output_file = None) -> None:
 
 
 
+
+def plot_time(time, lengths, outputfile = None):
+    """
+    Plots the time it takes to predict the structure of a sequence using the Nussinov algorithm
+
+    Parameters:
+    - time (list): A list of floats representing the time it took to predict the structure of each sequence.
+    - lengths (list): A list of integers representing the length of each sequence.
+    """
+
+    plt.figure(figsize=(10, 6))
+    plt.scatter(lengths, time, facecolor='none', edgecolor = 'C0', s=20, linewidths = 1)
+    plt.plot(lengths, time, linestyle = '--', linewidth = 0.8)
+    plt.xlabel('Sequence length')
+    plt.ylabel('Time (s)')
+    plt.grid(linestyle='--')
+    plt.gca().spines['top'].set_visible(False)
+    plt.gca().spines['right'].set_visible(False)
+    plt.tight_layout
+    plt.savefig(outputfile, dpi=300, bbox_inches='tight')
+
+
+
+def plot_timedict(timedict, lengths, outputfile = None):
+    colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9']
+    
+    
+    fig, ax = plt.subplots(figsize = (10, 6)) 
+    handles = []
+
+    for i, func in enumerate(timedict):
+        ax.scatter(x= lengths, y=timedict[func], facecolor='none', edgecolor = colors[i], s=20, linewidths = 1)
+        ax.plot(lengths, timedict[func], color = colors[i], linestyle = '--', linewidth = 0.8)
+        handles.append(Line2D([0], [0], color = colors[i], linestyle = '--', linewidth = 0.8, marker = 'o', markerfacecolor = 'none', markeredgecolor = colors[i], label = func))
+
+    
+    ax.legend(handles = handles, loc = 'upper left', frameon = False)
+    ax.grid(linestyle = '--')
+    ax.set_xlabel("Sequence length")
+    ax.set_ylabel("Time (s)")
+
+    plt.gca().spines['right'].set_visible(False)
+    plt.gca().spines['top'].set_visible(False)
+
+    plt.tight_layout()
+    
+    if outputfile: 
+        plt.savefig(outputfile, dpi = 300)
 
 
 

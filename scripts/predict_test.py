@@ -11,24 +11,7 @@ from collections import namedtuple
 from utils.prepare_data import make_matrix_from_sequence_8
 from utils.model_and_training import RNA_Unet
 from utils.post_processing import blossom #TODO - CHANGE TO THE CHOSEN POST-PROCESSING METHOD
-
-
-def plot_time(time, lengths):
-    """
-    Plots the time it takes to predict the structure of a sequence using the Nussinov algorithm
-
-    Parameters:
-    - time (list): A list of floats representing the time it took to predict the structure of each sequence.
-    - lengths (list): A list of integers representing the length of each sequence.
-    """
-
-    plt.scatter(lengths, time, facecolor='none', edgecolor = 'C0', s=20, linewidths = 1)
-    plt.plot(lengths, time, linestyle = '--', linewidth = 0.8)
-    plt.xlabel('Sequence length')
-    plt.ylabel('Time (s)')
-    plt.grid(linestyle='--')
-    plt.tight_layout
-    plt.savefig('figures/times_nussinov.png', dpi=300, bbox_inches='tight')
+from utils.plots import plot_time
 
 
 def predict(sequence, name): 
@@ -76,4 +59,5 @@ if __name__ == '__main__':
     data = {'lengths': lengths, 'times': times}
     df = pd.DataFrame(data)
     df.to_csv('results/times_final.csv', index=False)
+    plot_time(times, lengths, 'figures/time_final.png')
 

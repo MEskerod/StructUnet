@@ -3,10 +3,9 @@ from utils import prepare_data
 import numpy as np
 import pandas as pd
 
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-
 import time, random, sys, multiprocessing 
+
+from utils.plots import plot_timedict
 
 
 def generate_random_sequence(N): 
@@ -68,31 +67,6 @@ def average_times(func, func_name, repeats = 5, n = 81, min_length = 60, max_len
     
     return average[1:]
 
-def plot_timedict(timedict, lengths, outputfile = None):
-    colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9']
-    
-    
-    fig, ax = plt.subplots(figsize = (10, 6)) 
-    handles = []
-
-    for i, func in enumerate(timedict):
-        ax.scatter(x= lengths, y=timedict[func], facecolor='none', edgecolor = colors[i], s=20, linewidths = 1)
-        ax.plot(lengths, timedict[func], color = colors[i], linestyle = '--', linewidth = 0.8)
-        handles.append(Line2D([0], [0], color = colors[i], linestyle = '--', linewidth = 0.8, marker = 'o', markerfacecolor = 'none', markeredgecolor = colors[i], label = func))
-
-    
-    ax.legend(handles = handles, loc = 'upper left', frameon = False)
-    ax.grid(linestyle = '--')
-    ax.set_xlabel("Sequence length")
-    ax.set_ylabel("Time (s)")
-
-    plt.gca().spines['top'].set_visible(False)
-    plt.gca().spines['right'].set_visible(False)
-
-    plt.tight_layout()
-    
-    if outputfile: 
-        plt.savefig(outputfile, dpi = 300)
 
 def main(): 
     functions = {"8-channel": prepare_data.make_matrix_from_sequence_8,
