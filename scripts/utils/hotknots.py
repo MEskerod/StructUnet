@@ -1,9 +1,11 @@
-import heapq, sys
+import heapq, sys, subprocess
 
 import numpy as np
 
 from functools import cached_property
 from enum import IntEnum
+
+s_scores = {}
 
 class HotSpot: 
     def __init__(self, pairs, energy) -> None:
@@ -19,18 +21,22 @@ class HotSpot:
     
     @cached_property
     def bases(self): 
-        strand1 = sorted([x[0] for x in self.pairs])
-        strand2 = sorted([x[1] for x in self.pairs])
+        #strand1 = sorted([x[0] for x in self.pairs])
+        #strand2 = sorted([x[1] for x in self.pairs])
 
-        return list(range(strand1[0], strand1[-1])) + list(range(strand2[0], strand2[-1]))
+        strand1 = np.sort(np.array([x[0] for x in self.pairs]))
+        strand2 = np.sort(np.array([x[1] for x in self.pairs]))
 
+        return np.concatenate([np.arange(strand1[0], strand1[-1]+1), np.arange(strand2[0], strand2[-1]+1)])
+        
+        #return list(range(strand1[0], strand1[-1]+1)) + list(range(strand2[0], strand2[-1]+1))
 
 
 class Node: 
-    def __init__(self, hotspots = None) -> None:
-        self.level = None
+    def __init__(self, hotspots = []) -> None:
         self.children = []
         self.hotspots = hotspots
+        self.StrSeq = None
     
     def __str__(self) -> str:
         return f'{self.hotspots}'
@@ -41,44 +47,30 @@ class Node:
     @cached_property
     def bases(self): 
         if self.hotspots is not None: 
-            bases = []
-            for hotspot in self.hotspots: 
-                bases.extend(hotspot.bases)
-            return sorted(bases)
-        else: 
-            return []
+            bases = np.concatenate([hotspot.bases for hotspot in self.hotspots])
+            #for hotspot in self.hotspots: 
+            #    bases.extend(hotspot.bases)
+            return np.sort(bases)
+        else:
+            return np.array([])
     
     @cached_property
     def energy(self): 
         if self.hotspots is not None: 
-            return sum(hotspot.energy for hotspot in self.hotspots)
+            return np.sum([hotspot.energy for hotspot in self.hotspots])
         else: 
             return 0
 
 class Tree:
     def __init__(self) -> None:
         self.root = Node()
-        self.root.level = 0
-        self.nodes = [[self.root]]
-        self.levels = 0
+        self.nodes = [self.root]
 
     def __str__(self) -> str:
-        return f"Treee with {len(self)} nodes at {self.levels} level(s)"
-
-    def __repr__(self) -> str:
-        pass
+        return f"Treee with {len(self)} nodes at {len(self.nodes[-1].hotspots)} level(s)"
 
     def __len__(self) -> int:
-        length = 0
-        for level in self.nodes:
-            length += len(level)
-        return length
-
-    def __getitem__(self, key):
-        pass
-
-    def __iter__(self):
-        pass
+        return len(self.nodes)
 
     def print_tree(self):
         self._print_tree(self.root, 0)
@@ -89,18 +81,9 @@ class Tree:
         for child in node.children:
             self._print_tree(child, level + 1)
     
-    def add_node(self, parent: Node, hotspots):
-        node = Node(hotspots)
-        node.level = parent.level + 1
-
-        assert node.level == len(hotspots)
-
-        if node.level > self.levels: 
-            self.levels = node.level
-            self.nodes.append([])
-
+    def add_node(self, parent: Node, node: Node):
+        self.nodes.append(node)
         parent.children.append(node)
-        self.nodes[node.level].append(node)
         
 class Trace(IntEnum):
     STOP = 0
@@ -108,16 +91,33 @@ class Trace(IntEnum):
     DOWN = 2
     DIAG = 3
 
+def run_simfold(sequence, contraints):
+    """
+    """
+    simfold_dir = '../simfold/'
+    command = [simfold_dir + 'simfold', '-s', sequence, '-r', contraints]
 
-def smith_waterman(seq1, matrix, k=10, treshold = 2.0):
+    try:
+        p = subprocess.Popen(command, cwd=simfold_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p.wait()
+        output, error = p.communicate()
+
+        if p.returncode == 0: #Check that command succeeded
+            result = output.decode().split()
+            return result[3]
+        else:
+            error_msg = error.decode() if error else 'Unknown error'
+            raise Exception(f'Simfold execution failed: {error_msg}')
+    
+    except Exception as e:
+        raise Exception(f'An error occured: {e}')
+
+def smith_waterman(seq1, matrix, treshold = 2.0):
     """
     """
     top_cells = []
-    heapq.heapify(top_cells)
-    
     basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
 
-    #seq2 = seq1[::-1]
     N = len(seq1)
 
     # Initialize the scoring matrix.
@@ -149,18 +149,14 @@ def smith_waterman(seq1, matrix, k=10, treshold = 2.0):
                 tracing_matrix[i, j] = Trace.DIAG
                 #Update queue of top cells
                 if score_matrix[i, j] > treshold: 
-                    if len(top_cells) < k: 
-                        heapq.heappush(top_cells, (score_matrix[i, j], (i, j)))
-                    else:
-                        # If heap is full, compare the smallest value with the new value
-                        min_value, _ = top_cells[0]
-                        if score_matrix[i, j] > min_value: 
-                            heapq.heappop(top_cells) #Pop smallest value
-                            heapq.heappush(top_cells, (score_matrix[i, j], (i, j)))
+                    top_cells.append((score_matrix[i, j], (i, j)))
             elif score_matrix[i, j] == vertical: 
                 tracing_matrix[i, j] = Trace.DOWN
             elif score_matrix[i, j] == horizontal: 
                 tracing_matrix[i, j] = Trace.LEFT
+    
+    # Sort the top cells list in descending order
+    top_cells.sort(key=lambda x: x[0])
     
     return top_cells, tracing_matrix
 
@@ -184,88 +180,69 @@ def traceback_smith_waterman(trace_matrix, i, j):
 def initialize_tree(sequence, matrix, k=20):
     """
     """
-    hotspots, trace = smith_waterman(sequence, matrix, k)
-    tree = Tree()
-    for score, (i, j) in hotspots: 
-        tree.add_node(tree.root, [HotSpot(traceback_smith_waterman(trace, i, j), score)])
+    pq, trace = smith_waterman(sequence, matrix)
 
+    print(pq)
+
+    tree = Tree()
+    bases  = []
+
+    while len(tree) < k and pq:
+        score, (i, j) = pq.pop(-1)
+        if i in bases and j in bases:
+            continue
+        node = Node([HotSpot(traceback_smith_waterman(trace, i, j), score)])
+        node.StrSeq = SeqStr(sequence, node, matrix)
+        bases.extend(node.bases)
+        tree.add_node(tree.root, node)
     return tree
 
-def constrained_structure(constrained, N): 
+def constrained_structure(bases, N): 
     """
     """
-    #Constrained structure of a sequence with a set of basepairs 
-    structure = ['_'] * N
-    for base in constrained:
-        structure[base] = '.'
+    #Constrained structure of a sequence with a set of bases that are not allowed to form pairs
+    structure = np.full(N, '_', dtype=str)
+    structure[bases] = '.'
 
     return ''.join(structure)
 
+
+def db_to_pairs(structure: str):
+    """
+    """
+    stack = []
+    pairs = []
+
+    for i, char in enumerate(structure):
+        if char == '(':
+            stack.append(i)
+        elif char == ')':
+            j = stack.pop()
+            pairs.append((j, i))
+    pairs.sort()
+    return pairs
+
 def identify_hotspots(structure: str, matrix: np.ndarray, k=20, treshold = 2.0):
-    """
-    """
-
-    #Identify hotspots that doesn't have more than one gap between opening brackets
-    prelim_hotspots = []
-    current_stem = [[]]
-    number_hotspots = 0
-    len_current_hotspot = 0
-    in_hotspot = False
-
-    for i, s in enumerate(structure):
-        if s == '(':
-            in_hotspot = True
-            current_stem[number_hotspots].append([i])
-        
-        elif s == '.':
-            if in_hotspot and structure[i-1] == '.' and current_stem[number_hotspots] != []:
-                current_stem.append([])
-                number_hotspots += 1
-        
-        elif s == ')': 
-            in_hotspot = False
-
-            if len_current_hotspot == 0:
-                current_stem = current_stem[:-1]
-                number_hotspots -= 1
-                len_current_hotspot = len(current_stem[number_hotspots]) 
-            
-            current_stem[number_hotspots][len_current_hotspot-1].append(i)
-            len_current_hotspot -= 1
-
-            if len_current_hotspot == 0:
-                number_hotspots -= 1
-                len_current_hotspot = len(current_stem[number_hotspots])
-                
-                if number_hotspots < 0:
-                    for hotspot in current_stem:
-                        prelim_hotspots.append(hotspot)
-                    current_stem = [[]]
-                    len_current_hotspot = 0
-                    in_hotspot = False
-                    number_hotspots = 0
-
-    #Identify larger gaps between closing brackets and break the hotspots
-    valid_hotspots = []
-    for hotspot in prelim_hotspots: 
-        breaking_points = []
-        for i in range(len(hotspot)-1):
-            if hotspot[i][1] - hotspot[i+1][1] > 2: 
-                breaking_points.append(i)
-        #Split based on indices
-        if breaking_points:
-            prev_index = 0
-            for i in breaking_points: 
-                valid_hotspots.append(hotspot[prev_index:i+1])
-                prev_index = i+1
-            valid_hotspots.append(hotspot[prev_index:])
-        else: 
-            valid_hotspots.append(hotspot)
     
+    pairs = db_to_pairs(structure)
+    
+    stems = []
+    current_hotspot = [pairs[0]]
+
+    for i, pair in enumerate(pairs):
+        if i > 0: 
+            if (pair[0] - pairs[i-1][0] <=2) and (pairs[i-1][1] - pair[1] <= 2): 
+                current_hotspot.append(pair)
+            else:
+                stems.append(current_hotspot)
+                current_hotspot = [pair]
+    stems.append(current_hotspot)
+
     #Get energy of hotspots and eliminate those under treshold
     #Return top k hotspots
+    #TODO - Maybe add min length for hotspots
     hotspots = []
-    for hotspot in valid_hotspots:
+    for hotspot in stems:
         #Get energy
         energy = 0
         for i, pair in enumerate(hotspot): 
@@ -285,39 +262,78 @@ def identify_hotspots(structure: str, matrix: np.ndarray, k=20, treshold = 2.0):
             
     return hotspots[:k]
 
-def SeqStr(S, H): 
+def energy_from_structure(structure, matrix):
     """
     """
-    #Secondary structure of sequence S with hotspot set H
-    #s1, s2, ..., sl are the sequences obtained from S when removing the bases that are in hotspots of H
-    #Mfold/SimFold is used to obtain the energy of the segmeents 
-    #SeqStr is the union of the energies of the l segments and the hotspots in H
-    return 
+    energy = 0
+    for i, j in db_to_pairs(structure):
+        energy += matrix[i, j]
+    return energy
 
-def grow_tree(tree, sequence, matrix, k=20):
+def SeqStr(S: str, H: Node, matrix: np.ndarray): 
+    """
+    Secondary structure of sequence S with hotspot set H
+    s1, s2, ..., sl are the sequences obtained from S when removing the bases that are in hotspots of H
+    Mfold/SimFold is used to obtain the energy of the segmeents 
+    SeqStr is the union of the energies of the l segments and the hotspots in H
+    """
+    if not H: 
+        return energy_from_structure(run_simfold(S, '_'*len(S)), matrix)
+    
+    s_list = [] if H.bases[0] == 0 else [(0, H.bases[0]-1)]
+
+    for i in range(1, len(H.bases)):
+        if H.bases[i] - H.bases[i-1] > 1:
+            s_list.append((H.bases[i-1]+1, H.bases[i]-1))
+    
+    if H.bases[-1] != len(S)-1:
+        s_list.append((H.bases[-1]+1, len(S)-1))
+
+    for pair in s_list: 
+        if pair in s_scores:
+            continue
+        s_scores[pair] = energy_from_structure(run_simfold(S[pair[0]:pair[1]+1], '_'*(pair[1]-pair[0]+1)), matrix)
+    
+    energies = [s_scores[pair] for pair in s_list]
+
+    return H.energy + np.sum(energies)
+
+def grow_tree(tree: Tree, sequence, matrix, k=20):
     """
     """
     N = len(sequence)
-    L = [node.hotspots for node in tree.root.children]
-    print(L)
+    L = [node.hotspots[0] for node in tree.root.children]
 
-    def build_node(node, L): 
+    treshold = SeqStr(sequence, tree.root.hotspots, matrix)
+    tree.root.StrSeq = treshold
+
+    def build_node(node: Node, L): 
         constraints = constrained_structure(node.bases, N)
         #Use constraints and SimFold to obtain the structure of the sequence
-        struture = ''
+        structure = run_simfold(sequence, constraints)
         hotspots = identify_hotspots(structure, matrix, k)
         L = L + hotspots
-        for hotspot in hotspots: 
-            L = L
-            #Use SeqStr to identify whether the hotspots are good or not
+        children = []
+        for i, hotspot in enumerate(L): 
+            if any([x in hotspot.bases for x in node.bases]):
+                L.pop(i)
+                continue
+            new_node = Node(node.hotspots + [hotspot])
+            new_node.StrSeq = SeqStr(sequence, new_node, matrix)
+            if new_node.StrSeq > treshold:
+                children.append(new_node)
+        
+        children.sort(key=lambda x: x.StrSeq, reverse=True)
+        for child in children[:k]:
+            tree.add_node(node, child)
+
         #Grow tree based on good hotspots
         if node.children:
             for child in node.children: 
                 build_node(child, L)
-        return
  
     for node in tree.root.children: 
-        build_node(node)
+        build_node(node, L)
 
     return tree
 
@@ -325,7 +341,10 @@ def grow_tree(tree, sequence, matrix, k=20):
 def output_structure(tree):
     """
     """
-    return
+    structures = sorted(tree.nodes, key=lambda x: x.StrSeq, reverse=True)
+    best = structures[0]
+
+    return best.hotspots
 
 
 
@@ -351,20 +370,11 @@ matrix = np.zeros((len(sequence), len(sequence)))
 for i, j in [pair for sublist in pairs for pair in sublist]:
     matrix[i-1, j-1] = matrix[j-1, i-1] = 1
 
-tree = initialize_tree(sequence, matrix, k=20)
+import time
 
-print(tree)
-tree.print_tree()
+print()
+start_time = time.time()
+final = hotknots(matrix, sequence, k=10)
+print("--- %s seconds ---" % (time.time() - start_time))
 
-print(tree.nodes[1][0].bases)
-
-structure = '(((((((.........(((........))))))))))..((..((((((((((((.....)))))))).))))))............' 
-
-print(structure)
-
-#print(identify_hotspots(structure, matrix, k=20))
-
-
-grow_tree(tree, sequence, matrix, k=20)
-
-
+print(final)
