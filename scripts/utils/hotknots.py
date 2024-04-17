@@ -188,7 +188,7 @@ def initialize_tree(sequence, matrix, k=20):
     bases  = []
 
     while len(tree) < k and pq:
-        score, (i, j) = pq.pop(-1)
+        score, (i, j) = pq.pop()
         if i in bases and j in bases:
             continue
         node = Node([HotSpot(traceback_smith_waterman(trace, i, j), score)])
@@ -254,11 +254,8 @@ def identify_hotspots(structure: str, matrix: np.ndarray, k=20, treshold = 2.0):
                     energy -= 0.5
         if energy > treshold:
             hotspots.append(HotSpot(hotspot, energy))
-
-    def sort_func(h):
-        return h.energy
     
-    hotspots.sort(key=sort_func, reverse=True)
+    hotspots.sort(key=lambda x: x.energy, reverse=True)
             
     return hotspots[:k]
 
@@ -270,7 +267,7 @@ def energy_from_structure(structure, matrix):
         energy += matrix[i, j]
     return energy
 
-def SeqStr(S: str, H: Node, matrix: np.ndarray): 
+def SeqStr(S: str, H: Node, matrix: np.ndarray, output_pairs = False): 
     """
     Secondary structure of sequence S with hotspot set H
     s1, s2, ..., sl are the sequences obtained from S when removing the bases that are in hotspots of H
@@ -289,6 +286,14 @@ def SeqStr(S: str, H: Node, matrix: np.ndarray):
     if H.bases[-1] != len(S)-1:
         s_list.append((H.bases[-1]+1, len(S)-1))
 
+    if output_pairs:
+        pairs = []
+        for pair in s_list:
+            pairs.extend(db_to_pairs(run_simfold(S[pair[0]:pair[1]+1], '_'*(pair[1]-pair[0]+1))))
+        for hotspot in H.hotspots:
+            pairs.extend(hotspot.pairs)
+        return pairs
+    
     for pair in s_list: 
         if pair in s_scores:
             continue
@@ -308,21 +313,24 @@ def grow_tree(tree: Tree, sequence, matrix, k=20):
     tree.root.StrSeq = treshold
 
     def build_node(node: Node, L): 
-        constraints = constrained_structure(node.bases, N)
         #Use constraints and SimFold to obtain the structure of the sequence
-        structure = run_simfold(sequence, constraints)
-        hotspots = identify_hotspots(structure, matrix, k)
-        L = L + hotspots
+        L = L + identify_hotspots(run_simfold(sequence, constrained_structure(node.bases, N)), matrix, k)
+        
         children = []
         for i, hotspot in enumerate(L): 
+            #Remove hotspot from list if it overlaps with hotspots in the node
             if any([x in hotspot.bases for x in node.bases]):
                 L.pop(i)
                 continue
+            
+            #Create new node with hotspotset and calculate its StrSeq
+            #If energy above treshold add to children
             new_node = Node(node.hotspots + [hotspot])
             new_node.StrSeq = SeqStr(sequence, new_node, matrix)
             if new_node.StrSeq > treshold:
                 children.append(new_node)
         
+        #Find k best children and add them to the tree
         children.sort(key=lambda x: x.StrSeq, reverse=True)
         for child in children[:k]:
             tree.add_node(node, child)
@@ -332,20 +340,11 @@ def grow_tree(tree: Tree, sequence, matrix, k=20):
             for child in node.children: 
                 build_node(child, L)
  
+    #Build nodes for all children of the curret node
     for node in tree.root.children: 
         build_node(node, L)
 
     return tree
-
-
-def output_structure(tree):
-    """
-    """
-    structures = sorted(tree.nodes, key=lambda x: x.StrSeq, reverse=True)
-    best = structures[0]
-
-    return best.hotspots
-
 
 
 def hotknots(matrix, sequence, k=20):
@@ -353,8 +352,10 @@ def hotknots(matrix, sequence, k=20):
     """
     tree = initialize_tree(sequence, matrix, k)
     grow_tree(tree, sequence, matrix, k)
-    pairs = output_structure(tree)
-    return pairs
+
+    structures = sorted(tree.nodes, key=lambda x: x.StrSeq, reverse=True)
+    best = structures[0]
+    return SeqStr(sequence, best, matrix, output_pairs=True)
 
 
 
