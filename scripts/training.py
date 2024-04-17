@@ -149,6 +149,7 @@ def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience
     train_loss_history, train_F1_history, valid_loss_history, valid_F1_history = [], [], [], []
     start_epoch = 0
 
+    #Only load previous training history if it exists
     if os.path.exists('results/training_history.csv'):
         logging.info('Loading previous training history...')
         df = pd.read_csv('results/training_history.csv')
@@ -156,6 +157,7 @@ def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience
         train_F1_history = df['train_F1'].tolist()
         valid_loss_history = df['valid_loss'].tolist()
         valid_F1_history = df['valid_F1'].tolist()
+        #Continue training from last epoch
         start_epoch = len(train_loss_history)
         best_score = min(valid_loss_history)
         early_stopping_counter = len(valid_loss_history) - valid_loss_history.index(best_score) - 1
@@ -237,6 +239,7 @@ def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience
         df.to_csv('results/training_history.csv')
         
 
+        #Update best model if validation loss is lower than previous best
         if val_loss < best_score:
            best_score = val_loss
            early_stopping_counter = 0
@@ -260,7 +263,16 @@ def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience
     return data
 
 
-def count_parameters(model):
+def count_parameters(model: torch.nn.Module) -> int:
+    """
+    Counts the number of trainable parameters in a model.
+
+    Parameters:
+    - model (torch.nn.Module): The model to count the parameters of.
+
+    Returns:
+    - int: The number of trainable parameters in the model.
+    """
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 if __name__ == "__main__":
@@ -276,6 +288,7 @@ if __name__ == "__main__":
     valid_dataset = ImageToImageDataset(valid)  
 
     model = RNA_Unet(channels=32)
+    #If model exists, load it and continue training
     if os.path.exists('RNA_Unet.pth'):
         model.load_state_dict(torch.load('RNA_Unet.pth'))
         logging.info('\nModel loaded from RNA_Unet.pth')
