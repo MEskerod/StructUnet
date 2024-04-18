@@ -73,6 +73,16 @@ def test_model(files):
 
 ### EVALUATION ###
 
+def evaluate_hotknots():
+    inputs = [os.path.join('data', 'test_RNA_sample', file) for file in os.listdir('data/test_RNA_sample')]
+    outputs = ['results/F1_hotknots.csv', 
+               'figures/F1_hotknots.png', 
+               'figures/time_hotknots.png', 
+               'results/time_hotknots.csv']
+    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"}
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/evaluate_hotknots.py"""
+
 def predict_hotknots(file): 
     inputs = [file]
     outputs = [os.path.join('steps', 'hotknots', os.path.basename(file))]
