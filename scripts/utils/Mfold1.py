@@ -217,17 +217,6 @@ def fold_rna() -> tuple[np.ndarray, np.ndarray]:
 
     return W, V
 
-def find_optimal(W: np.ndarray) -> float: 
-    """
-    Find the final energy of the folded RNA
-
-    Parameters:
-    - W (np.ndarray): The W matrix
-
-    Returns:
-    - min_energy (float): The minimum free energy of the folded RNA
-    """
-    return W[0, -1]
 
 ### BACTRACKING ### 
 
@@ -300,7 +289,7 @@ def Mfold(sequence: str, matrix: np.ndarray) -> list:
     - matrix (np.ndarray): The energy matrix used to calculate the energy of the different basepairs
 
     Returns:
-    - fold (list): The secondary structure of the RNA
+    - fold (np.ndarray): The secondary structure of the RNA
     """
     declare_global_variable(sequence, matrix)
 

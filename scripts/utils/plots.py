@@ -137,7 +137,20 @@ def plot_time(time, lengths, outputfile = None):
 
 
 
-def plot_timedict(timedict, lengths, outputfile = None):
+def plot_timedict(timedict: dict, lengths: list, outputfile = None) -> None:
+    """
+    Plots the time it takes to predict the structure of a sequence using different methods (given be the dictionary)
+    Makes a scatter plot connected with lines with the time it takes to predict the structure of a sequence using different methods 
+
+    Parameters:
+    - timedict (dict): A dictionary where the keys are the names of the methods and the values are lists of floats representing the time it took to predict the structure of each sequence.
+    - lengths (list): A list of integers representing the length of each sequence.
+    - outputfile (str, optional): The file path to save the plot. If not provided, the plot will be displayed.
+
+    Returns:
+    - None
+    """
+
     colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9']
     
     
@@ -147,6 +160,7 @@ def plot_timedict(timedict, lengths, outputfile = None):
     for i, func in enumerate(timedict):
         ax.scatter(x= lengths, y=timedict[func], facecolor='none', edgecolor = colors[i], s=20, linewidths = 1)
         ax.plot(lengths, timedict[func], color = colors[i], linestyle = '--', linewidth = 0.8)
+        #Add handles to make a legend
         handles.append(Line2D([0], [0], color = colors[i], linestyle = '--', linewidth = 0.8, marker = 'o', markerfacecolor = 'none', markeredgecolor = colors[i], label = func))
 
     

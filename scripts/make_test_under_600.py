@@ -4,6 +4,10 @@ from collections import namedtuple
 
 
 if __name__ == '__main__': 
+    """
+    Make a list of all the files in the test set that have a length under 600 and save it as a pickle file
+    Is used later to evaluate some methods
+    """
     RNA = namedtuple('RNA', 'input output length family name sequence')
     
     #Load data

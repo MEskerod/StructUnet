@@ -376,19 +376,8 @@ def hotknots(matrix, sequence, k=20, gap_penalty=0.5, treshold_prop = 0.5):
     best = sorted(tree.nodes, key=lambda x: x.StrSeq, reverse=True)[0]
 
     pairs = SeqStr(sequence, best, matrix, output_pairs=True)
-
-    N = len(sequence)
-    
-    structure = [i for i in range(N)]
-    for i, j in pairs:
-        structure[i] = j
-        structure[j] = i
-
-    matrix = np.zeros((N, N))
-    for i in range(N):
-        matrix[i, structure[i]] = 1 
   
-    return matrix
+    return pairs
     
 
 

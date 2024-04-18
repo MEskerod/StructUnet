@@ -6,11 +6,25 @@ import pandas as pd
 
 from itertools import product
 
-from utils.hotknots import hotknots
 from utils.model_and_training import evaluate
 from utils.plots import plot_timedict
 
-def plot_f1(categories, scores, outputfile):
+from utils.post_processing import hotknots_postprocessing
+
+def plot_f1(categories: list, scores: list, outputfile: str) -> None:
+    """
+    Function to plot the F1 scores of different combinations of hyperparameters.
+    The plot is a bar plot with the F1 scores on the y-axis and the combinations on the x-axis.
+    The plot is saved as a .png file.
+    
+    Parameters:
+    - categories (list): list of strings, the combinations of hyperparameters
+    - scores (list): list of floats, the F1 scores
+    - outputfile (str): string, the path to save the plot
+
+    Returns:
+    - Nones
+    """
     plt.figure(figsize=(16, 6))
     plt.bar(categories, scores, color='C0', edgecolor='black', linewidth=0.5, zorder = 3)
     plt.xlabel('Combinations')
@@ -22,13 +36,23 @@ def plot_f1(categories, scores, outputfile):
     plt.tight_layout()
     plt.savefig(outputfile, dpi=300, bbox_inches='tight')
 
-def dot_bracket_to_matrix(db):
+def dot_bracket_to_matrix(db: str) -> np.ndarray:
+      """
+      Function to convert a dot-bracket notation to a matrix representation.
+
+      Parameters:
+      - db (str): string, the dot-bracket notation
+      
+      Returns:
+      - np.ndarray: the matrix representation of the dot-bracket notation
+      """
       stack1 = []
       stack2 = []
       stack3 = []
 
       bp = [None] * len(db)
 
+      # Append the index of the opening bracket to the stack and set the corresponding closing bracket to the current index
       for i, char in enumerate(db):
             if char == '(':
                 stack1.append(i)
@@ -48,13 +72,25 @@ def dot_bracket_to_matrix(db):
                 j = stack3.pop()
                 bp[i] = j
                 bp[j] = i
+      
+      #Convert the list to a matrix
       matrix = np.zeros((len(db), len(db)))
       for i, j in enumerate(bp):
             if j is not None:
                 matrix[i, j] = matrix[j, i] = 1
       return matrix
 
-def read_files(file_path):
+def read_files(file_path: str) -> list:
+    """
+    Fimction to read the files in a directory containing .dbn files and return the data in a list.
+    The data is a list of tuples, where each tuple contains the length of the sequence, the sequence and the matrix representation of the dot-bracket notation.
+
+    Parameters:
+    - file_path (str): the path to the directory containing the .dbn files
+
+    Returns:
+    - list: the data in a list of tuples
+    """
     data = []
     
     files = os.listdir(file_path)
@@ -67,7 +103,19 @@ def read_files(file_path):
     return sorted(data, key=lambda x: x[0])
 
 
-def process_files(k, treshold, gap_penalty): 
+def process_files(k: int, treshold: float, gap_penalty: float) -> tuple:
+    """
+    Function to process the data using hotknots with the given hyperparameters.
+    The function returns the average F1 score and the time it took to process each sequence in 'data'.
+
+    Parameters:
+    - k (int): the depth to explore using hotknots
+    - treshold (float): the treshold to use for the hotknots algorithm. Defines the proportion of SeqStr to use as tresold
+    - gap_penalty (float): the gap penalty to use for the hotknots algorithm
+
+    Returns:
+    - tuple: the average F1 score and the time it took to process each sequence in 'data'
+    """ 
     F1 = []
     times = []
     
@@ -75,7 +123,7 @@ def process_files(k, treshold, gap_penalty):
     
     for d in data:
         start = time.time()
-        pred = hotknots(d[2], d[1], k, gap_penalty=gap_penalty, treshold_prop=treshold)
+        pred = hotknots_postprocessing(d[2], d[1], k, gap_penalty=gap_penalty, treshold_prop=treshold)
         times.append(time.time() - start)
         F1.append(evaluate(pred, d[2]))
         progess_bar.update(1)

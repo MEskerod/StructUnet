@@ -4,6 +4,7 @@ import networkx as nx
 from utils import blossom
 from utils.Mfold1 import Mfold as Mfold_param
 from utils.Mfold2 import Mfold as Mfold_constrain
+from utils.hotknots import hotknots
 
 def argmax_postprocessing(matrix: np.ndarray, sequence: str) -> np.ndarray:
     """
@@ -185,6 +186,32 @@ def Mfold_constrain_postprocessing(matrix: np.ndarray, sequence: str, treshold: 
     
     y_out = np.zeros_like(matrix)
 
+    for (i, j) in pairs:
+        y_out[i, j] = y_out[j, i] = 1
+    
+    for i in range(matrix.shape[0]): 
+        if not np.any(y_out[i, :]): 
+            y_out[i, i] = 1
+    
+    return y_out
+
+def hotknots_postprocessing(matrix: np.ndarray, sequence: str, k=15, gap_penalty = 0.5, treshold_prop = 1) -> np.ndarray:  #TODO - Change "fixed" parameters
+    """
+    Postprocessing function that takes a matrix and returns a matrix.
+    Uses the HotKnots algorithm, which is a heuristic able to find structures with pseudoknot.
+    The HotKnots algorithm uses the matrix from the network as parameters for base pairing.
+
+    Parameters:
+    - matrix (np.ndarray): The matrix to postprocess.
+    - sequence (str): The sequence that the matrix was generated from.
+
+    Returns:
+    - np.ndarray: The postprocessed matrix.
+    """
+    pairs = hotknots(sequence, matrix, k=k, gap_penalty=gap_penalty, treshold_prop=treshold_prop)
+
+    y_out = np.zeros_like(matrix)
+    
     for (i, j) in pairs:
         y_out[i, j] = y_out[j, i] = 1
     
