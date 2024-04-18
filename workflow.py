@@ -82,6 +82,7 @@ def evaluate_hotknots():
     options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/evaluate_hotknots.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def predict_hotknots(file): 
     inputs = [file]
@@ -177,6 +178,8 @@ gwf.target_from_template('time_convert', convert_time())
 gwf.target_from_template('convert_data', make_complete_set())
 
 gwf.target_from_template('train_RNAUnet', train_model_small(files = pickle.load(open('data/train.pkl', 'rb')) + pickle.load(open('data/valid.pkl', 'rb'))))
+
+gwf.target_from_template('evaluate_hotknots', evaluate_hotknots())
 
 
 
