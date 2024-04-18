@@ -81,7 +81,7 @@ def evaluate_hotknots():
                'results/time_hotknots.csv']
     options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    python3 scripts/evaluate_hotknots.py"""
+    python3 scripts/evaluate_hotknot.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def predict_hotknots(file): 
