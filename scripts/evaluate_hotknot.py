@@ -81,7 +81,6 @@ def process_files(k, treshold, gap_penalty):
         progess_bar.update(1)
     
     progess_bar.close()
-    print()
         
     return np.mean(F1), times
 
