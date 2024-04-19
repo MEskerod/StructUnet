@@ -379,7 +379,7 @@ def hotknots(matrix, sequence, k=20, gap_penalty=0.5, treshold_prop = 0.5):
   
     return pairs
     
-
+"""
 
 sequence = "GGCCGGCAUGGUCCCAGCCUCCUCGCUGGCGCCGGCUGGGCAACAUUCCCAGGGGACCGUCCCCUGGGUAAUGGCGAAUGGGACCCA"
 "...............................___..................................................___"
@@ -411,4 +411,4 @@ for i, j in pairs:
 _, _, F1 = evaluate(final, matrix)
 print(F1)
 
-
+"""
