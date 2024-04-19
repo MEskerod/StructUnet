@@ -134,7 +134,7 @@ def process_files(k: int, treshold: float, gap_penalty: float) -> tuple:
 
 
 if __name__ == '__main__':
-    k_range = [1, 2, 5, 10, 15, 20]
+    k_range = [1, 2, 3, 4, 5]
     treshold_range = [0.5, 0.8, 1]
     gap_penalty_range = [0, 0.2, 0.5]
 
