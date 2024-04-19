@@ -4,6 +4,10 @@ from gwf import Workflow, AnonymousTarget
 
 ### EXPERIMENTS ###
 def make_experiment_data(matrix_type): 
+    """
+    Make data for experiments with either 8, 9 or 17 channels. 
+    Test sets contains a sequences under 500 and no more than 5000 sequences from each family.
+    """
     inputs = [os.path.join('data', 'RNAStralign.tar.gz')]
     outputs = [os.path.join('data', f'experiment{matrix_type}.tar.gz')]
     options = {"memory":"16gb", "walltime":"03:00:00", "account":"RNA_Unet"}
@@ -14,6 +18,9 @@ def make_experiment_data(matrix_type):
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def postprocess_time(): 
+    """
+    Time postprocessing methods
+    """
     inputs = []
     outputs = [os.path.join('results', 'postprocess_time.csv'),
                os.path.join('figures', 'postprocess_time.png')]
@@ -22,7 +29,10 @@ def postprocess_time():
     python3 scripts/time_postprocessing.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def convert_time(): 
+def convert_time():
+    """
+    Time matrix conversion with 8, 9 and 17 channels    
+    """ 
     inputs = []
     outputs = [os.path.join('results', 'convert_time.csv'),
                os.path.join('figures', 'convert_time.png')]
@@ -34,6 +44,9 @@ def convert_time():
 
 ### TRAINING ###
 def make_complete_set(): 
+    """
+    Convert all data to matrices and save namedtuple as pickle files
+    """
     inputs = [os.path.join('data', 'RNAStralign.tar.gz')]
     outputs = [os.path.join('data', 'train.pkl'),
                os.path.join('data', 'valid.pkl'),
@@ -47,6 +60,9 @@ def make_complete_set():
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)    
 
 def train_model_small(files): 
+    """
+    Train the model on the entire data set
+    """
     inputs = [file for file in files]
     outputs = ['RNA_Unet.pth']
     options = {"memory":"8gb", "walltime":"168:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
@@ -64,6 +80,9 @@ def train_model_small(files):
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def test_model(files): 
+    """
+    Test the model of the test set and time it
+    """
     inputs = ['RNA_Unet.pth'] + files
     outputs = ['results/test_scores.csv'] + [file.replace('data/test_files', 'steps/RNA_Unet') for file in files] #TODO - Add paths for plots and change path to csv
     options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
@@ -74,17 +93,23 @@ def test_model(files):
 ### EVALUATION ###
 
 def evaluate_hotknots():
+    """
+    Evaluate the hotknots post-processing with different hyper-parameters
+    """
     inputs = [os.path.join('data', 'test_RNA_sample', file) for file in os.listdir('data/test_RNA_sample')]
     outputs = ['results/F1_hotknots.csv', 
                'figures/F1_hotknots.png', 
                'figures/time_hotknots.png', 
                'results/time_hotknots.csv']
-    options = {"memory":"16gb", "walltime":"48:00:00", "account":"RNA_Unet"}
+    options = {"memory":"16gb", "walltime":"72:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/evaluate_hotknot.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def predict_hotknots(file): 
+    """
+    Predict structure with hotknots 
+    """
     inputs = [file]
     outputs = [os.path.join('steps', 'hotknots', os.path.basename(file))]
     options = {"memory":"64gb", "walltime":"3:00:00", "account":"RNA_Unet"} 
@@ -93,6 +118,9 @@ def predict_hotknots(file):
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def predict_ufold(files): 
+    """
+    Predict structure with Ufold
+    """
     inputs = [files]
     outputs = [file.replace('data/test_files', 'steps/Ufold') for file in files]
     options = {"memory":"16gb", "walltime":"3:00:00", "account":"RNA_Unet"} 
@@ -110,6 +138,9 @@ def predict_ufold(files):
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def predict_cnnfold(files): 
+    """
+    Predict structure with CNNfold
+    """
     inputs = [file for file in files]
     outputs = [file.replace('data/test_files', 'steps/CNNfold') for file in files]
     options = {"memory":"16gb", "walltime":"18:00:00", "account":"RNA_Unet"}
@@ -121,6 +152,9 @@ def predict_cnnfold(files):
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def predict_vienna(files): 
+    """
+    Predict structure with viennaRNA
+    """
     inputs = [file for file in files]
     outputs = [file.replace('data/test_files', 'steps/vienna_mfold') for file in files]
     options = {"memory":"8gb", "walltime":"2:00:00", "account":"RNA_Unet"}
@@ -130,6 +164,9 @@ def predict_vienna(files):
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def predict_nussinov(files):
+    """
+    Predict structure with Nussinov algorithm
+    """
     inputs = [file for file in files]
     outputs = [file.replace('data/test_files', 'steps/nussinov') for file in files] + ['results/times_nussinov.csv', 'figures/times_nussinov.png']
     options = {"memory":"8gb", "walltime":"48:00:00", "account":"RNA_Unet"}
@@ -139,6 +176,9 @@ def predict_nussinov(files):
 
 
 def evaluate_postprocessing(files): 
+    """
+    Evaluate all the implemented post-processing methods and compare them
+    """
     inputs = [os.path.join('RNA_Unet.pth')] + files
     outputs = [os.path.join('results', 'evaluation_nn.csv'), #TODO - Fix paths to output
                os.path.join('figures', 'evaluation_nn.png')]
@@ -148,6 +188,9 @@ def evaluate_postprocessing(files):
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) #TODO - Add some commands!
 
 def compare_methods(methods_under600, files_under600, methods, files):
+    """
+    Compare the different previous methods with the RNAUnet
+    """
     inputs = [file.replace('data/test_files', f'steps/{method}') for file in files_under600 for method in methods_under600] + [file.replace('data/test_files', f'steps/{method}') for file in files for method in methods]
     outputs = ['results/test_scores_under600.csv',
                'results/test_scores.csv',
