@@ -274,9 +274,9 @@ def energy_from_structure(structure, matrix):
         energy += matrix[pair[0], pair[1]]
         if i > 0: 
             if pair[0] - pairs[i-1][0] > 1: 
-                energy -= gp*(pair[0] - pairs[i-1][0] - 1) #Add penalty for every gap inserted
+                energy -= gp+gp*0.25*(pair[0] - pairs[i-1][0] - 2) #Add penalty for every gap inserted, with a higher opening penalty
             if pairs[i-1][1] - pair[1] > 1:
-                energy -= gp*(pairs[i-1][1] - pair[1] - 1) #Add penalty for every gap inserted
+                energy -= gp+gp*0.25*(pairs[i-1][1] - pair[1] - 2) #Add penalty for every gap inserted, with a higher opening penalty
     return energy
 
 def SeqStr(S: str, H: Node, matrix: np.ndarray, output_pairs = False): 
@@ -381,7 +381,6 @@ def hotknots(matrix, sequence, k=20, gap_penalty=0.5, treshold_prop = 0.5):
     
 
 
-"""
 sequence = "GGCCGGCAUGGUCCCAGCCUCCUCGCUGGCGCCGGCUGGGCAACAUUCCCAGGGGACCGUCCCCUGGGUAAUGGCGAAUGGGACCCA"
 "...............................___..................................................___"
 
@@ -398,13 +397,18 @@ import time
 
 print()
 start_time = time.time()
-final = hotknots(matrix, sequence, k=15)
+pairs = hotknots(matrix, sequence, k=4, gap_penalty=0.5)
 print("--- %s seconds ---" % (time.time() - start_time))
 
-print(final)
+print(pairs)
 
 from model_and_training import evaluate
 
+final = np.zeros((len(sequence), len(sequence)))
+for i, j in pairs:
+    final[i, j] = final[j, i] = 1
+
 _, _, F1 = evaluate(final, matrix)
 print(F1)
-"""
+
+
