@@ -208,7 +208,7 @@ def hotknots_postprocessing(matrix: np.ndarray, sequence: str, k=15, gap_penalty
     Returns:
     - np.ndarray: The postprocessed matrix.
     """
-    pairs = hotknots(sequence, matrix, k=k, gap_penalty=gap_penalty, treshold_prop=treshold_prop)
+    pairs = hotknots(matrix, sequence, k=k, gap_penalty=gap_penalty, treshold_prop=treshold_prop)
 
     y_out = np.zeros_like(matrix)
     
