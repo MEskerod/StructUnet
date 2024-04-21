@@ -135,8 +135,8 @@ def process_files(k: int, treshold: float, gap_penalty: float) -> tuple:
 
 if __name__ == '__main__':
     k_range = [1, 2, 3, 4, 5]
-    treshold_range = [0.5, 0.8, 1]
-    gap_penalty_range = [0, 0.2, 0.5]
+    treshold_range = [0.8, 1]
+    gap_penalty_range = [0.2, 0.5]
 
 
     F1_df = pd.DataFrame(index=k_range, columns=['F1'])
@@ -146,22 +146,24 @@ if __name__ == '__main__':
     data = read_files(file_path)
 
     results = []
+    combinations = []
+    scores = []
 
 
     #Get F1 score and time for each combination
     for k, treshold, gap_penalty in product(k_range, treshold_range, gap_penalty_range):
         f1_score, times = process_files(k, treshold, gap_penalty)
         results.append((f1_score, f'k={k}, th={treshold}, gp={gap_penalty}', times))
+        combinations.append(f'k={k}, th={treshold}, gp={gap_penalty}')
+        scores.append(f1_score)
+        #Save scores
+        F1_df = pd.DataFrame({'combinations': combinations, 'F1': scores})
+        F1_df.to_csv('results/F1_hotknots.csv', index=False)
     
-    combinations = [x[1] for x in results]
-    scores = [x[0] for x in results]
+
 
     #Make bar plot of F1 scores
     plot_f1(combinations, scores, 'figures/F1_hotknots.png')
-
-    #Save scores
-    F1_df = pd.DataFrame({'combinations': combinations, 'F1': scores})
-    F1_df.to_csv('results/F1_hotknots.csv', index=False)
 
     #Find 5 best options and plot time
     results.sort(key=lambda x: x[0], reverse=True)
