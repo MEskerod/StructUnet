@@ -112,7 +112,7 @@ def predict_hotknots(files):
     """
     inputs = [files]
     outputs = [os.path.join('steps', 'hotknots', os.path.basename(file)) for file in files]
-    options = {"memory":"64gb", "walltime":"96:00:00", "account":"RNA_Unet"} 
+    options = {"memory":"64gb", "walltime":"96:00:00", "account":"RNA_Unet", "cores":4} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 ../HotKnots/hotknots.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)

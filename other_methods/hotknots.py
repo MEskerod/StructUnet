@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os, sys, argparse, pickle, time, tqdm, datetime
+import multiprocessing as mp
 from collections import namedtuple
 from argparse import RawTextHelpFormatter
 from signal import signal, SIGPIPE, SIG_DFL
@@ -75,6 +76,16 @@ def make_matrix_from_basepairs(pairs: list) -> np.ndarray:
 
 	return matrix
 
+def process_file(i): 
+	start_time = time.time()
+	name = os.path.join('steps', 'hotknots', os.path.basename(files[i]))
+	sequence = pickle.load(open(files[i], 'rb')).sequence
+	sequence = sequence.replace('N', 'A')
+	seq, mfe = hk.fold(sequence, model)
+	structure = make_matrix_from_basepairs(dot_bracket_to_basepair(seq))
+	pickle.dump(structure, open(name, 'wb'))
+	process_bar.update(1)
+	return time.time() - start_time
             
 
 if __name__ == '__main__':
@@ -95,21 +106,13 @@ if __name__ == '__main__':
 	print(f"Start predicting with hotknots for {len(indices)} sequences")
 
 	process_bar = tqdm.tqdm(total=len(indices), unit='seq', file=sys.stdout)
-
-	start_time = time.time()
-
-	for i in indices:
-		name = os.path.join('steps', 'hotknots', os.path.basename(files[i]))
-		sequence = pickle.load(open(files[i], 'rb')).sequence
-		sequence = sequence.replace('N', 'A')
-		seq, mfe = hk.fold(sequence, model)
-		structure = make_matrix_from_basepairs(dot_bracket_to_basepair(seq))
-		pickle.dump(structure, open(name, 'wb'))
-		process_bar.update(1)
 	
+	with mp.Pool(mp.cpu_count()) as pool:
+		times = pool.map(process_file, indices)
+
 	process_bar.close()
 	
-	total_time = time.time() - start_time
+	total_time = np.sum(times)
 	print(f"Finished in {format_time(total_time)}. Average time per sequence: {total_time/len(indices):.5f}")
 
 
