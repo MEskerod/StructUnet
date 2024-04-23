@@ -1,5 +1,4 @@
-import pickle
-import os
+import pickle, time, os, torch, datetime
 
 import torch
 import torch.optim as optim
@@ -27,6 +26,21 @@ warnings.filterwarnings("ignore", message="FutureWarning: elementwise comparison
 absolute_path = os.path.dirname(os.path.realpath(__file__))
 args = get_args(absolute_path=absolute_path)
 perm = list(product(np.arange(4), np.arange(4)))
+
+def format_time(seconds):
+    """
+    Format a time duration in seconds to hh:mm:ss format.
+    
+    Parameters:
+    seconds: Time duration in seconds.
+    
+    Returns:
+    Formatted time string in hh:mm:ss format.
+    """
+    time_delta = datetime.timedelta(seconds=seconds)
+    hours, remainder = divmod(time_delta.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return '{:02d}:{:02d}:{:02d}'.format(hours, minutes, seconds)
 
 
 def model_eval_all_test(contact_net,test_generator):
@@ -189,7 +203,7 @@ def main():
               'drop_last': True}
 
     test_set = Dataset_FCN('input.txt')
-    #test_set = Dataset_FCN(test_data)
+    #test_set = Dataset_FCN(test_data)s
     test_generator = data.DataLoader(test_set, **params)
     contact_net = FCNNet(img_ch=17)
 
@@ -198,8 +212,11 @@ def main():
     print('==========Finish Loading Pretrained Model==========')
     print("TOTAL NUMBER OF SEQUENCES: ", len(test_set))
     contact_net.to(device)
+    time_start = time.time()
     model_eval_all_test(contact_net,test_generator)
+    total_time = time.time() - time_start
     print('==========Done!!! Please check results folder for the predictions!==========')
+    print(f'Total time: {format_time(total_time)}. Average time per sequence: {total_time/len(test_set):.5f} seconds.')
 
     
 if __name__ == '__main__':

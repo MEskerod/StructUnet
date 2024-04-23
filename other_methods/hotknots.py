@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, sys, argparse, pickle
+import os, sys, argparse, pickle, time, tqdm, datetime
 from collections import namedtuple
 from argparse import RawTextHelpFormatter
 from signal import signal, SIGPIPE, SIG_DFL
@@ -8,6 +8,22 @@ import numpy as np
 
 sys.path.pop(0)
 from hotknots import hotknots as hk
+
+def format_time(seconds):
+    """
+    Format a time duration in seconds to hh:mm:ss format.
+    
+    Parameters:
+    seconds: Time duration in seconds.
+    
+    Returns:
+    Formatted time string in hh:mm:ss format.
+    """
+    time_delta = datetime.timedelta(seconds=seconds)
+    hours, remainder = divmod(time_delta.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return '{:02d}:{:02d}:{:02d}'.format(hours, minutes, seconds)
+
 
 def dot_bracket_to_basepair(db): 
 	stack1 = []
@@ -62,28 +78,36 @@ def make_matrix_from_basepairs(pairs: list) -> np.ndarray:
             
 
 if __name__ == '__main__':
-	usage = '%s [-opt1, [-opt2, ...]] infile' % __file__
-	parser = argparse.ArgumentParser(description='', formatter_class=RawTextHelpFormatter, usage=usage)
-	parser.add_argument('infile', type=str, help='input file')
-	parser.add_argument('outfile', type=str, help='where to write output')
-	parser.add_argument('-m', '--model', type=str, default='DP', choices=['DP', 'CC', 'RE'], help='The model to use [DP]')
-	args = parser.parse_args()
-
 	RNA = namedtuple('RNA', 'input output length family name sequence') #Used for complete data set
 
 	# initialize everything first
 	params = os.path.dirname(hk.__file__)
-	sequence = pickle.load(open(args.infile, 'rb')).sequence
-	sequence = sequence.replace('N', 'A')
-	print(sequence, file=sys.stdout)
-	hk.initialize( args.model, os.path.join(params,"parameters_DP09.txt") , os.path.join(params,"multirnafold.conf"), os.path.join(params,"pkenergy.conf") )
-	seq,mfe = hk.fold(sequence , args.model)
-	print(seq, file=sys.stdout)
 
-	pairs = dot_bracket_to_basepair(seq)
-	matrix = make_matrix_from_basepairs(pairs)
+	files = pickle.load(open('data/test.pkl'))
+	indices = pickle.load(open('data/test_under_600.pkl'))
 
-	pickle.dump(matrix, open(args.outfile, 'wb'))
+	model = 'DP'
 
+	hk.initialize(model, os.path.join(params,"parameters_DP09.txt") , os.path.join(params,"multirnafold.conf"), os.path.join(params,"pkenergy.conf") )
+
+	print(f"Start predicting with hotknots for {len(indices)} sequences")
+
+	process_bar = tqdm.tqdm(total=len(indices), unit='seq', file=sys.stdout)
+
+	start_time = time.time()
+
+	for i in indices:
+		name = os.path.join('steps', 'hotknots', os.path.basename(files[i]))
+		sequence = pickle.load(open(files[i].input, 'rb')).sequence
+		sequence = sequence.replace('N', 'A')
+		seq, mfe = hk.fold(sequence, model)
+		structure = make_matrix_from_basepairs(dot_bracket_to_basepair(seq))
+		pickle.dump(structure, open(name, 'wb'))
+		process_bar.update(1)
+	
+	process_bar.close()
+	
+	total_time = time.time() - start_time
+	print(f"Finished in {format_time(total_time)}. Average time per sequence: {total_time/len(indices):.5f}")
 
 
