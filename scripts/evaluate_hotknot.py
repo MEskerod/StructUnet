@@ -1,10 +1,11 @@
 import time, os
 from tqdm import tqdm
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import multiprocessing as mp
 
-from itertools import product
 
 from utils.model_and_training import evaluate
 from utils.plots import plot_timedict
@@ -25,7 +26,7 @@ def plot_f1(categories: list, scores: list, outputfile: str) -> None:
     Returns:
     - Nones
     """
-    plt.figure(figsize=(16, 6))
+    plt.figure(figsize=(8, 6))
     plt.bar(categories, scores, color='C0', edgecolor='black', linewidth=0.5, zorder = 3)
     plt.xlabel('Combinations')
     plt.ylabel('F1 score')
@@ -119,7 +120,7 @@ def process_files(k: int, treshold: float, gap_penalty: float) -> tuple:
     F1 = []
     times = []
     
-    progess_bar = tqdm(total=len(data), desc=f'k = {k}, treshold = {treshold}, gap penaty = {gap_penalty}', unit='seq')
+    progess_bar = tqdm(total=len(data), desc=f'k = {k}, ', unit='seq')
     
     for d in data:
         start = time.time()
@@ -132,11 +133,13 @@ def process_files(k: int, treshold: float, gap_penalty: float) -> tuple:
         
     return np.mean(F1), times
 
+def process_combination(k): 
+    f1_score, times = process_files(k, 0.8, 0.5)
+    return f1_score, k, times
+
 
 if __name__ == '__main__':
     k_range = [1, 2, 3, 4, 5]
-    treshold_range = [0.8, 1]
-    gap_penalty_range = [0.2, 0.5]
 
 
     F1_df = pd.DataFrame(index=k_range, columns=['F1'])
@@ -145,35 +148,30 @@ if __name__ == '__main__':
 
     data = read_files(file_path)
 
-    results = []
-    combinations = []
-    scores = []
+    #Use multiprocessing to process the combinations
+    with mp.Pool(mp.cpu_count()) as pool:
+        results = pool.map(process_combination, k_range)
 
+    results.sort(key=lambda x: x[1])
 
-    #Get F1 score and time for each combination
-    for k, treshold, gap_penalty in product(k_range, treshold_range, gap_penalty_range):
-        f1_score, times = process_files(k, treshold, gap_penalty)
-        results.append((f1_score, f'k={k}, th={treshold}, gp={gap_penalty}', times))
-        combinations.append(f'k={k}, th={treshold}, gp={gap_penalty}')
-        scores.append(f1_score)
-        #Save scores
-        F1_df = pd.DataFrame({'combinations': combinations, 'F1': scores})
-        F1_df.to_csv('results/F1_hotknots.csv', index=False)
-    
+    k = [result[1] for result in results]
+    scores = [result[0] for result in results]
 
+    #Save scores
+    F1_df = pd.DataFrame({'k': k, 'F1': scores})
+    F1_df.to_csv('results/F1_hotknots.csv', index=False)
 
     #Make bar plot of F1 scores
-    plot_f1(combinations, scores, 'figures/F1_hotknots.png')
+    plot_f1(k, scores, 'figures/F1_hotknots.png')
 
-    #Find 5 best options and plot time
-    results.sort(key=lambda x: x[0], reverse=True)
-    time_dict = {x[1]: x[2] for x in results[:5]}
+    #Plot time
+    time_dict = {x[1]: x[2] for x in results}
     lengths = [d[0] for d in data]
     plot_timedict(time_dict, lengths, 'figures/time_hotknots.png')
 
     #Save times
     time_df = pd.DataFrame(time_dict, index=lengths)
-    time_df.to_csv('results/time_hotknots.csv', index=False)
+    time_df.to_csv('results/time_hotknots.csv')
 
 
 
