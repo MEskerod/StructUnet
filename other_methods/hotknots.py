@@ -84,8 +84,9 @@ def process_file(i):
 	seq, mfe = hk.fold(sequence, model)
 	structure = make_matrix_from_basepairs(dot_bracket_to_basepair(seq))
 	pickle.dump(structure, open(name, 'wb'))
+	result = time.time() - start_time
 	process_bar.update(1)
-	return time.time() - start_time
+	return result
             
 
 if __name__ == '__main__':
