@@ -83,8 +83,8 @@ if __name__ == '__main__':
 	# initialize everything first
 	params = os.path.dirname(hk.__file__)
 
-	files = pickle.load(open('data/test.pkl'))
-	indices = pickle.load(open('data/test_under_600.pkl'))
+	files = pickle.load(open('data/test.pkl', 'rb'))
+	indices = pickle.load(open('data/test_under_600.pkl', 'rb'))
 
 	model = 'DP'
 
@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
 	for i in indices:
 		name = os.path.join('steps', 'hotknots', os.path.basename(files[i]))
-		sequence = pickle.load(open(files[i].input, 'rb')).sequence
+		sequence = pickle.load(open(files[i], 'rb')).sequence
 		sequence = sequence.replace('N', 'A')
 		seq, mfe = hk.fold(sequence, model)
 		structure = make_matrix_from_basepairs(dot_bracket_to_basepair(seq))

@@ -132,6 +132,7 @@ def predict_ufold(files):
     conda activate UFold
 
     python3 ../UFOLD/ufold_predict.py
+    mkdir steps/Ufold
     mv results_Ufold/* steps/Ufold/
     rm -r results_Ufold
     rm input.txt""".format(files = '\n'.join(files))
