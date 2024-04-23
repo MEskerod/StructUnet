@@ -1,94 +1,45 @@
-import pickle, os, time
+import pickle, os, time, subprocess, datetime
 from collections import namedtuple
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-
-
-def pairing_score(i: int, j: int, S: np.array, sequence: str): 
+def format_time(seconds):
     """
-    Returns the score of pairing i and j. 
-    If i and j can form a basepair the score is 1 + S[i+1, j-1] 
-    Otherwise it is negative infinity (not possible structure)
-    """
-    basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
-
-    if sequence[i]+sequence[j] in basepairs: 
-        score = 1 + S[i+1, j-1]
-    else: 
-        score = float('-inf')
+    Format a time duration in seconds to hh:mm:ss format.
     
-    return score
-
-def bifurcating_score(i: int, j: int, S: np.array) -> tuple:
-    """
-    Tries all the possible bifurcating loops and returns the score and k that gives the maximum energy
-    """
-    score = float('-inf')
-    end_k = 0
-
-    for k in range(i+1, j-1): 
-        sub_score = S[i, k] + S[k+1, j]
-        if sub_score > score: 
-            score = sub_score
-            end_k = k
-    return score, end_k
-
-def fill_S(sequence: str) -> np.array:
-    """
-    Fills out the S matrix
-    """
-
-    N = len(sequence)
-    S = np.zeros([N, N])
+    Parameters:
+    seconds: Time duration in seconds.
     
-    for l in range(4, N): #Computes the best score for all subsequences that are 5 nucleotides or longer
-        for i in range(0, N-4): 
-            j = i+l
-            if j < N:
-                score = max(S[i+1, j],
-                            S[i, j-1],
-                            pairing_score(i, j, S, sequence),
-                            bifurcating_score(i, j, S)[0])
-                S[i,j] = score
-                
-    return S
-
-def backtrack(i: int, j: int, S: np.array, pairs: list, sequence: str) -> None: 
+    Returns:
+    Formatted time string in hh:mm:ss format.
     """
-    Backtracks trough the S matrix, to find the structure that gives the maximum energy
+    time_delta = datetime.timedelta(seconds=seconds)
+    hours, remainder = divmod(time_delta.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return '{:02d}:{:02d}:{:02d}'.format(hours, minutes, seconds)
+
+
+def run_nussinov(sequence):
     """
-    if j-i-1 <= 3: 
-        pairs[i], pairs[j] = j, i
+    """
+    command = ['other_methods/nussinov', sequence]
 
-    elif S[i, j] == S[i+1, j]: 
-        backtrack(i+1, j, S, pairs, sequence)
+    try:
+        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p.wait()
+        output, error = p.communicate()
 
-    elif S[i, j] == S[i, j-1]: 
-        backtrack(i, j-1, S, pairs, sequence)
+        if p.returncode == 0: #Check that command succeeded
+            result = output.decode().split()
+            return result
+        else:
+            error_msg = error.decode() if error else 'Unknown error'
+            raise Exception(f'Simfold execution failed: {error_msg}')
     
-    elif S[i, j] == pairing_score(i, j, S, sequence): 
-        pairs[i], pairs[j] = j, i
-        backtrack(i+1, j-1, S, pairs, sequence)
-
-    elif S[i, j] == bifurcating_score(i, j, S)[0]:
-        k = bifurcating_score(i, j, S)[1]
-        backtrack(i, k, S, pairs, sequence), backtrack(k+1, j, S, pairs, sequence)
-
-def fold_RNA(S: np.array, sequence: str) -> str: 
-    """
-    Finds the optimal structure of foldning the sequence and returns a list of each position of the state of pairing of each base
-    """
-    pairs = [None for x in range(S.shape[0])]
-    
-    j = S.shape[0]-1
-    i = 0
-
-    backtrack(i, j, S, pairs, sequence)
-
-    return pairs
+    except Exception as e:
+        raise Exception(f'An error occured: {e}')
 
 
 def make_matrix_from_basepairs(pairs: list) -> np.ndarray:
@@ -107,10 +58,7 @@ def make_matrix_from_basepairs(pairs: list) -> np.ndarray:
 	matrix = np.full((N,N), 0, dtype="float32")
 
 	for i, p in enumerate(pairs):
-		if isinstance(p, int): 
-			matrix[i, pairs[i]] = 1 
-		else: 
-			matrix[i,i] = 1
+		matrix[i, int(p)] = 1 
 
 	return matrix
 
@@ -147,20 +95,25 @@ def main() -> None:
 
     progress_bar = tqdm(total=len(test), unit='sequence')
 
+    start_time = time.time()
+
     for i in range(len(test)): 
         sequence = pickle.load(open(test[i], 'rb')).sequence
         name = os.path.join('steps', 'nussinov', os.path.basename(test[i])) 
         start = time.time()
-        pairs = fold_RNA(fill_S(sequence), sequence)  
-        output = make_matrix_from_basepairs(pairs)
+        output = make_matrix_from_basepairs(run_nussinov(sequence))
         pickle.dump(output, open(name, 'wb'))
         times.append(time.time()-start)
         lengths.append(len(sequence))
         progress_bar.update(1)
-
+    
     progress_bar.close()
+    
+    total_time = time.time()-start_time
 
     print('-- Predictions done --')
+
+    print(f'Total time: {format_time(total_time)}. Average prediction time: {total_time/len(test):.5f}')
 
     print('-- Plot and save times --')
     data = {'lengths': lengths, 'times': times}

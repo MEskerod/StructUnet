@@ -90,6 +90,8 @@ if __name__ == '__main__':
 
 	hk.initialize(model, os.path.join(params,"parameters_DP09.txt") , os.path.join(params,"multirnafold.conf"), os.path.join(params,"pkenergy.conf") )
 
+	os.makedirs('steps/hotknots', exist_ok=True)
+
 	print(f"Start predicting with hotknots for {len(indices)} sequences")
 
 	process_bar = tqdm.tqdm(total=len(indices), unit='seq', file=sys.stdout)

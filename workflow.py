@@ -170,7 +170,7 @@ def predict_nussinov(files):
     """
     inputs = [file for file in files]
     outputs = [file.replace('data/test_files', 'steps/nussinov') for file in files] + ['results/times_nussinov.csv', 'figures/times_nussinov.png']
-    options = {"memory":"8gb", "walltime":"48:00:00", "account":"RNA_Unet"}
+    options = {"memory":"8gb", "walltime":"96:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 other_methods/nussinov.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
