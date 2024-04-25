@@ -63,7 +63,7 @@ def train_model_small(files):
     """
     Train the model on the entire data set
     """
-    inputs = [file for file in files]
+    inputs = ['data/complete_set.tar.gz']
     outputs = ['RNA_Unet.pth']
     options = {"memory":"8gb", "walltime":"168:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
     spec = """CONDA_BASE=$(conda info --base)
