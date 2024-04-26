@@ -139,7 +139,7 @@ def process_combination(k):
 
 
 if __name__ == '__main__':
-    k_range = [1, 2, 3, 4, 5]
+    k_range = [1, 2, 3]
 
 
     F1_df = pd.DataFrame(index=k_range, columns=['F1'])
