@@ -1,4 +1,4 @@
-import heapq, sys, subprocess
+import heapq, sys, subprocess, torch
 
 import numpy as np
 
@@ -23,11 +23,6 @@ class HotSpot:
     def bases(self): 
         strand1 = sorted([x[0] for x in self.pairs])
         strand2 = sorted([x[1] for x in self.pairs])
-
-        #strand1 = np.sort(np.array([x[0] for x in self.pairs]))
-        #strand2 = np.sort(np.array([x[1] for x in self.pairs]))
-
-        #return np.concatenate([np.arange(strand1[0], strand1[-1]+1), np.arange(strand2[0], strand2[-1]+1)])
         
         return list(range(strand1[0], strand1[-1]+1)) + list(range(strand2[0], strand2[-1]+1))
 
@@ -50,18 +45,16 @@ class Node:
             if len(self.hotspots) == 1:
                 return self.hotspots[0].bases
             bases = []
-            #bases = np.concatenate([hotspot.bases for hotspot in self.hotspots])
             for hotspot in self.hotspots: 
                 bases.extend(hotspot.bases)
             return sorted(bases)
-            #return np.sort(bases)
         else:
-            return np.array([])
+            return []
     
     @cached_property
     def energy(self): 
         if self.hotspots is not None: 
-            return np.sum([hotspot.energy for hotspot in self.hotspots])
+            return torch.sum(torch.tensor([hotspot.energy for hotspot in self.hotspots], device=dv))
         else: 
             return 0
 
@@ -90,7 +83,7 @@ class Tree:
         parent.children.append(node)
         
 class Trace(IntEnum):
-    STOP = 0
+    STOP = 0 
     LEFT = 1
     DOWN = 2
     DIAG = 3
@@ -125,8 +118,8 @@ def smith_waterman(seq1, matrix, treshold = 2.0):
     N = len(seq1)
 
     # Initialize the scoring matrix.
-    score_matrix = np.zeros((N+1, N+1))
-    tracing_matrix = np.zeros((N+1, N+1))
+    score_matrix = torch.zeros((N+1, N+1), device=dv)
+    tracing_matrix = torch.zeros((N+1, N+1), device=dv)
 
     #Calculating the scores for all cells in the matrix
     for l in range(4, N): 
@@ -226,7 +219,7 @@ def db_to_pairs(structure: str):
     pairs.sort()
     return pairs
 
-def identify_hotspots(structure: str, matrix: np.ndarray, k=20, treshold = 2.0):
+def identify_hotspots(structure: str, matrix: torch.Tensor, k=20, treshold = 2.0):
     
     pairs = db_to_pairs(structure)
     if not pairs:
@@ -279,7 +272,7 @@ def energy_from_structure(structure, matrix):
                 energy -= gp+gp*0.25*(pairs[i-1][1] - pair[1] - 2) #Add penalty for every gap inserted, with a higher opening penalty
     return energy
 
-def SeqStr(S: str, H: Node, matrix: np.ndarray, output_pairs = False): 
+def SeqStr(S: str, H: Node, matrix: torch.Tensor, output_pairs = False): 
     """
     Secondary structure of sequence S with hotspot set H
     s1, s2, ..., sl are the sequences obtained from S when removing the bases that are in hotspots of H
@@ -316,7 +309,7 @@ def SeqStr(S: str, H: Node, matrix: np.ndarray, output_pairs = False):
     
     energies = [s_scores[pair] for pair in s_list]
 
-    return H.energy + np.sum(energies)
+    return H.energy + torch.sum(torch.tensor(energies, device=dv))
 
 def grow_tree(tree: Tree, sequence, matrix, k=20):
     """
@@ -363,12 +356,13 @@ def grow_tree(tree: Tree, sequence, matrix, k=20):
     return tree
 
 
-def hotknots(matrix, sequence, k=20, gap_penalty=0.5, treshold_prop = 0.5):
+def hotknots(matrix: torch.Tensor, sequence: str, device: str, k=20, gap_penalty=0.5, treshold_prop = 0.5):
     """
     """
-    global gp, tp
+    global gp, tp, dv
     gp = gap_penalty
     tp = treshold_prop
+    dv = device
 
     tree = initialize_tree(sequence, matrix, k)
     grow_tree(tree, sequence, matrix, k)
@@ -379,7 +373,8 @@ def hotknots(matrix, sequence, k=20, gap_penalty=0.5, treshold_prop = 0.5):
   
     return pairs
     
-"""
+"""    
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 sequence = "GGCCGGCAUGGUCCCAGCCUCCUCGCUGGCGCCGGCUGGGCAACAUUCCCAGGGGACCGUCCCCUGGGUAAUGGCGAAUGGGACCCA"
 "...............................___..................................................___"
@@ -389,7 +384,7 @@ pairs = [[(1, 37), (2, 36), (3, 35), (4, 34), (5, 33), (6, 32), (7, 31)],
          [(17, 30), (18, 29), (19, 28)], 
          [(44, 73), (45, 72), (46, 71), (47, 70), (48, 68), (49, 67), (50, 66), (51, 65), (52, 64), (53, 63), (54, 62), (55, 61), (56, 60)]]
 
-matrix = np.zeros((len(sequence), len(sequence)))
+matrix = torch.zeros((len(sequence), len(sequence)), device=device)
 for i, j in [pair for sublist in pairs for pair in sublist]:
     matrix[i-1, j-1] = matrix[j-1, i-1] = 1
 
@@ -397,14 +392,15 @@ import time
 
 print()
 start_time = time.time()
-pairs = hotknots(matrix, sequence, k=4, gap_penalty=0.5)
+pairs = hotknots(matrix, sequence, device, k=4, gap_penalty=0.5)
 print("--- %s seconds ---" % (time.time() - start_time))
 
 print(pairs)
 
 from model_and_training import evaluate
 
-final = np.zeros((len(sequence), len(sequence)))
+
+final = torch.zeros((len(sequence), len(sequence)), device=device)
 for i, j in pairs:
     final[i, j] = final[j, i] = 1
 

@@ -1,22 +1,22 @@
-import math, os
-import numpy as np
+import math, os, torch
 import pandas as pd
 
 ####### HELP FUNCTIONS #######
 
 
-def declare_global_variable(seq: str, M: np.ndarray) -> None: 
+def declare_global_variable(seq: str, M: torch.Tensor, device: str) -> None: 
     """
     Declares the global variables used troughout all the other functions. 
 
     Parameters:
     - seq (str): The RNA sequence to fold
-    - M (np.ndarray): The energy matrix used to calculate the energy of the different basepairs
+    - M (torch.Tensor): The energy matrix used to calculate the energy of the different basepairs
+    - device (str): The device to run the calculations on
 
     Returns:
     - None
     """
-    global basepairs, sequence, matrix, parameters, asymmetric_penalty_function
+    global basepairs, sequence, matrix, parameters, asymmetric_penalty_function, dv
 
     #Find absolute path of script, to be able to open csv files whereever the script is called from
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -36,6 +36,7 @@ def declare_global_variable(seq: str, M: np.ndarray) -> None:
     matrix = M
     parameters = (loops, stacking)
     asymmetric_penalty_function = make_asymmetric_penalty([0.4, 0.3, 0.2, 0.1], 3)
+    dv = device
 
 
 ####### FOLD FUNCTIONS #######
@@ -92,7 +93,7 @@ def loop_greater_10(loop_type: str, length: int) -> float:
     return G
 
 ### LOOP ENERGIES ###
-def stacking(i: int, j: int, V: np.ndarray) -> float: 
+def stacking(i: int, j: int, V: torch.Tensor) -> float: 
     """
     Find the energy parameter for basepairing of Sij and Si+1j-1, which results in basepair stacking
     If Si+1 and Sj+1 cannot basepair the energy is infinity
@@ -101,7 +102,7 @@ def stacking(i: int, j: int, V: np.ndarray) -> float:
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - V (np.ndarray): The V matrix
+    - V (torch.Tensor): The V matrix
 
     Returns:
     - energy (float): The energy of the basepairing
@@ -119,14 +120,14 @@ def stacking(i: int, j: int, V: np.ndarray) -> float:
     
     return energy
 
-def bulge_loop_3end(i: int, j: int, V: np.array) -> tuple[float, int]: 
+def bulge_loop_3end(i: int, j: int, V: torch.Tensor) -> tuple[float, int]: 
     """
     Find the energy parameter of introducing a bulge loop on the 3' end of the strand 
 
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - V (np.ndarray): The V matrix
+    - V (torch.Tensor): The V matrix
 
     Returns:
     - energy (float): The energy of the bulge loop
@@ -153,14 +154,14 @@ def bulge_loop_3end(i: int, j: int, V: np.array) -> tuple[float, int]:
     
     return energy, ij
 
-def bulge_loop_5end(i: int, j: int, V: np.ndarray) -> tuple[float, int]:
+def bulge_loop_5end(i: int, j: int, V: torch.Tensor) -> tuple[float, int]:
     """
     Find the energy parameter of introducing a bulge loop on the 5' end of the strand
 
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - V (np.ndarray): The V matrix
+    - V (torch.Tensor): The V matrix
 
     Returns:
     - energy (float): The energy of the bulge loop 
@@ -187,14 +188,14 @@ def bulge_loop_5end(i: int, j: int, V: np.ndarray) -> tuple[float, int]:
 
     return energy, ij
 
-def interior_loop(i: int, j: int, V: np.ndarray) -> tuple[float, tuple[int, int]]: 
+def interior_loop(i: int, j: int, V: torch.Tensor) -> tuple[float, tuple[int, int]]: 
     """
     Find the energy parameter of adding a interior loop
 
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - V (np.ndarray): The V matrix
+    - V (torch.Tensor): The V matrix
 
     Returns:
     - energy (float): The energy of the interior loop
@@ -247,7 +248,7 @@ def find_E1(i: int, j: int) -> float:
 
     return energy
 
-def find_E2(i: int, j: int, V: np.ndarray) -> float: 
+def find_E2(i: int, j: int, V: torch.Tensor) -> float: 
     """
     E2 is the energy of basepairing between i and j and i' and j' resulting in two internal edges (stacking, bulge loop or internal loop)
     i<i'<j'<j
@@ -256,7 +257,7 @@ def find_E2(i: int, j: int, V: np.ndarray) -> float:
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - V (np.ndarray): The V matrix
+    - V (torch.Tensor): The V matrix
 
     Returns:
     - energy (float): The minimum energy of the basepairing given that two internal edges are formed
@@ -267,7 +268,7 @@ def find_E2(i: int, j: int, V: np.ndarray) -> float:
                  interior_loop(i, j, V)[0])
     return energy
 
-def find_E3(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]: 
+def find_E3(i: int, j: int, W: torch.Tensor) -> tuple[float, tuple[int, int]]: 
     """
     E3 is the energy of a structure that contains more than two internal edges (bifurcating loop)
     The energy is the energy of the sum of the substructures 
@@ -276,7 +277,7 @@ def find_E3(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]:
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - W (np.ndarray): The W matrix
+    - W (torch.Tensor): The W matrix
 
     Returns:
     - energy (float): The energy of the bifurcating loop
@@ -293,7 +294,7 @@ def find_E3(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]:
             ij = (ip, ip+1)
     return energy, ij
 
-def find_E4(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]: 
+def find_E4(i: int, j: int, W: torch.Tensor) -> tuple[float, tuple[int, int]]: 
     """
     E4 is the energy when i and j are both in base pairs, but not with each other. 
     It find the minimum of combinations of two possible subsequences containing i and j
@@ -301,7 +302,7 @@ def find_E4(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]:
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - W (np.ndarray): The W matrix
+    - W (torch.Tensor): The W matrix
 
     Returns:
     - energy (float): The energy of the basepairing
@@ -319,14 +320,14 @@ def find_E4(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]:
 
     return energy, ij
 
-def penta_nucleotides(W: np.ndarray, V: np.ndarray) -> None:
+def penta_nucleotides(W: torch.Tensor, V: torch.Tensor) -> None:
     """
     Fills out the first entries in the matrices V and W 
     The shortest possible subsequences are of length 5 and can only form hairpin loops of size 3 if i and j basepair
 
     Parameters:
-    - W (np.ndarray): The W matrix
-    - V (np.ndarray): The V matrix
+    - W (torch.Tensor): The W matrix
+    - V (torch.Tensor): The V matrix
 
     Returns:
     - None
@@ -342,18 +343,18 @@ def penta_nucleotides(W: np.ndarray, V: np.ndarray) -> None:
             V[i,j] = W[i,j] = parameters[0].at[3, "HL"] 
 
 ### FILL V AND W ###
-def compute_V(i: int, j: int, W: np.ndarray, V: np.ndarray) -> None: 
+def compute_V(i: int, j: int, W: torch.Tensor, V: torch.Tensor) -> None: 
     """
     Computes the minimization over E1, E2 and E3, which will give the value at V[i,j]
 
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - W (np.ndarray): The W matrix
-    - V (np.ndarray): The V matrix
+    - W (torch.Tensor): The W matrix
+    - V (torch.Tensor): The V matrix
 
     Returns:
-    - None
+    - None 
     """
 
     if matrix[i, j] and sequence[i]+sequence[j] in basepairs:
@@ -366,7 +367,7 @@ def compute_V(i: int, j: int, W: np.ndarray, V: np.ndarray) -> None:
 
     V[i, j] = v
 
-def compute_W(i: int, j: int, W: np.ndarray, V: np.ndarray) -> None:
+def compute_W(i: int, j: int, W: torch.Tensor, V: torch.Tensor) -> None:
     """
     Computes the minimization over possibilities for W and fills out the entry at W[i,j]
      Possibilities are: 
@@ -377,15 +378,15 @@ def compute_W(i: int, j: int, W: np.ndarray, V: np.ndarray) -> None:
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - W (np.ndarray): The W matrix
-    - V (np.ndarray): The V matrix
+    - W (torch.Tensor): The W matrix
+    - V (torch.Tensor): The V matrix
     """
     w = min(W[i+1,j], W[i,j-1], V[i,j], find_E4(i, j, W)[0])
 
     W[i,j] = w
 
 
-def fold_rna() -> tuple[np.ndarray, np.ndarray]: 
+def fold_rna() -> tuple[torch.Tensor, torch.Tensor]: 
     """
     Fills out the W and V matrices to find the fold that gives the minimum free energy
     Follows Mfold as desribed by M. Zuker
@@ -398,11 +399,11 @@ def fold_rna() -> tuple[np.ndarray, np.ndarray]:
     Only base pairs that have a non-zero value in the M matrix are considered.
 
     Returns:
-    - W (np.ndarray): The W matrix
-    - V (np.ndarray): The V matrix
+    - W (torch.Tensor): The W matrix
+    - V (torch.Tensor): The V matrix
     """
     N = len(sequence)
-    W, V = np.full([N, N], float('inf')), np.full([N, N], float('inf'))
+    W, V = torch.full([N, N], float('inf'), device=dv), torch.full([N, N], float('inf'), device=dv)
 
 
     #Fills out the table with all posible penta nucleotide subsequences
@@ -420,19 +421,19 @@ def fold_rna() -> tuple[np.ndarray, np.ndarray]:
 
 
 ### BACTRACKING ### 
-def backtrack(W: np.ndarray, V: np.ndarray) -> list: 
+def backtrack(W: torch.Tensor, V: torch.Tensor) -> list: 
     """
     Backtracks trough the W, V matrices to find the final fold
     Returns the fold as a list of tuples containing the indices of the basepairs
 
     Parameters:
-    - W (np.ndarray): The W matrix
-    - V (np.ndarray): The V matrix
+    - W (torch.Tensor): The W matrix
+    - V (torch.Tensor): The V matrix
 
     Returns:
     - pairs (list): The secondary structure of the RNA
     """
-    pairs = []
+    pairs = [i for i in range(W.shape[0])]
 
     N = W.shape[0]-1
     
@@ -443,31 +444,38 @@ def backtrack(W: np.ndarray, V: np.ndarray) -> list:
         """
         Traces backwards trough the V matrix recursively to find the secondary structure
         """
-        if V[i,j] == find_E1(i, j): 
-            pairs.append((i, j))
+        if V[i,j] == find_E1(i, j):
+            pairs[i] = j
+            pairs[j] = i 
+
     
-        elif V[i,j] == stacking(i, j, V): 
-            pairs.append((i, j))
+        elif V[i,j] == stacking(i, j, V):
+            pairs[i] = j
+            pairs[j] = i 
             trace_V(i+1, j-1)
     
         elif V[i,j] == bulge_loop_3end(i, j, V)[0]: 
             jp = bulge_loop_3end(i, j, V)[1]
-            pairs.append((i, j))
+            pairs[i] = j
+            pairs[j] = i
             trace_V(i+1, jp)
     
         elif V[i,j] == bulge_loop_5end(i, j, V)[0]: 
             ip = bulge_loop_5end(i, j, V)[1]
-            pairs.append((i, j))
+            pairs[i] = j   
+            pairs[j] = i
             trace_V(ip, j-1)
     
         elif V[i,j] == interior_loop(i, j, V)[0]:
             ij = interior_loop(i, j, V)[1]
-            pairs.append((i, j))
+            pairs[i] = j
+            pairs[j] = i
             trace_V(ij[0], ij[1])
     
         elif V[i, j] == find_E3(i, j, W)[0]: 
             ij = find_E3(i, j, W)[1]
-            pairs.append((i, j))
+            pairs[i] = j
+            pairs[j] = i
             trace_W(i+1, ij[0]), trace_W(ij[1], j-1)
 
     def trace_W(i: int, j: int) -> None: 
@@ -496,19 +504,19 @@ def backtrack(W: np.ndarray, V: np.ndarray) -> list:
     return pairs
 
 
-def Mfold(sequence: str, matrix: np.ndarray) -> list: 
+def Mfold(sequence: str, matrix: torch.Tensor, device: str) -> list: 
     """
     Folds a RNA sequence using Mfold as described by M. Zuker
     Uses the matrix as constraints for which basepairs are allowed
 
     Parameters:
     - sequence (str): The RNA sequence to fold
-    - matrix (np.ndarray): The energy matrix used to calculate the energy of the different basepairs
+    - matrix (torch.Tensor): The energy matrix used to calculate the energy of the different basepairs
 
     Returns:
-    - fold (np.ndarray): The secondary structure of the RNA
+    - fold (torch.Tensor): The secondary structure of the RNA
     """
-    declare_global_variable(sequence, matrix)
+    declare_global_variable(sequence, matrix, device)
 
     W, V = fold_rna()
     fold = backtrack(W, V)

@@ -1,3 +1,7 @@
+import torch, math
+
+import torch.nn.functional as F
+
 import numpy as np
 import networkx as nx
 
@@ -6,61 +10,92 @@ from utils.Mfold1 import Mfold as Mfold_param
 from utils.Mfold2 import Mfold as Mfold_constrain
 from utils.hotknots import hotknots
 
-def argmax_postprocessing(matrix: np.ndarray, sequence: str) -> np.ndarray:
+def pairs(x: str, y:str) -> bool:
+    if x == 'A' and y == 'U':
+        return True
+    if x == 'U' and y == 'A':
+        return True
+    if x == 'C' and y == 'G':
+        return True
+    if x == 'G' and y == 'C':
+        return True
+    if x == 'G' and y == 'U':
+        return True
+    if x == 'U' and y == 'G':
+        return True
+    return False
+
+def prepare_input(matrix: torch.Tensor, sequence: str, device: str) -> torch.Tensor:
+    """
+    Takes a sequence and returns a mask tensor with 1s in the positions where a base can pair with another base and for unpaired bases.
+    """
+    
+    N = len(sequence)
+    
+    m = torch.eye(N, device=device)
+
+    #Make mask to ensure only allowed base pairs and that no sharp turns are present
+    for i in range(N):
+        for j in range(N):
+            if abs(i-j) < 3:
+                if pairs(sequence[i], sequence[j]):
+                    m[i, j] = 1
+    
+    #Make symmetric and apply mask
+    matrix = (matrix + matrix.T) / 2 * m
+    
+    return 
+
+def argmax_postprocessing(matrix: torch.Tensor, sequence: str, device: str) -> torch.Tensor:
     """
     Postprocessing function that takes a matrix and returns a matrix with 1s in the position of the maximum value in each row.
     The functions has sequence as input, but does not use it. It is provided to make the function compatible with other postprocessing functions.
 
     Parameters:
-    - matrix (np.ndarray): The matrix to postprocess.
+    - matrix (torch.Tensor): The matrix to postprocess.
     - sequence (str): The sequence that the matrix was generated from.
 
     Returns:
-    - np.ndarray: The postprocessed matrix.
+    - torch.Tensor: The postprocessed matrix.
     """ 
-    N = matrix.shape[0]
-    
-    #Make symmetric
-    matrix = (matrix + matrix.T) / 2
+    y_out = torch.zeros_like(matrix)
+    indices = torch.argmax(matrix, dim=1)
+    y_out.scatter_(1, indices.unsqueeze(1), 1)
 
-    y_out = np.zeros_like(matrix)
-    
-    indices =  np.argmax(matrix, axis=1)
-    y_out[np.arange(N), indices] = 1
-    
-    for i in range(N): 
-        if not np.any(y_out[i, :]) and not np.any(y_out[:, i]): 
-            y_out[i, i] = 1
-    
+    zero_rows = ~torch.any(y_out != 0, dim=1)
+
+    y_out[zero_rows, zero_rows] = 1
+
     return y_out
 
-def nx_blossum_postprocessing(matrix: np.ndarray, sequence: str) -> np.ndarray: 
+
+def nx_blossum_postprocessing(matrix: torch.Tensor, sequence: str, device: str) -> torch.Tensor: 
     """
     Postprocessing function that takes a matrix and returns a matrix.
     The function uses NetworkX to find the maximum weight matching in the graph representation of the matrix, with copying of the matrix to allow for self-pairing.
     The functions has sequence as input, but does not use it. It is provided to make the function compatible with other postprocessing functions.
 
     Parameters:
-    - matrix (np.ndarray): The matrix to postprocess.
+    - matrix (torch.Tensor): The matrix to postprocess.
     - sequence (str): The sequence that the matrix was generated from.
 
     Returns:
-    - np.ndarray: The postprocessed matrix.
-    """
+    - torch.Tensor: The postprocessed matrix.
+    """    
     n = matrix.shape[0]
 
-    mask = np.eye(n)*2
+    mask = torch.eye(n, device=device)*2
 
-    A = np.zeros((2*n, 2*n))
+    A = torch.zeros((2*n, 2*n), device=device)
     A[:n, :n] = matrix
     A[n:, n:] = matrix
     A[:n, n:] = matrix*mask
     A[n:, :n] = matrix*mask
 
-    G = nx.convert_matrix.from_numpy_array(A)
+    G = nx.convert_matrix.from_numpy_array(A.numpy())
     pairing = nx.max_weight_matching(G)
 
-    y_out = np.zeros_like(matrix)
+    y_out = torch.zeros_like(matrix, device=device)
 
     for (i, j) in pairing:
         if i>n and j>n:
@@ -70,7 +105,7 @@ def nx_blossum_postprocessing(matrix: np.ndarray, sequence: str) -> np.ndarray:
     
     return y_out
 
-def blossom_postprocessing(matrix: np.ndarray, sequence: str) -> np.ndarray: 
+def blossom_postprocessing(matrix: torch.Tensor, sequence: str, device: str) -> torch.Tensor: 
     """
     Postprocessing function that takes a matrix and returns a matrix.
     The function uses the blossom algorithm to find the maximum weight matching in the graph representation of the matrix, with copying of the matrix to allow for self-pairing.
@@ -78,17 +113,17 @@ def blossom_postprocessing(matrix: np.ndarray, sequence: str) -> np.ndarray:
     The functions has sequence as input, but does not use it. It is provided to make the function compatible with other postprocessing functions.
 
     Parameters:
-    - matrix (np.ndarray): The matrix to postprocess.
+    - matrix (torch.Tensor): The matrix to postprocess.
     - sequence (str): The sequence that the matrix was generated from.
 
     Returns:
-    - np.ndarray: The postprocessed matrix.
+    - torch.Tensor: The postprocessed matrix.
     """
     n = matrix.shape[0]
 
-    mask = np.eye(n)*2
+    mask = torch.eye(n, device=device)*2
 
-    A = np.zeros((2*n, 2*n))
+    A = torch.zeros((2*n, 2*n), device=device)
     A[:n, :n] = matrix
     A[n:, n:] = matrix
     A[:n, n:] = matrix*mask
@@ -96,7 +131,7 @@ def blossom_postprocessing(matrix: np.ndarray, sequence: str) -> np.ndarray:
 
     pairing = blossom.max_weight_matching_matrix(A)
 
-    y_out = np.zeros_like(matrix)
+    y_out = torch.zeros_like(matrix, device=device)
 
     for (i, j) in pairing:
         if i>n and j>n:
@@ -106,7 +141,7 @@ def blossom_postprocessing(matrix: np.ndarray, sequence: str) -> np.ndarray:
     
     return y_out
 
-def blossom_weak(matrix: np.ndarray, sequence: str, treshold: float = 0.5) -> np.ndarray: 
+def blossom_weak(matrix: torch.Tensor, sequence: str, device: str, treshold: float = 0.5) -> torch.Tensor: 
     """
     Postprocessing function that takes a matrix and returns a matrix.
     Uses the blossom algorithm to find the maximum weight matching in the graph representation of the matrix.
@@ -115,108 +150,114 @@ def blossom_weak(matrix: np.ndarray, sequence: str, treshold: float = 0.5) -> np
     The function has sequence as input, but does not use it. It is provided to make the function compatible with other postprocessing functions.
 
     Parameters:
-    - matrix (np.ndarray): The matrix to postprocess.
+    - matrix (torch.Tensor): The matrix to postprocess.
     - sequence (str): The sequence that the matrix was generated from.
     - treshold (float): The treshold to use for the matrix.
 
     Returns:
-    - np.ndarray: The postprocessed matrix.
+    - torch.Tensor: The postprocessed matrix.
     """
+    matrix = matrix.clone()
     matrix[matrix < treshold] = 0
 
     pairs = blossom.max_weight_matching_matrix(matrix)
 
-    y_out = np.zeros_like(matrix)
+    y_out = torch.zeros_like(matrix, device=device)
 
     for (i, j) in pairs:
         y_out[i, j] = y_out[j, i] = 1
-    
-    for i in range(matrix.shape[0]): 
-        if not np.any(y_out[i, :]): 
-            y_out[i, i] = 1
-    
+
+    # Find rows where all elements are zero
+    zero_rows = ~torch.any(y_out != 0, dim=1)
+
+    # Set diagonal elements to 1 in rows where all other elements are zero
+    y_out[zero_rows, torch.arange(y_out.shape[0], device=device)[zero_rows]] = 1
+
     return y_out
 
-def Mfold_param_postprocessing(matrix: np.ndarray, sequence: str) -> np.ndarray:
+def Mfold_param_postprocessing(matrix: torch.Tensor, sequence: str, device: str) -> torch.Tensor:
     """
     Postprocessing function that takes a matrix and returns a matrix.
     Uses the Mfold algorithm to find the maximum weight matching in the graph representation of the matrix.
     The Mfold alorthm uses the matrix from the network as parameters for base pairing.
 
     Parameters:
-    - matrix (np.ndarray): The matrix to postprocess.
+    - matrix (torch.Tensor): The matrix to postprocess.
     - sequence (str): The sequence that the matrix was generated from.
 
     Returns:
-    - np.ndarray: The postprocessed matrix.
+    - torch.Tensor: The postprocessed matrix.
     """
-    M = np.copy(-matrix)
-    M[M == 0] = np.inf
+    M = -matrix.clone()
+    M[M == 0] = torch.inf
 
-    pairs = Mfold_param(sequence, M)
+    pairs = Mfold_param(sequence, M, device)
 
-    y_out = np.zeros_like(matrix)
+    y_out = torch.zeros_like(matrix, device=device)
 
-    for (i, j) in pairs:
-        y_out[i, j] = y_out[j, i] = 1
-    
-    for i in range(matrix.shape[0]): 
-        if not np.any(y_out[i, :]): 
-            y_out[i, i] = 1
+    for i, j in enumerate(pairs):
+        y_out[i, j] = 1
     
     return y_out
 
-def Mfold_constrain_postprocessing(matrix: np.ndarray, sequence: str, treshold: float = 0.01) -> np.ndarray: 
+
+#TODO - Remember to ad application of mask to the evaluation script (and timing of everything)(and GPU usage)
+#TODO - Change evaluate to use tensors (and check what scripts uses evaluate and change them to tensors if possible)
+
+
+def Mfold_constrain_postprocessing(matrix: torch.Tensor, sequence: str, device: str, treshold: float = 0.5) -> torch.Tensor: 
     """
     Postprocessing function that takes a matrix and returns a matrix.
     Uses the Mfold algorithm to find the maximum weight matching in the graph representation of the matrix.
     The Mfold alorthm uses the matrix from the network as constraints for which bases can pair.
 
     Parameters:
-    - matrix (np.ndarray): The matrix to postprocess.
+    - matrix (torch.Tensor): The matrix to postprocess.
     - sequence (str): The sequence that the matrix was generated from.
+    - device (str): The device to use for the matrix.
     - treshold (float): The treshold to use for the matrix. Bases with a value below the treshold are not allowed to pair.
 
     Returns:
-    - np.ndarray: The postprocessed matrix.
+    - torch.Tensor: The postprocessed matrix.
     """
+    matrix = matrix.clone()
     matrix[matrix < treshold] = 0
     
-    pairs = Mfold_constrain(sequence, matrix)
+    pairs = Mfold_constrain(sequence, matrix, device)
     
-    y_out = np.zeros_like(matrix)
+    y_out = torch.zeros_like(matrix, device=device)
 
-    for (i, j) in pairs:
-        y_out[i, j] = y_out[j, i] = 1
-    
-    for i in range(matrix.shape[0]): 
-        if not np.any(y_out[i, :]): 
-            y_out[i, i] = 1
+    for i, j in enumerate(pairs):
+        y_out[i, j]  = 1
     
     return y_out
 
-def hotknots_postprocessing(matrix: np.ndarray, sequence: str, k=15, gap_penalty = 0.5, treshold_prop = 1) -> np.ndarray:  #TODO - Change "fixed" parameters
+def hotknots_postprocessing(matrix: torch.Tensor, sequence: str, device: str, k=3, gap_penalty = 0.5, treshold_prop = 0.8) -> torch.Tensor:  #TODO - Change "fixed" parameters
     """
     Postprocessing function that takes a matrix and returns a matrix.
     Uses the HotKnots algorithm, which is a heuristic able to find structures with pseudoknot.
     The HotKnots algorithm uses the matrix from the network as parameters for base pairing.
 
     Parameters:
-    - matrix (np.ndarray): The matrix to postprocess.
+    - matrix (torch.Tensor): The matrix to postprocess.
     - sequence (str): The sequence that the matrix was generated from.
+    - device (str): The device to use for the matrix.
+    - k (int): The maximum number of children for each node.
+    - gap_penalty (float): The penalty for gaps in the structure.
+    - treshold_prop (float): The porportion of the naive structure to use as treshold for adding new hotspots.
 
     Returns:
-    - np.ndarray: The postprocessed matrix.
+    - torh.Tensor: The postprocessed matrix.
     """
     pairs = hotknots(matrix, sequence, k=k, gap_penalty=gap_penalty, treshold_prop=treshold_prop)
 
-    y_out = np.zeros_like(matrix)
+    y_out = torch.zeros_like(matrix, device=device)
     
     for (i, j) in pairs:
         y_out[i, j] = y_out[j, i] = 1
     
     for i in range(matrix.shape[0]): 
-        if not np.any(y_out[i, :]): 
+        if not torch.any(y_out[i, :], device=device):    
             y_out[i, i] = 1
     
     return y_out

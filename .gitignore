@@ -19,3 +19,5 @@ steps/*
 
 RNA_Unet.pth
 
+.vscode/
+

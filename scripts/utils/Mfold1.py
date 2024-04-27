@@ -1,23 +1,24 @@
-import numpy as np
+import torch
 
 ####### HELP FUNCTIONS #######
 
-def declare_global_variable(seq: str, M: np.ndarray) -> None: 
+def declare_global_variable(seq: str, M: torch.Tensor, device: str) -> None: 
     """
     Declares the global variables used troughout all the other functions. 
 
     Parameters:
     - seq (str): The RNA sequence to fold
-    - M (np.ndarray): The energy matrix used to calculate the energy of the different basepairs
+    - M (torch.Tensor): The energy matrix used to calculate the energy of the different basepairs
 
     Returns:
     - None
     """
-    global basepairs, sequence, matrix
+    global basepairs, sequence, matrix, dv
 
     basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
     sequence = seq
     matrix = M
+    dv = device
 
 
 ### LOOP ENERGIES ###
@@ -37,7 +38,7 @@ def find_E1(i: int, j: int) -> float:
 
     return energy
 
-def find_E2(i: int, j: int, V: np.ndarray) -> tuple[float, tuple[int, int]]: 
+def find_E2(i: int, j: int, V: torch.Tensor) -> tuple[float, tuple[int, int]]: 
     """
     E2 is the energy of basepairing between i and j and i' and j' resulting in two internal edges (stacking, bulge loop or internal loop)
     i<i'<j'<j 
@@ -45,7 +46,7 @@ def find_E2(i: int, j: int, V: np.ndarray) -> tuple[float, tuple[int, int]]:
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - V (np.ndarray): The V matrix
+    - V (torch.Tensor): The V matrix
 
     Returns:
     - energy (float): The minimum energy of the basepairing given that two internal edges are formed
@@ -63,7 +64,7 @@ def find_E2(i: int, j: int, V: np.ndarray) -> tuple[float, tuple[int, int]]:
                     ij = (ip, jp) 
     return energy, ij
 
-def find_E3(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]: 
+def find_E3(i: int, j: int, W: torch.Tensor) -> tuple[float, tuple[int, int]]: 
     """
     E3 is the energy of a structure that contains more than two internal edges (bifurcating loop)
     The energy is the energy of the sum of the substructures 
@@ -72,7 +73,7 @@ def find_E3(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]:
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - W (np.ndarray): The W matrix
+    - W (torch.Tensor): The W matrix
 
     Returns:
     - energy (float): The minimum energy of the basepairing given that more than two internal edges are formed
@@ -85,11 +86,11 @@ def find_E3(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]:
     for ip in range(i+2, j-2):  
         loop_energy = W[i+1, ip] + W[ip+1, j-1]
         if loop_energy < energy: 
-            energy = round(loop_energy, 5)
+            energy = loop_energy
             ij = (ip, ip+1)
     return energy, ij
 
-def find_E4(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]: 
+def find_E4(i: int, j: int, W: torch.Tensor) -> tuple[float, tuple[int, int]]: 
     """
     E4 is the energy when i and j are both in base pairs, but not with each other. 
     It find the minimum of combinations of two possible subsequences containing i and j
@@ -97,7 +98,7 @@ def find_E4(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]:
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - W (np.ndarray): The W matrix
+    - W (torch.Tensor): The W matrix
 
     Returns:
     - energy (float): The minimum energy of the basepairing given that i and j are both in base pairs
@@ -110,19 +111,19 @@ def find_E4(i: int, j: int, W: np.ndarray) -> tuple[float, tuple[int, int]]:
         subsequence_energy = W[i, ip] + W[ip+1, j]
         
         if subsequence_energy < energy: 
-            energy = round(subsequence_energy, 5)
+            energy = subsequence_energy
             ij = (ip, ip+1)
 
     return energy, ij
 
-def penta_nucleotides(W: np.ndarray, V: np.ndarray) -> None:
+def penta_nucleotides(W: torch.Tensor, V: torch.Tensor) -> None:
     """
     Fills out the first entries in the matrices V and W 
     The shortest possible subsequences are of length 5 and can only form hairpin loops of size 3 if i and j basepair
 
     Parameters:
-    - W (np.ndarray): The W matrix
-    - V (np.ndarray): The V matrix
+    - W (torch.Tensor): The W matrix
+    - V (torch.Tensor): The V matrix
 
     Returns:
     - None
@@ -138,15 +139,15 @@ def penta_nucleotides(W: np.ndarray, V: np.ndarray) -> None:
             V[i,j] = W[i,j] = matrix[i, j] 
 
 ### FILL V AND W ###
-def compute_V(i: int, j: int, W: np.ndarray, V: np.ndarray) -> None: 
+def compute_V(i: int, j: int, W: torch.Tensor, V: torch.Tensor) -> None: 
     """
     Computes the minimization over E1, E2 and E3, which will give the value at V[i,j]
 
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - W (np.ndarray): The W matrix
-    - V (np.ndarray): The V matrix
+    - W (torch.Tensor): The W matrix
+    - V (torch.Tensor): The V matrix
 
     Returns:
     - None
@@ -162,7 +163,7 @@ def compute_V(i: int, j: int, W: np.ndarray, V: np.ndarray) -> None:
 
     V[i, j] = v
 
-def compute_W(i: int, j: int, W: np.ndarray, V: np.ndarray) -> None:
+def compute_W(i: int, j: int, W: torch.Tensor, V: torch.Tensor) -> None:
     """
     Computes the minimization over possibilities for W and fills out the entry at W[i,j]
      Possibilities are: 
@@ -173,8 +174,8 @@ def compute_W(i: int, j: int, W: np.ndarray, V: np.ndarray) -> None:
     Parameters:
     - i (int): The start index of the subsequence
     - j (int): The end index of the subsequence
-    - W (np.ndarray): The W matrix
-    - V (np.ndarray): The V matrix
+    - W (torch.Tensor): The W matrix
+    - V (torch.Tensor): The V matrix
 
     Returns:
     - None
@@ -184,7 +185,7 @@ def compute_W(i: int, j: int, W: np.ndarray, V: np.ndarray) -> None:
     W[i,j] = w
 
 
-def fold_rna() -> tuple[np.ndarray, np.ndarray]: 
+def fold_rna() -> tuple[torch.Tensor, torch.Tensor]: 
     """
     Fills out the W and V matrices to find the fold that gives the minimum free energy
     Follows Mfold as desribed by M. Zuker
@@ -197,11 +198,11 @@ def fold_rna() -> tuple[np.ndarray, np.ndarray]:
     The floats in the matrix M is used as energy parameters for pairing of the different nucleotides.
 
     Returns:
-    - W (np.ndarray): The W matrix
-    - V (np.ndarray): The V matrix
+    - W (torch.Tensor): The W matrix
+    - V (torch.Tensor): The V matrix
     """
     N = len(sequence)
-    W, V = np.full([N, N], float('inf')), np.full([N, N], float('inf'))
+    W, V = torch.full([N, N], float('inf'), device=dv), torch.full([N, N], float('inf'), device=dv)
 
 
     #Fills out the table with all posible penta nucleotide subsequences
@@ -220,19 +221,19 @@ def fold_rna() -> tuple[np.ndarray, np.ndarray]:
 
 ### BACTRACKING ### 
 
-def backtrack(W: np.ndarray, V: np.ndarray) -> list: 
+def backtrack(W: torch.Tensor, V: torch.Tensor) -> list: 
     """
     Backtracks trough the W, V matrices to find the final fold
     Returns the fold as a list of tuples containing the indices of the basepairs
 
     Parameters:
-    - W (np.ndarray): The W matrix
-    - V (np.ndarray): The V matrix
+    - W (torch.Tensor): The W matrix
+    - V (torch.Tensor): The V matrix
 
     Returns:
     - pairs (list): The secondary structure of the RNA
     """
-    pairs = []
+    pairs = [i for i in range(W.shape[0])]
 
     N = W.shape[0]-1
     
@@ -244,16 +245,19 @@ def backtrack(W: np.ndarray, V: np.ndarray) -> list:
         Traces backwards trough the V matrix recursively to find the secondary structure
         """
         if V[i,j] == find_E1(i, j): 
-            pairs.append((i, j))
+            pairs[i] = j
+            pairs[j] = i
         
         elif V[i,j] == find_E2(i, j, V)[0]:
             ij = find_E2(i, j, V)[1]
-            pairs.append((i, j))
+            pairs[i] = j
+            pairs[j] = i
             trace_V(ij[0], ij[1])
     
         elif V[i, j] == find_E3(i, j, W)[0]: 
             ij = find_E3(i, j, W)[1]
-            pairs.append((i, j))
+            pairs[i] = j
+            pairs[j] = i
             trace_W(i+1, ij[0]), trace_W(ij[1], j-1)
 
     def trace_W(i: int, j: int) -> None: 
@@ -279,21 +283,21 @@ def backtrack(W: np.ndarray, V: np.ndarray) -> list:
     return pairs
 
 
-def Mfold(sequence: str, matrix: np.ndarray) -> list: 
+def Mfold(sequence: str, matrix: torch.Tensor, device: str) -> list: 
     """
     Folds the RNA sequence to find the secondary structure with the minimum free energy
     Uses the matrix as energy parameters for the different basepairs
 
     Parameters:
     - sequence (str): The RNA sequence to fold
-    - matrix (np.ndarray): The energy matrix used to calculate the energy of the different basepairs
+    - matrix (torch.Tensor): The energy matrix used to calculate the energy of the different basepairs
 
     Returns:
-    - fold (np.ndarray): The secondary structure of the RNA
+    - fold (list): The secondary structure of the RNA
     """
-    declare_global_variable(sequence, matrix)
+    declare_global_variable(sequence, matrix, device)
 
     W, V = fold_rna()
     fold = backtrack(W, V)
 
-    return fold
+    return fold 

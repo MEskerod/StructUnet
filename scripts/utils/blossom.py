@@ -1,5 +1,7 @@
+import torch
+
 from itertools import repeat
-import numpy as np
+#import numpy as np
    
 """
 THE FOLLOWING CODE IS SOURCED FROM THE NETWORKX LIBRARY, WHICH IS LICENSED UNDER THE 3-CLAUSE BSD LICENSE.
@@ -31,7 +33,7 @@ def matching_dict_to_set(matching):
     return edges
 
 
-def max_weight_matching_matrix(G: np.array):
+def max_weight_matching_matrix(G: torch.Tensor):
     """Compute a maximum-weighted matching of G.
 
     A matching is a subset of edges in which no node occurs more than once.
@@ -40,7 +42,7 @@ def max_weight_matching_matrix(G: np.array):
     The cardinality of a matching is the number of matched edges.
 
     Parameters
-    - G : Graph in the form of a numpy array
+    - G : Graph in the form of a pytorch tensor
 
     Returns
     - matching (set): A maximal matching of the graph.
@@ -87,7 +89,7 @@ def max_weight_matching_matrix(G: np.array):
         return set()  # don't bother with empty graphs
 
     # Find the maximum edge weight.
-    maxweight = np.max(G)
+    maxweight = torch.max(G)
 
     mate = {}
     label = {}

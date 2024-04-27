@@ -317,13 +317,14 @@ class RNA_Unet(nn.Module):
 
 
 ### EVALUATION FUNCTIONS ###
-def evaluate(y_pred: torch.Tensor, y_true: torch.Tensor, epsilon: float=1e-10, allow_shift = False, include_unpaired = False) -> tuple: 
+def evaluate(y_pred: torch.Tensor, y_true: torch.Tensor, device: str, epsilon: float=1e-10, allow_shift = False, include_unpaired = False) -> tuple: 
     """
     Function to evaluate the performance of a model based on precision, recall and F1 score
 
     Parameters:
     - y_pred (torch.Tensor): The predicted output matrix
     - y_true (torch.Tensor): The true output matrix
+    - device (str): The device to use for the evaluation
     - epsilon (float): A small number to avoid division by zero. Default is 1e-10.
     - allow_shift (bool): If True, the function will allow for a 1 bp shift in the predicted matrix. Default is False.
     - include_unpaired (bool): If True, the function will include unpaired bases (values on the diagonal) in the evaluation. Default is False.
@@ -334,18 +335,21 @@ def evaluate(y_pred: torch.Tensor, y_true: torch.Tensor, epsilon: float=1e-10, a
     assert y_pred.shape == y_true.shape
     
     if include_unpaired: 
-       mask = np.ones_like(y_true)
+       mask = torch.ones_like(y_true, device=device)
     else: 
-       mask = np.ones_like(y_true) - np.eye(y_true.shape[-1])
+       mask = torch.ones_like(y_true, device=device) - torch.eye(y_true.shape[-1], device=device)
     
     y_pred = y_pred * mask
     y_true = y_true * mask
 
     if allow_shift:
-      kernel = np.array([[0, 1, 0], 
-                         [1, 1, 1], 
-                         [0, 1, 0]]) 
-      y_pred_filtered = (convolve2d(y_pred, kernel, mode='same')>0).astype(float)
+      kernel = torch.tensor([[0, 1, 0], 
+                             [1, 1, 1], 
+                             [0, 1, 0]], device=device, dtype=torch.float32)
+      
+      y_pred_filtered = F.conv2d(y_pred.unsqueeze(0).unsqueeze(0), kernel.unsqueeze(0).unsqueeze(0), padding=1).squeeze(0).squeeze(0)
+      y_pred_filtered = (y_pred_filtered>0).float()
+
       FN = (y_true * (1-y_pred_filtered)).sum()
     else:
       FN = (y_true * (1-y_pred)).sum()

@@ -221,70 +221,77 @@ def test_f1():
 
 def test_all_paired():
     
-    matrix1 = np.random.random((50, 50))
-    matrix2 = np.eye(50)
+    matrix1 = torch.rand((50, 50))
+    matrix2 = torch.eye(50)
     sequence = 'AUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAUCGAU'
 
     #Row wise
-    assert np.all(np.any(post_process.argmax_postprocessing(matrix1, 'sequence'), axis=1))
-    assert np.all(np.any(post_process.blossom_postprocessing(matrix1, 'sequence'), axis=1))
-    assert np.all(np.any(post_process.blossom_weak(matrix1, 'sequence'), axis=1)) 
-    assert np.all(np.any(post_process.Mfold_constrain_postprocessing(matrix1, sequence), axis=1)) 
-    assert np.all(np.any(post_process.Mfold_param_postprocessing(matrix1, sequence), axis=1)) 
+    assert torch.all(torch.any(post_process.argmax_postprocessing(matrix1, 'sequence', 'cpu'), axis=1))
+    assert torch.all(torch.any(post_process.blossom_postprocessing(matrix1, 'sequence', 'cpu'), axis=1))
+    assert torch.all(torch.any(post_process.blossom_weak(matrix1, 'sequence', 'cpu'), axis=1)) 
+    assert torch.all(torch.any(post_process.Mfold_constrain_postprocessing(matrix1, sequence, 'cpu'), axis=1)) 
+    assert torch.all(torch.any(post_process.Mfold_param_postprocessing(matrix1, sequence, 'cpu'), axis=1)) 
 
-    assert np.all(np.any(post_process.argmax_postprocessing(matrix2, 'sequence'), axis=1))
-    assert np.all(np.any(post_process.blossom_postprocessing(matrix2, 'sequence'), axis=1))
-    assert np.all(np.any(post_process.blossom_weak(matrix2, 'sequence'), axis=1)) 
-    assert np.all(np.any(post_process.Mfold_constrain_postprocessing(matrix2, sequence), axis=1))
-    assert np.all(np.any(post_process.Mfold_param_postprocessing(matrix2, sequence), axis=1))
+    assert torch.all(torch.any(post_process.argmax_postprocessing(matrix2, 'sequence', 'cpu'), axis=1))
+    assert torch.all(torch.any(post_process.blossom_postprocessing(matrix2, 'sequence', 'cpu'), axis=1))
+    assert torch.all(torch.any(post_process.blossom_weak(matrix2, 'sequence', 'cpu'), axis=1)) 
+    assert torch.all(torch.any(post_process.Mfold_constrain_postprocessing(matrix2, sequence, 'cpu'), axis=1))
+    assert torch.all(torch.any(post_process.Mfold_param_postprocessing(matrix2, sequence, 'cpu'), axis=1))
 
     #Column wise (without argmax)
-    assert np.all(np.any(post_process.blossom_postprocessing(matrix1, 'sequence'), axis=0))
-    assert np.all(np.any(post_process.blossom_weak(matrix1, 'sequence'), axis=0)) 
-    assert np.all(np.any(post_process.Mfold_constrain_postprocessing(matrix1, sequence), axis=0)) 
-    assert np.all(np.any(post_process.Mfold_param_postprocessing(matrix1, sequence), axis=0)) 
+    assert torch.all(torch.any(post_process.blossom_postprocessing(matrix1, 'sequence', 'cpu'), axis=0))
+    assert torch.all(torch.any(post_process.blossom_weak(matrix1, 'sequence', 'cpu'), axis=0)) 
+    assert torch.all(torch.any(post_process.Mfold_constrain_postprocessing(matrix1, sequence, 'cpu'), axis=0)) 
+    assert torch.all(torch.any(post_process.Mfold_param_postprocessing(matrix1, sequence, 'cpu'), axis=0)) 
 
-    assert np.all(np.any(post_process.blossom_postprocessing(matrix2, 'sequence'), axis=0)) 
-    assert np.all(np.any(post_process.blossom_weak(matrix2, 'sequence'), axis=0)) 
-    assert np.all(np.any(post_process.Mfold_constrain_postprocessing(matrix2, sequence), axis=0))
-    assert np.all(np.any(post_process.Mfold_param_postprocessing(matrix2, sequence), axis=0))
+    assert torch.all(torch.any(post_process.blossom_postprocessing(matrix2, 'sequence', 'cpu'), axis=0)) 
+    assert torch.all(torch.any(post_process.blossom_weak(matrix2, 'sequence', 'cpu'), axis=0)) 
+    assert torch.all(torch.any(post_process.Mfold_constrain_postprocessing(matrix2, sequence, 'cpu'), axis=0))
+    assert torch.all(torch.any(post_process.Mfold_param_postprocessing(matrix2, sequence, 'cpu'), axis=0))
 
 def test_argmax(): 
-    matrix1 = np.random.random((50, 50))
+    matrix1 = torch.rand((50, 50))
 
-    assert isinstance(post_process.argmax_postprocessing(matrix1, 'sequence'), np.ndarray) #Test that matrix is returned
-    assert len(np.nonzero(post_process.argmax_postprocessing(matrix1, 'sequence'))[0]) == 50 #Test correct number of values is in the matrix
+    assert isinstance(post_process.argmax_postprocessing(matrix1, 'sequence', 'cpu'), torch.Tensor) #Test that matrix is returned
+    assert torch.nonzero(post_process.argmax_postprocessing(matrix1, 'sequence', 'cpu')).size()[0] == 50 #Test correct number of values is in the matrix
 
     # Test that the functionality is correct
-    result = post_process.argmax_postprocessing(matrix1, 'sequence')
-    max_indices = np.argmax((matrix1+matrix1.T)/2, axis=1)
+    result = post_process.argmax_postprocessing(matrix1, 'sequence', 'cpu')
+    for i in range(50):
+        for j in range(50):
+            print(result[i, j], end=' ')
+        print()
+    #max_indices = torch.argmax(matrix1, axis=1)
+    max_indices = torch.argmax(matrix1, axis=1)
+    print(max_indices)
     for i, idx in enumerate(max_indices):
+        print(result[i, idx])
         assert result[i, idx] == 1
 
 def test_blossum():
-    matrix1 = np.random.random((50, 50))
+    matrix1 = torch.rand((50, 50))
 
-    result1 = post_process.blossom_postprocessing(matrix1, 'sequence')
-    result2 = post_process.blossom_weak(matrix1, 'sequence')
-    assert np.allclose(result1, result1.T)
-    assert np.allclose(result2, result2.T)
+    result1 = post_process.blossom_postprocessing(matrix1, 'sequence', 'cpu')
+    result2 = post_process.blossom_weak(matrix1, 'sequence', 'cpu')
+    assert torch.allclose(result1, result1.T)
+    assert torch.allclose(result2, result2.T)
 
-    matrix = np.zeros((3, 3))
-    result = post_process.blossom_weak(matrix, 'sequence')
-    assert np.array_equal(result, np.eye(3))
+    matrix = torch.zeros((3, 3))
+    result = post_process.blossom_weak(matrix, 'sequence', 'cpu')
+    assert torch.equal(result, torch.eye(3))
 
 def test_Mfold(): 
     sequence = 'CGUGUCAGGUCCGGAAGGAAGCAGCACUAAC'
     pairs = [0, 26, 25, 24, 23, 0, 0, 0, 0, 18, 17, 16, 0, 0, 0, 0, 11, 10, 9, 0, 0, 0, 0, 4, 3, 2, 1, 0, 0, 0, 0]
 
-    matrix = np.zeros((len(pairs), len(pairs)))
+    matrix = torch.zeros((len(pairs), len(pairs)))
     for i in range(len(pairs)):
         if pairs[i] != 0:
             matrix[i, pairs[i]] = 1
         else: 
             matrix[i, i] = 1
     
-    result = post_process.Mfold_param_postprocessing(matrix, sequence)
+    result = post_process.Mfold_param_postprocessing(matrix, sequence, 'cpu')
 
     assert np.array_equal(matrix, result)
 
@@ -292,20 +299,20 @@ def test_Mfold():
 ### EVALUATION ###
 def test_evaluation(): 
     # Test functionality
-    y_pred = np.array([1, 1, 1, 1])
-    y_true = np.array([1, 0, 1, 0])
+    y_pred = torch.tensor([1, 1, 1, 1])
+    y_true = torch.tensor([1, 0, 1, 0])
 
-    precision, recall, F1 = train.evaluate(y_pred, y_true, include_unpaired=True)
+    precision, recall, F1 = train.evaluate(y_pred, y_true, 'cpu', include_unpaired=True)
 
     assert round(precision, 1) == 0.5
     assert round(recall, 1) == 1
     assert round(F1, 2) == 0.67
 
     #Test zero-case
-    y_pred = np.array([0, 0, 0, 0])
-    y_true = np.array([1, 1, 1, 1])
+    y_pred = torch.tensor([0, 0, 0, 0])
+    y_true = torch.tensor([1, 1, 1, 1])
 
-    precision, recall, F1 = train.evaluate(y_pred, y_true, include_unpaired=True)
+    precision, recall, F1 = train.evaluate(y_pred, y_true, 'cpu', include_unpaired=True)
 
     assert round(precision) == 0
     assert round(recall) == 0
@@ -315,7 +322,7 @@ def test_evaluation():
     y_pred = torch.tensor([1, 1, 1, 1])
     y_true = torch.tensor([1, 1, 1, 1])
 
-    precision, recall, F1 = train.evaluate(y_pred, y_true)
+    precision, recall, F1 = train.evaluate(y_pred, y_true, 'cpu')
     assert round(precision) == 1
     assert round(recall) == 1
     assert round(F1) == 1
@@ -329,7 +336,7 @@ def test_evaluation():
                            [0, 0, 0, 0], 
                            [1, 1, 1, 1],
                            [0, 0, 0, 0]])
-    precision, recall, F1 = train.evaluate(y_pred, y_true, include_unpaired=True)
+    precision, recall, F1 = train.evaluate(y_pred, y_true, 'cpu', include_unpaired=True)
     assert round(precision, 2) == 0.5
     assert round(recall, 2) == 0.5
     assert round(F1, 2) == 0.5

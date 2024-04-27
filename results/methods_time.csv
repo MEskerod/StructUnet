@@ -1,5 +1,7 @@
 ,total_time,average_time(s)
 CNNfold,13:13:37,12.83477
 vienna,00:40:02,0.64744
-nussinov,,
+Ufold,00:17:41,0.40807 
+hotknots,98:38:40,135.67717
+nussinov,01:10:50,1.14562
 RNA_Unet,,

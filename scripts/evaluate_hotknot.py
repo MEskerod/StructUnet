@@ -1,4 +1,4 @@
-import time, os
+import time, os, torch
 from tqdm import tqdm
 
 import matplotlib.pyplot as plt
@@ -37,7 +37,7 @@ def plot_f1(categories: list, scores: list, outputfile: str) -> None:
     plt.tight_layout()
     plt.savefig(outputfile, dpi=300, bbox_inches='tight')
 
-def dot_bracket_to_matrix(db: str) -> np.ndarray:
+def dot_bracket_to_matrix(db: str) -> torch.Tensor:
       """
       Function to convert a dot-bracket notation to a matrix representation.
 
@@ -45,7 +45,7 @@ def dot_bracket_to_matrix(db: str) -> np.ndarray:
       - db (str): string, the dot-bracket notation
       
       Returns:
-      - np.ndarray: the matrix representation of the dot-bracket notation
+      - torch.Tensor: the matrix representation of the dot-bracket notation
       """
       stack1 = []
       stack2 = []
@@ -75,7 +75,7 @@ def dot_bracket_to_matrix(db: str) -> np.ndarray:
                 bp[j] = i
       
       #Convert the list to a matrix
-      matrix = np.zeros((len(db), len(db)))
+      matrix = torch.zeros((len(db), len(db)))
       for i, j in enumerate(bp):
             if j is not None:
                 matrix[i, j] = matrix[j, i] = 1
@@ -124,7 +124,7 @@ def process_files(k: int, treshold: float, gap_penalty: float) -> tuple:
     
     for d in data:
         start = time.time()
-        pred = hotknots_postprocessing(d[2], d[1], k, gap_penalty=gap_penalty, treshold_prop=treshold)
+        pred = hotknots_postprocessing(d[2], d[1], 'cpu', k, gap_penalty=gap_penalty, treshold_prop=treshold)
         times.append(time.time() - start)
         F1.append(evaluate(pred, d[2]))
         progess_bar.update(1)
