@@ -64,7 +64,7 @@ def time_postprocess(func, n: int, min_length: int, max_length: int) -> list:
         matrix = func(matrix, sequence)
         t.append(time.time() - t0)
         
-        return t
+    return t
 
 
 
