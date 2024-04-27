@@ -181,12 +181,13 @@ def evaluate_postprocessing(files):
     Evaluate all the implemented post-processing methods and compare them
     """
     inputs = [os.path.join('RNA_Unet.pth')] + files
-    outputs = [os.path.join('results', 'evaluation_nn.csv'), #TODO - Fix paths to output
-               os.path.join('figures', 'evaluation_nn.png')]
-    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    outputs = [os.path.join('results', 'average_scores_postprocess.csv'), 
+               os.path.join('figures', 'evaluation_postprocess.png'),
+               os.path.join('results', 'evalutation_postprocess.csv')]
+    options = {"memory":"16gb", "walltime":"32:00:00", "account":"RNA_Unet", "cores":2} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/evaluate_postprocessing.py"""
-    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) #TODO - Add some commands!
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
 
 def compare_methods(methods_under600, files_under600, methods, files):
     """
