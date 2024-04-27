@@ -76,13 +76,13 @@ def plot_time(time, lengths):
     plt.xlabel('Sequence length')
     plt.ylabel('Time (s)')
     plt.grid(linestyle='--')
+    plt.gca().spines['right'].set_visible(False)
+    plt.gca().spines['top'].set_visible(False)
     plt.tight_layout
     plt.savefig('figures/times_nussinov.png', dpi=300, bbox_inches='tight')
 
 
 def main() -> None: 
-    """
-    """
     
     os.makedirs('steps/nussinov', exist_ok=True)
     test = pickle.load(open('data/test.pkl', 'rb'))
@@ -90,25 +90,29 @@ def main() -> None:
     print(f"Predicting structure using Nussinov algorithm.\n Total: {len(test)} sequences.")
     print('-- Predicting --')
 
-    times = []
+    times = [[]*len(test)]
     lengths = []
 
-    progress_bar = tqdm(total=len(test), unit='sequence')
+    progress_bar = tqdm(total=len(test)*3, unit='sequence')
 
     start_time = time.time()
 
-    for i in range(len(test)): 
-        sequence = pickle.load(open(test[i], 'rb')).sequence
-        name = os.path.join('steps', 'nussinov', os.path.basename(test[i])) 
-        file_times = []
-        for _ in range(3):
+    #Predict for all sequences in test set 3 times and save the time it took
+    for _ in range(3):
+        lengths = []
+        for i in range(len(test)): 
+            sequence = pickle.load(open(test[i], 'rb')).sequence
+            name = os.path.join('steps', 'nussinov', os.path.basename(test[i])) 
             start = time.time()
             output = make_matrix_from_basepairs(run_nussinov(sequence))
-            file_times.append(time.time()-start)
-        pickle.dump(output, open(name, 'wb'))
-        times.append(np.mean(file_times))
-        lengths.append(len(sequence))
-        progress_bar.update(1)
+            times[i].append(time.time()-start)
+            if i == 0:
+                pickle.dump(output, open(name, 'wb'))
+                lengths.append(len(sequence))
+            progress_bar.update(1)
+    
+    #Calculate average time for each sequence
+    times = [np.mean(t) for t in times]
     
     progress_bar.close()
     
