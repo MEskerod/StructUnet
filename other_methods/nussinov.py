@@ -104,8 +104,8 @@ def main() -> None:
         for _ in range(3):
             start = time.time()
             output = make_matrix_from_basepairs(run_nussinov(sequence))
-            pickle.dump(output, open(name, 'wb'))
             file_times.append(time.time()-start)
+        pickle.dump(output, open(name, 'wb'))
         times.append(np.mean(file_times))
         lengths.append(len(sequence))
         progress_bar.update(1)
