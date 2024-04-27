@@ -24,7 +24,7 @@ def postprocess_time():
     inputs = []
     outputs = [os.path.join('results', 'postprocess_time.csv'),
                os.path.join('figures', 'postprocess_time.png')]
-    options = {"memory": "16gb", "walltime": "36:00:00", "account":"RNA_Unet", "cores": 4}
+    options = {"memory": "16gb", "walltime": "36:00:00", "account":"RNA_Unet", "cores": 5}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/time_postprocessing.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)

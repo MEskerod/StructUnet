@@ -20,10 +20,14 @@ def calculate_lengths(n: int = 51, min_length: int = 60, max_length: int = 600) 
     """
     Calculate the lengths of the slices, to obtain a given number of slices of lengths between a minimum and maximum length, spaced according to a quadratic function. 
 
-    Args:
-        - num_slices: Number of slices wanted 
-        - min_length: Length of the shortest slice 
-        - initial_length: Length of the sequence to slice from, which is also equal to the maximum length
+    Parameters:
+    - num_slices: Number of slices wanted 
+    - min_length: Length of the shortest slice 
+    - initial_length: Length of the sequence to slice from, which is also equal to the maximum length
+    
+    Returns:
+    - lengths: List of lengths of the slices
+
     """
     lengths = []
 
@@ -36,7 +40,20 @@ def calculate_lengths(n: int = 51, min_length: int = 60, max_length: int = 600) 
     return lengths
 
 
-def time_postprocess(func, n, min_length, max_length): 
+def time_postprocess(func, n: int, min_length: int, max_length: int) -> list:
+    """
+    Procceses n number of sequences with lengths between min_length and max_length using a given function.
+    The function is timed and the time it takes to process each sequence is returned.
+
+    Parameters:
+    - func: The function to time
+    - n: The number of sequences to process
+    - min_length: The minimum length of the sequences
+    - max_length: The maximum length of the sequences
+
+    Returns:
+    - t: A list of the time it took to process each sequence
+    """ 
     t = []
 
     lengths = calculate_lengths(n, min_length, max_length)
@@ -51,7 +68,23 @@ def time_postprocess(func, n, min_length, max_length):
 
 
 
-def average_times(func, func_name, repeats = 5, n = 51, min_length = 60, max_length = 600): #change to 51, 60, 600
+def average_times(func, func_name: str, repeats: int = 5, n: int = 51, min_length: int = 60, max_length: int = 600): 
+    """
+    Takes a function and times it for a given number of repeats and sequences of different lengths.
+    The average time it takes to process each sequence is returned.
+    The repeats are processed in parallel using a multiprocessing pool.
+
+    Parameters:
+    - func: The function to time
+    - func_name (str): The name of the function
+    - repeats (int): The number of repeats to average over
+    - n (int): The number of sequences to process
+    - min_length (int): The minimum length of the sequences
+    - max_length (int): The maximum length of the sequences
+
+    Returns:
+    - average: A list of the average time it took to process each sequence
+    """
     times = [0] * n
 
     pool = multiprocessing.Pool()
@@ -64,7 +97,7 @@ def average_times(func, func_name, repeats = 5, n = 51, min_length = 60, max_len
         for i in range(n): 
             times[i] += rep_times[i]
     
-    pool.close()
+    pool.close() 
     pool.join()
     
     average = [t/repeats for t in times]
@@ -72,23 +105,25 @@ def average_times(func, func_name, repeats = 5, n = 51, min_length = 60, max_len
     return average[1:]
 
 def main(): 
-    functions = {'NetworkX blossom w/ self-loops': post_processing.nx_blossum_postprocessing, 
+    functions = {'Mfold w/ matrix as constrains': post_processing.Mfold_constrain_postprocessing,
+                 'Mfold w/ matrix as parameters': post_processing.Mfold_param_postprocessing, 
+                 'NetworkX blossom w/ self-loops': post_processing.nx_blossum_postprocessing, 
                  'Blossom w/ self-loops': post_processing.blossom_postprocessing, 
                  'Blossom': post_processing.blossom_weak, 
                  'Argmax': post_processing.argmax_postprocessing,
-                 'Mfold w/ matrix as parameters': post_processing.Mfold_param_postprocessing, 
-                 'Mfold w/ matrix as constrains': post_processing.Mfold_constrain_postprocessing,
                  }
     
+    #Time the functions
     timedict = {func_name: average_times(v, func_name) for func_name, v in functions.items()}
 
     lengths = calculate_lengths()[1:]
     
+    #Save and plot the results
     df = pd.DataFrame(timedict, index = lengths)
     df.to_csv('results/postprocess_time.csv')
     
     plot_timedict(timedict, lengths, 'figures/postprocess_time.png')
-    return
+    
 
 if __name__ == '__main__': 
     main()
