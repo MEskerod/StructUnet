@@ -100,16 +100,19 @@ def main() -> None:
     for i in range(len(test)): 
         sequence = pickle.load(open(test[i], 'rb')).sequence
         name = os.path.join('steps', 'nussinov', os.path.basename(test[i])) 
-        start = time.time()
-        output = make_matrix_from_basepairs(run_nussinov(sequence))
-        pickle.dump(output, open(name, 'wb'))
-        times.append(time.time()-start)
+        file_times = []
+        for _ in range(3):
+            start = time.time()
+            output = make_matrix_from_basepairs(run_nussinov(sequence))
+            pickle.dump(output, open(name, 'wb'))
+            file_times.append(time.time()-start)
+        times.append(np.mean(file_times))
         lengths.append(len(sequence))
         progress_bar.update(1)
     
     progress_bar.close()
     
-    total_time = time.time()-start_time
+    total_time = (time.time()-start_time)/3
 
     print('-- Predictions done --')
 
@@ -118,8 +121,9 @@ def main() -> None:
     print('-- Plot and save times --')
     data = {'lengths': lengths, 'times': times}
     df = pd.DataFrame(data)
+    df = df.sort_values('lengths')
     df.to_csv('results/times_nussinov.csv', index=False)
-    plot_time(times, lengths)
+    plot_time(df['times'].tolist(), df['lengths'].tolist())
 
    
 if __name__ == '__main__': 
