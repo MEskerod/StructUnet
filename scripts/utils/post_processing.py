@@ -143,7 +143,7 @@ def blossom_postprocessing(matrix: torch.Tensor, sequence: str, device: str) -> 
     
     return y_out
 
-def blossom_weak(matrix: torch.Tensor, sequence: str, device: str, treshold: float = 0.75) -> torch.Tensor: 
+def blossom_weak(matrix: torch.Tensor, sequence: str, device: str, treshold: float = 0.5) -> torch.Tensor: 
     """
     Postprocessing function that takes a matrix and returns a matrix.
     Uses the blossom algorithm to find the maximum weight matching in the graph representation of the matrix.

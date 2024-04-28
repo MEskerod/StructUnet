@@ -11,7 +11,7 @@ from utils.plots import violin_plot
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-def evaluate_output(predicted: torch.Tensor, target: torch.Tensor, sequence: str) -> list:
+def evaluate_output(predicted: torch.Tensor, target: torch.Tensor, sequence: str, treshold: float = 0.5) -> list:
     """
     Evaluate the output of the model using different post-processing methods.
     Runs the evaluation in parallel using a ThreadPoolExecutor.
@@ -26,11 +26,11 @@ def evaluate_output(predicted: torch.Tensor, target: torch.Tensor, sequence: str
     """
     predicted = predicted.squeeze(0).detach()
     
-    results = list(evaluate(predicted, target, device=device))
+    results = list(evaluate((predicted >= treshold).float(), target, device=device)) #Evaluate raw output
 
     predicted = post_process.prepare_input(predicted, sequence, device)
 
-    results.extend(list(evaluate(predicted, target, device=device)))
+    results.extend(list(evaluate((predicted >= treshold).float(), target, device=device))) #Evaluate masked output
 
 
     
@@ -40,6 +40,8 @@ def evaluate_output(predicted: torch.Tensor, target: torch.Tensor, sequence: str
         future_to_func = {executor.submit(func, predicted, sequence, device): func.__name__ for func in functions}
         for future in as_completed(future_to_func):
             results.extend(evaluate(future.result(), target, device))
+
+    print(results)
 
     return results
 
