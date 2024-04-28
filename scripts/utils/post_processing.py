@@ -23,6 +23,8 @@ def pairs(x: str, y:str) -> bool:
         return True
     if x == 'U' and y == 'G':
         return True
+    if x == 'N' or y == 'N':
+        return True
     return False
 
 def prepare_input(matrix: torch.Tensor, sequence: str, device: str) -> torch.Tensor:
@@ -37,14 +39,14 @@ def prepare_input(matrix: torch.Tensor, sequence: str, device: str) -> torch.Ten
     #Make mask to ensure only allowed base pairs and that no sharp turns are present
     for i in range(N):
         for j in range(N):
-            if abs(i-j) < 3:
+            if abs(i-j) > 3:
                 if pairs(sequence[i], sequence[j]):
                     m[i, j] = 1
     
     #Make symmetric and apply mask
     matrix = (matrix + matrix.T) / 2 * m
     
-    return 
+    return matrix
 
 def argmax_postprocessing(matrix: torch.Tensor, sequence: str, device: str) -> torch.Tensor:
     """
@@ -141,7 +143,7 @@ def blossom_postprocessing(matrix: torch.Tensor, sequence: str, device: str) -> 
     
     return y_out
 
-def blossom_weak(matrix: torch.Tensor, sequence: str, device: str, treshold: float = 0.5) -> torch.Tensor: 
+def blossom_weak(matrix: torch.Tensor, sequence: str, device: str, treshold: float = 0.75) -> torch.Tensor: 
     """
     Postprocessing function that takes a matrix and returns a matrix.
     Uses the blossom algorithm to find the maximum weight matching in the graph representation of the matrix.

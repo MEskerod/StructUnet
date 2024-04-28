@@ -26,20 +26,20 @@ def evaluate_output(predicted: torch.Tensor, target: torch.Tensor, sequence: str
     """
     predicted = predicted.squeeze(0).detach()
     
-    results = list(evaluate(predicted, target))
+    results = list(evaluate(predicted, target, device=device))
 
-    predicted = post_process.prepare_input(predicted, sequence, 'cpu')
+    predicted = post_process.prepare_input(predicted, sequence, device)
 
-    results.extend(list(evaluate(predicted, target)))
+    results.extend(list(evaluate(predicted, target, device=device)))
 
 
     
     functions = [post_process.argmax_postprocessing, post_process.blossom_postprocessing, post_process.blossom_weak, post_process.Mfold_param_postprocessing]
 
     with ThreadPoolExecutor() as executor:
-        future_to_func = {executor.submit(func, predicted, sequence): func.__name__ for func in functions}
+        future_to_func = {executor.submit(func, predicted, sequence, device): func.__name__ for func in functions}
         for future in as_completed(future_to_func):
-            results.extend(evaluate(future.result(), target))
+            results.extend(evaluate(future.result(), target, device))
 
     return results
 
@@ -49,9 +49,10 @@ if __name__ == "__main__":
     print("--- Starting evaluation ---")
 
     print("--- Loading model and data ---")
+    device = torch.device('cpu')
     # Load the model
-    model = RNA_Unet()
-    model.load_state_dict(torch.load('RNA_Unet.pth'), map_location = torch.device('cpu'))
+    model = RNA_Unet(channels=32)
+    model.load_state_dict(torch.load('RNA_Unet.pth', map_location=device))
     
     # Load the data
     RNA = namedtuple('RNA', 'input output length family name sequence')
