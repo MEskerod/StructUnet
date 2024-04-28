@@ -51,8 +51,7 @@ if __name__ == "__main__":
     print("--- Loading model and data ---")
     # Load the model
     model = RNA_Unet()
-    model.load_state_dict(torch.load('RNA_Unet.pth'))
-    model.cpu()
+    model.load_state_dict(torch.load('RNA_Unet.pth'), map_location = torch.device('cpu'))
     
     # Load the data
     RNA = namedtuple('RNA', 'input output length family name sequence')
@@ -70,7 +69,8 @@ if __name__ == "__main__":
     
     for i, file in enumerate(file_list): 
         data = pickle.load(open(file, 'rb'))
-        predicted = model(data.input.unsqueeze(0))
+        with torch.no_grad():
+            predicted = model(data.input.unsqueeze(0))
         results = [data.family, data.length] + evaluate_output(predicted.squeeze(0).squeeze(0), data.output, data.sequence) #Evaluate using all methods
         df.loc[i] = results
 
