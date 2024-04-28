@@ -41,8 +41,6 @@ def evaluate_output(predicted: torch.Tensor, target: torch.Tensor, sequence: str
         for future in as_completed(future_to_func):
             results.extend(evaluate(future.result(), target, device))
 
-    print(results)
-
     return results
 
 
