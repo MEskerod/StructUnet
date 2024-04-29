@@ -1,4 +1,4 @@
-import pickle, torch
+import pickle, torch, multiprocessing
 
 import pandas as pd
 
@@ -11,7 +11,7 @@ from utils.plots import violin_plot
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-def evaluate_output(predicted: torch.Tensor, target: torch.Tensor, sequence: str, treshold: float = 0.5) -> list:
+def evaluate_output(file: str, treshold: float = 0.5) -> list:
     """
     Evaluate the output of the model using different post-processing methods.
     Runs the evaluation in parallel using a ThreadPoolExecutor.
@@ -24,24 +24,26 @@ def evaluate_output(predicted: torch.Tensor, target: torch.Tensor, sequence: str
     Returns:
     - results (list): The results of the evaluation.
     """
-    predicted = predicted.squeeze(0).detach()
+    data = pickle.load(open(file, 'rb'))
     
-    results = list(evaluate((predicted >= treshold).float(), target, device=device)) #Evaluate raw output
+    with torch.no_grad():
+        predicted = model(data.input.unsqueeze(0)).squeeze(0).squeeze(0).detach()
+    
+    target = data.output
+    sequence = data.sequence
+    
+    results = list(evaluate((predicted >= treshold).float(), target, device=device)) #Evaluate binart raw output
 
     predicted = post_process.prepare_input(predicted, sequence, device)
 
-    results.extend(list(evaluate((predicted >= treshold).float(), target, device=device))) #Evaluate masked output
-
-
+    results.extend(list(evaluate((predicted >= treshold).float(), target, device=device))) #Evaluate binary masked output
     
     functions = [post_process.argmax_postprocessing, post_process.blossom_postprocessing, post_process.blossom_weak, post_process.Mfold_param_postprocessing]
 
-    with ThreadPoolExecutor() as executor:
-        future_to_func = {executor.submit(func, predicted, sequence, device): func.__name__ for func in functions}
-        for future in as_completed(future_to_func):
-            results.extend(evaluate(future.result(), target, device))
-
-    return results
+    for func in functions:
+        results.extend(evaluate(func(predicted, sequence, device), target, device))
+    
+    return [data.family, data.length] + results
 
 
 
@@ -65,19 +67,23 @@ if __name__ == "__main__":
     df = pd.DataFrame(index = range(len(file_list)), columns = columns)
     
     print("--- Evaluating ---")
-    
-    progess_bar = tqdm(total=len(file_list), unit='files')
-    
-    for i, file in enumerate(file_list): 
-        data = pickle.load(open(file, 'rb'))
-        with torch.no_grad():
-            predicted = model(data.input.unsqueeze(0))
-        results = [data.family, data.length] + evaluate_output(predicted.squeeze(0).squeeze(0), data.output, data.sequence) #Evaluate using all methods
-        df.loc[i] = results
 
-        progess_bar.update(1)
+    num_processes = 5
+    print(f"Number of processes: {num_processes}")
+    pool = multiprocessing.Pool(num_processes)
+    shared_counter = multiprocessing.Value('i', 0)
     
-    progess_bar.close()
+    #Run processes
+    with tqdm(total=len(file_list)) as pbar:
+        for i, result in enumerate(pool.imap_unordered(evaluate_output, file_list)):
+            df.loc[i] = result
+            with shared_counter.get_lock():
+                shared_counter.value += 1
+            pbar.update()
+    
+    #Close the pool
+    pool.close()
+    pool.join()
 
     print("--- Evaluation done ---")
     print("--- Saving results ---")

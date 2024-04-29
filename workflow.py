@@ -65,7 +65,7 @@ def train_model_small(files):
     """
     inputs = ['data/complete_set.tar.gz']
     outputs = ['RNA_Unet.pth']
-    options = {"memory":"8gb", "walltime":"168:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime and test GPU
+    options = {"memory":"8gb", "walltime":"168:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} 
     spec = """CONDA_BASE=$(conda info --base)
     source $CONDA_BASE/etc/profile.d/conda.sh
     conda activate RNA_Unet
@@ -184,7 +184,7 @@ def evaluate_postprocessing(files):
     outputs = [os.path.join('results', 'average_scores_postprocess.csv'), 
                os.path.join('figures', 'evaluation_postprocess.png'),
                os.path.join('results', 'evalutation_postprocess.csv')]
-    options = {"memory":"16gb", "walltime":"72:00:00", "account":"RNA_Unet", "cores":2} 
+    options = {"memory":"8gb", "walltime":"72:00:00", "account":"RNA_Unet", "cores":5} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/evaluate_postprocessing.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
