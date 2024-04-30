@@ -38,7 +38,7 @@ def evaluate_output(file: str, treshold: float = 0.5) -> list:
 
     results.extend(list(evaluate((predicted >= treshold).float(), target, device=device))) #Evaluate binary masked output
     
-    functions = [post_process.argmax_postprocessing, post_process.blossom_postprocessing, post_process.blossom_weak, post_process.Mfold_param_postprocessing]
+    functions = [post_process.argmax_postprocessing, post_process.blossom_postprocessing, post_process.blossom_weak] #, post_process.Mfold_param_postprocessing]
 
     for func in functions:
         results.extend(evaluate(func(predicted, sequence, device), target, device))
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     RNA = namedtuple('RNA', 'input output length family name sequence')
     file_list = pickle.load(open('data/valid.pkl', 'rb'))
     
-    funcs = ['No post-processing', 'Only mask', 'Argmax', 'Blossum w/ self-loops', 'Blossum', 'Mfold']
+    funcs = ['No post-processing', 'Only mask', 'Argmax', 'Blossum w/ self-loops', 'Blossum'] #, 'Mfold']
     
     # Evaluate the model
     columns = ['family', 'length'] + [f'{name}_{metric}' for name in funcs for metric in ['precision', 'recall', 'f1']] 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     
     print("--- Evaluating ---")
 
-    num_processes = 5
+    num_processes = 12
     print(f"Number of processes: {num_processes}")
     pool = multiprocessing.Pool(num_processes)
     shared_counter = multiprocessing.Value('i', 0)
