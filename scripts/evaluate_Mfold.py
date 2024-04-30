@@ -57,7 +57,7 @@ if __name__ == "__main__":
     
     print("--- Evaluating ---")
 
-    num_processes = 5
+    num_processes = 8
     print(f"Number of processes: {num_processes}")
     pool = multiprocessing.Pool(num_processes)
     shared_counter = multiprocessing.Value('i', 0)

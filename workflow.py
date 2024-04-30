@@ -184,7 +184,7 @@ def evaluate_postprocessing(files):
     outputs = [os.path.join('results', 'average_scores_postprocess.csv'), 
                os.path.join('figures', 'evaluation_postprocess.png'),
                os.path.join('results', 'evalutation_postprocess.csv')]
-    options = {"memory":"8gb", "walltime":"72:00:00", "account":"RNA_Unet", "cores":12} 
+    options = {"memory":"8gb", "walltime":"96:00:00", "account":"RNA_Unet", "cores":20} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/evaluate_postprocessing.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
@@ -197,7 +197,7 @@ def evaluate_postprocessing_Mfold(files):
     outputs = [os.path.join('results', 'average_scores_postprocess_Mfold.csv'), 
                os.path.join('figures', 'evaluation_postprocess_Mfold.png'),
                os.path.join('results', 'evalutation_postprocess_Mfold.csv')]
-    options = {"memory":"8gb", "walltime":"72:00:00", "account":"RNA_Unet", "cores":5} 
+    options = {"memory":"8gb", "walltime":"96:00:00", "account":"RNA_Unet","cores":8} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/evaluate_Mfold.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
