@@ -189,6 +189,19 @@ def evaluate_postprocessing(files):
     python3 scripts/evaluate_postprocessing.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
 
+def evaluate_postprocessing_Mfold(files): 
+    """
+    Evaluate all the implemented post-processing methods and compare them
+    """
+    inputs = [os.path.join('RNA_Unet.pth')] + files
+    outputs = [os.path.join('results', 'average_scores_postprocess_Mfold.csv'), 
+               os.path.join('figures', 'evaluation_postprocess_Mfold.png'),
+               os.path.join('results', 'evalutation_postprocess_Mfold.csv')]
+    options = {"memory":"8gb", "walltime":"72:00:00", "account":"RNA_Unet", "cores":5} 
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/evaluate_Mfold.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
+
 def compare_methods(methods_under600, files_under600, methods, files):
     """
     Compare the different previous methods with the RNAUnet
@@ -246,6 +259,7 @@ methods_under600 = ['hotknots', 'Ufold']
 methods = ['CNNfold', 'vienna_mfold', 'RNAUnet']
 
 gwf.target_from_template('compare_postprocessing', evaluate_postprocessing(pickle.load(open('data/valid.pkl', 'rb'))))
+gwf.target_from_template('compare_postprocessing_Mfold', evaluate_postprocessing_Mfold(pickle.load(open('data/valid.pkl', 'rb'))))
 #gwf.target_from_template('evaluate_RNAUnet', test_model(test_files))
 #gwf.target_from_template('compare_methods', compare_methods(methods_under600, files, methods, test_files))
 
