@@ -221,7 +221,7 @@ def test_model_gpu(files):
     Test the model of the test set and time it
     """
     inputs = ['RNA_Unet.pth'] + files
-    outputs = ['results/times_final_cpu.csv', 'figures/time_final_cpu.png'] 
+    outputs = ['results/times_final_gpu.csv', 'figures/time_final_gpu.png'] 
     options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     nvidia-smi -L
@@ -286,6 +286,7 @@ gwf.target_from_template('predict_nussinov', predict_nussinov(test_files))
 
 gwf.target_from_template('compare_postprocessing', evaluate_postprocessing(pickle.load(open('data/valid.pkl', 'rb'))))
 gwf.target_from_template('compare_postprocessing_Mfold', evaluate_postprocessing_Mfold(pickle.load(open('data/valid.pkl', 'rb'))))
+gwf.target_from_template('compare_postprocessing_under600', evaluate_postprocessing_under600(pickle.load(open('data/valid_under_600.pkl', 'rb'))))
 
 #Evaluate on test set
 gwf.target_from_template('evaluate_RNAUnet_cpu', test_model_cpu(test_files))
