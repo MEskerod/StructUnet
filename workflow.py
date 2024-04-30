@@ -192,6 +192,19 @@ def evaluate_postprocessing_Mfold(files):
     python3 scripts/evaluate_Mfold.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
 
+def evaluate_postprocessing_under600(files): 
+    """
+    Evaluate all the implemented post-processing methods and compare them
+    """
+    inputs = [os.path.join('RNA_Unet.pth')] + files
+    outputs = [os.path.join('results', 'average_scores_postprocess_under600.csv'), 
+               os.path.join('figures', 'evaluation_postprocess_under600.png'),
+               os.path.join('results', 'evalutation_postprocess_under600.csv')]
+    options = {"memory":"16gb", "walltime":"134:00:00", "account":"RNA_Unet","cores":10} 
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/evaluate_postprocessing_under600.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
+
 def test_model_cpu(files): 
     """
     Test the model of the test set and time it
