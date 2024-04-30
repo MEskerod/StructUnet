@@ -8,19 +8,31 @@ import time, random, sys, multiprocessing
 from utils.plots import plot_timedict
 
 
-def generate_random_sequence(N): 
+def generate_random_sequence(N: int) -> list[str]:
+    """
+    Generate a random RNA sequence of length N.
+
+    Parameters:
+    - N: Length of the sequence
+
+    Returns:
+    - sequence: The generated sequence
+    """ 
     alphabet = ['A', 'C', 'G', 'U']
     return random.choices(alphabet, k=N)
 
 
-def calculate_lengths(n: int = 31, min_length: int = 60, max_length: int = 100) -> list[int]: #Change to 81, 60, 2000
+def calculate_lengths(n: int = 81, min_length: int = 60, max_length: int = 2000) -> list[int]:
     """
     Calculate the lengths of the slices, to obtain a given number of slices of lengths between a minimum and maximum length, spaced according to a quadratic function. 
 
-    Args:
-        - num_slices: Number of slices wanted 
-        - min_length: Length of the shortest slice 
-        - initial_length: Length of the sequence to slice from, which is also equal to the maximum length
+    Parameters:
+    - num_slices (int): Number of slices wanted. Default is 81
+    - min_length (int): Length of the shortest slice. Default is 60 
+    - initial_length (int): Length of the sequence to slice from, which is also equal to the maximum length. Default is 2000
+
+    Returns:
+    - lengths (list): List of the lengths of the slices
     """
     lengths = []
 
@@ -33,20 +45,49 @@ def calculate_lengths(n: int = 31, min_length: int = 60, max_length: int = 100) 
     return lengths
 
 
-def time_convert(n, min_length, max_length, func):
-    
-        t = []
+def time_convert(n: int, min_length: int, max_length: int, func: function) -> list[float]:
+    """
+    Calculate the time taken to convert N sequences of random RNA sequences of lengths between min_length and max_length using the given function.
+    Returns the individual times in a list.
 
-        lengths = calculate_lengths(n, min_length, max_length)
-        for N in lengths:
-            sequence = generate_random_sequence(N)
-            t0 = time.time()
-            func(sequence)
-            t.append(time.time() - t0)
-    
-        return t
+    Parameters:
+    - n (int): Number of sequences to convert
+    - min_length (int): Minimum length of the sequences
+    - max_length (int): Maximum length of the sequences
+    - func (function): The function to time
 
-def average_times(func, func_name, repeats = 5, n = 81, min_length = 60, max_length = 2000): #change to 81, 60, 2000
+    Returns:
+    - t (list): List of the times taken to convert each sequence
+    """
+    
+    t = []
+
+    lengths = calculate_lengths(n, min_length, max_length)
+    for N in lengths:
+        sequence = generate_random_sequence(N)
+        t0 = time.time()
+        func(sequence)
+        t.append(time.time() - t0)
+    
+    return t
+
+def average_times(func: function, func_name: str, repeats: int = 5, n: int = 81, min_length: int = 60, max_length: int = 2000) -> list[float]:
+    """
+    Calculates the average time taken to convert N sequences of random RNA sequences of lengths between min_length and max_length using the given function.
+    The time is calculated by averaging the time taken over a number of repeats.
+    The function is run in parallel using a multiprocessing Pool.
+
+    Parameters:
+    - func (function): The function to time
+    - func_name (str): The name of the function
+    - repeats (int): Number of times to repeat the timing. Default is 5
+    - n (int): Number of sequences to convert. Default is 81
+    - min_length (int): Minimum length of the sequences. Default is 60
+    - max_length (int): Maximum length of the sequences. Default is 2000
+
+    Returns:
+    - average (list): List of the average times taken to convert each sequence
+    """
     times = [0] * n
 
     pool =  multiprocessing.Pool()

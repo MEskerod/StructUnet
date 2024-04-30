@@ -12,28 +12,34 @@ from utils.plots import plot_timedict
 
 from utils.post_processing import hotknots_postprocessing
 
-def plot_f1(categories: list, scores: list, outputfile: str) -> None:
+def plot_f1(categories: list, scores: list, mean_times: list, outputfile: str) -> None:
     """
-    Function to plot the F1 scores of different combinations of hyperparameters.
+    Function to plot the F1 scores of different ks.
     The plot is a bar plot with the F1 scores on the y-axis and the combinations on the x-axis.
     The plot is saved as a .png file.
     
     Parameters:
     - categories (list): list of strings, the combinations of hyperparameters
     - scores (list): list of floats, the F1 scores
+    - mean_times (list): list of floats, the average time taken to train the model
     - outputfile (str): string, the path to save the plot
 
     Returns:
-    - Nones
+    - None
     """
-    plt.figure(figsize=(8, 6))
-    plt.bar(categories, scores, color='C0', edgecolor='black', linewidth=0.5, zorder = 3)
-    plt.xlabel('Combinations')
+    width = 1.8 * len(categories)
+    
+    plt.figure(figsize=(width, 6))
+    bars = plt.bar(categories, scores, color='C0', edgecolor='black', linewidth=0.5, zorder=3)
+    plt.xlabel('k')
     plt.ylabel('F1 score')
-    plt.xticks(rotation=90)
     plt.grid(axis='y', linestyle='--')
     plt.gca().spines['top'].set_visible(False)
     plt.gca().spines['right'].set_visible(False)
+
+    for bar, score, t in zip(bars, scores, mean_times):
+        plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01, f'F1 score: {score:.2f}\nAverage time: {t:.2f} s', ha='center', va='bottom', fontsize=7)
+
     plt.tight_layout()
     plt.savefig(outputfile, dpi=300, bbox_inches='tight')
 
@@ -154,24 +160,25 @@ if __name__ == '__main__':
 
     results.sort(key=lambda x: x[1])
 
-    k = [result[1] for result in results]
+    #Save times
+    time_dict = {x[1]: x[2] for x in results}
+    lengths = [d[0] for d in data]
+    time_df = pd.DataFrame(time_dict, index=lengths)
+    time_df.to_csv('results/time_hotknots.csv')
+
+    k = [str(result[1]) for result in results]
     scores = [result[0] for result in results]
+    average_times = time_df.mean(axis=0).tolist()
 
     #Save scores
     F1_df = pd.DataFrame({'k': k, 'F1': scores})
     F1_df.to_csv('results/F1_hotknots.csv', index=False)
 
     #Make bar plot of F1 scores
-    plot_f1(k, scores, 'figures/F1_hotknots.png')
+    plot_f1(k, scores, average_times, 'figures/F1_hotknots.png')
 
-    #Plot time
-    time_dict = {x[1]: x[2] for x in results}
-    lengths = [d[0] for d in data]
-    plot_timedict(time_dict, lengths, 'figures/time_hotknots.png')
+    
 
-    #Save times
-    time_df = pd.DataFrame(time_dict, index=lengths)
-    time_df.to_csv('results/time_hotknots.csv')
 
 
 

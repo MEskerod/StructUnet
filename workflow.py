@@ -79,16 +79,6 @@ def train_model_small(files):
     python3 scripts/training.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def test_model(files): 
-    """
-    Test the model of the test set and time it
-    """
-    inputs = ['RNA_Unet.pth'] + files
-    outputs = ['results/test_scores.csv'] + [file.replace('data/test_files', 'steps/RNA_Unet') for file in files] #TODO - Add paths for plots and change path to csv
-    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
-    spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    python3 scripts/predict_test.py"""
-    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 ### EVALUATION ###
 
@@ -202,6 +192,32 @@ def evaluate_postprocessing_Mfold(files):
     python3 scripts/evaluate_Mfold.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
 
+def test_model_cpu(files): 
+    """
+    Test the model of the test set and time it
+    """
+    inputs = ['RNA_Unet.pth'] + files
+    outputs = ['results/times_final_cpu.csv', 'figures/time_final_cpu.png'] + [file.replace('data/test_files', 'steps/RNA_Unet') for file in files] 
+    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/predict_test.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+def test_model_gpu(files): 
+    """
+    Test the model of the test set and time it
+    """
+    inputs = ['RNA_Unet.pth'] + files
+    outputs = ['results/times_final_cpu.csv', 'figures/time_final_cpu.png'] 
+    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    nvidia-smi -L
+    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+    nvcc --version
+    export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    python3 scripts/predict_test.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
 def compare_methods(methods_under600, files_under600, methods, files):
     """
     Compare the different previous methods with the RNAUnet
@@ -255,12 +271,16 @@ gwf.target_from_template('predict_vienna', predict_vienna(test_files))
 gwf.target_from_template('predict_nussinov', predict_nussinov(test_files))
 
 
+gwf.target_from_template('compare_postprocessing', evaluate_postprocessing(pickle.load(open('data/valid.pkl', 'rb'))))
+gwf.target_from_template('compare_postprocessing_Mfold', evaluate_postprocessing_Mfold(pickle.load(open('data/valid.pkl', 'rb'))))
+
+#Evaluate on test set
+gwf.target_from_template('evaluate_RNAUnet_cpu', test_model_cpu(test_files))
+gwf.target_from_template('evaluate_RNAUnet_gpu', test_model_gpu(test_files))
+
 methods_under600 = ['hotknots', 'Ufold']
 methods = ['CNNfold', 'vienna_mfold', 'RNAUnet']
 
-gwf.target_from_template('compare_postprocessing', evaluate_postprocessing(pickle.load(open('data/valid.pkl', 'rb'))))
-gwf.target_from_template('compare_postprocessing_Mfold', evaluate_postprocessing_Mfold(pickle.load(open('data/valid.pkl', 'rb'))))
-#gwf.target_from_template('evaluate_RNAUnet', test_model(test_files))
 #gwf.target_from_template('compare_methods', compare_methods(methods_under600, files, methods, test_files))
 
 

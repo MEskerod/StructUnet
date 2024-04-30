@@ -30,6 +30,14 @@ def pairs(x: str, y:str) -> bool:
 def prepare_input(matrix: torch.Tensor, sequence: str, device: str) -> torch.Tensor:
     """
     Takes a sequence and returns a mask tensor with 1s in the positions where a base can pair with another base and for unpaired bases.
+
+    Parameters:
+    - matrix (torch.Tensor): The matrix to prepare.
+    - sequence (str): The sequence that the matrix was generated from.
+    - device (str): The device to use for the matrix.
+
+    Returns:
+    - torch.Tensor: The prepared matrix.
     """
     
     N = len(sequence)
@@ -177,7 +185,7 @@ def blossom_weak(matrix: torch.Tensor, sequence: str, device: str, treshold: flo
 
     return y_out
 
-def Mfold_param_postprocessing(matrix: torch.Tensor, sequence: str, device: str) -> torch.Tensor:
+def Mfold_param_postprocessing(matrix: torch.Tensor, sequence: str, device: str, threshold = 1e-8) -> torch.Tensor:
     """
     Postprocessing function that takes a matrix and returns a matrix.
     Uses the Mfold algorithm to find the maximum weight matching in the graph representation of the matrix.
@@ -201,10 +209,6 @@ def Mfold_param_postprocessing(matrix: torch.Tensor, sequence: str, device: str)
         y_out[i, j] = 1
     
     return y_out
-
-
-#TODO - Remember to ad application of mask to the evaluation script (and timing of everything)(and GPU usage)
-#TODO - Change evaluate to use tensors (and check what scripts uses evaluate and change them to tensors if possible)
 
 
 def Mfold_constrain_postprocessing(matrix: torch.Tensor, sequence: str, device: str, treshold: float = 0.5) -> torch.Tensor: 
@@ -234,7 +238,7 @@ def Mfold_constrain_postprocessing(matrix: torch.Tensor, sequence: str, device: 
     
     return y_out
 
-def hotknots_postprocessing(matrix: torch.Tensor, sequence: str, device: str, k=3, gap_penalty = 0.5, treshold_prop = 0.8) -> torch.Tensor:  #TODO - Change "fixed" parameters
+def hotknots_postprocessing(matrix: torch.Tensor, sequence: str, device: str, k=3, gap_penalty = 0.5, treshold_prop = 0.8) -> torch.Tensor:
     """
     Postprocessing function that takes a matrix and returns a matrix.
     Uses the HotKnots algorithm, which is a heuristic able to find structures with pseudoknot.

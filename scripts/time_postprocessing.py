@@ -1,6 +1,7 @@
 from utils import post_processing
 
-import numpy as np
+import torch
+
 import pandas as pd
 
 import time, random, sys, multiprocessing 
@@ -8,10 +9,28 @@ import time, random, sys, multiprocessing
 from utils.plots import plot_timedict
 
 
-def generate_random_matrix(N): 
-    return np.random.random((N, N))
+def generate_random_matrix(N: int) -> torch.Tensor: 
+    """
+    Generates a random matrix of size NxN.
 
-def generate_random_sequence(N): 
+    Parameters:
+    - N: The size of the matrix
+
+    Returns:
+    - torch.Tensor: The generated matrix
+    """
+    return torch.rand((N, N))
+
+def generate_random_sequence(N: int) -> list[str]:
+    """
+    Generates a random sequence of length N using the alphabet ['A', 'C', 'G', 'U'].
+
+    Parameters:
+    - N: The length of the sequence
+
+    Returns:
+    - list[str]: The generated sequence
+    """ 
     alphabet = ['A', 'C', 'G', 'U']
     return random.choices(alphabet, k=N)
 
@@ -68,7 +87,7 @@ def time_postprocess(func, n: int, min_length: int, max_length: int) -> list:
 
 
 
-def average_times(func, func_name: str, repeats: int = 5, n: int = 51, min_length: int = 60, max_length: int = 600): 
+def average_times(func, func_name: str, repeats: int = 5, n: int = 51, min_length: int = 60, max_length: int = 600) -> list[float]: 
     """
     Takes a function and times it for a given number of repeats and sequences of different lengths.
     The average time it takes to process each sequence is returned.

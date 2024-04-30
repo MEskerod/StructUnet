@@ -5,17 +5,31 @@ from collections import namedtuple
 
 from utils.prepare_data import getLength, list_all_files, make_matrix_from_basepairs, make_matrix_from_sequence_8, make_matrix_from_sequence_9, make_matrix_from_sequence_17, read_ct, update_progress_bar, make_pairs_from_list
 
-def getFamily(file_name: str):
-  '''
+def getFamily(file_name: str) -> str:
+  """
   Returns the family of a file in the RNAStralign data set, based on folder structure
-  '''
+
+  Parameters:
+  - file_name (str): The name of the file
+
+  Returns:
+  - str: The family of the file
+  """
   return '_'.join(file_name.split(os.sep)[5].split('_')[:-1])
 
-def underGivenLength(length: int, data_size: int, file_list: list):
-  '''
+def underGivenLength(length: int, data_size: int, file_list: list) -> list:
+  """
   Returns a list of files under length with data_size from EACH family.
   If a family does not have enough data, all data from that family is added.
-  '''
+
+  Parameters:
+  - length (int): The maximum length of the sequences
+  - data_size (int): The maximum number of sequences to take from each family
+  - file_list (list): The list of files to choose from
+
+  Returns:
+  - list: The list of files under length with data_size from each family
+  """
   rd.seed(42)
 
   families = list(set([getFamily(file) for file in file_list])) #Find all family names and remove duplicates
@@ -41,6 +55,14 @@ def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8'
   - file name 
   - pairs in structure
   All elements are saved into output_folder as pickle files. 
+
+  Parameters:   
+  - file_list (list): The list of files to convert
+  - output_folder (str): The folder to save the converted files in
+  - matrix_type (str): The type of matrix to convert the files to
+
+  Returns:
+  - None
   """
   converted = 0
 

@@ -8,7 +8,10 @@ from enum import IntEnum
 s_scores = {}
 
 class HotSpot: 
-    def __init__(self, pairs, energy) -> None:
+    """
+    Class to represent a hotspot
+    """
+    def __init__(self, pairs: list, energy: float) -> None:
         self.pairs = pairs
         self.energy = energy
         
@@ -21,6 +24,9 @@ class HotSpot:
     
     @cached_property
     def bases(self): 
+        """
+        Returns the bases of the hotspot. The bases are the bases in the pairs and the single unpaired bases in the hotspot
+        """
         strand1 = sorted([x[0] for x in self.pairs])
         strand2 = sorted([x[1] for x in self.pairs])
         
@@ -28,6 +34,9 @@ class HotSpot:
 
 
 class Node: 
+    """
+    Node class for the tree. Each node has a set of hotspots and a list of children. 
+    """
     def __init__(self, hotspots = []) -> None:
         self.children = []
         self.hotspots = hotspots
@@ -41,6 +50,9 @@ class Node:
     
     @cached_property
     def bases(self): 
+        """
+        Returns the bases of the node, which is the union of the bases of the hotspots in the node
+        """
         if self.hotspots is not None: 
             if len(self.hotspots) == 1:
                 return self.hotspots[0].bases
@@ -52,13 +64,19 @@ class Node:
             return []
     
     @cached_property
-    def energy(self): 
+    def energy(self):
+        """
+        Returns the energy of the node, which is the sum of the energies of the hotspots in the node
+        """ 
         if self.hotspots is not None: 
             return torch.sum(torch.tensor([hotspot.energy for hotspot in self.hotspots], device=dv))
         else: 
             return 0
 
 class Tree:
+    """
+    Class that represents a tree. The tree has a root node and a list of nodes. The nodes are added to the tree in the order they are created
+    """
     def __init__(self) -> None:
         self.root = Node()
         self.nodes = [self.root]
@@ -70,15 +88,25 @@ class Tree:
         return len(self.nodes)-1 #Root doesn't count as part of the length
 
     def print_tree(self):
+        """
+        Prints the tree
+        """
         self._print_tree(self.root, 0)
     
-    def _print_tree(self, node, level):
+    def _print_tree(self, node: Node, level: int):
         hotspot_string = ", ".join(str(x) for x in node.hotspots) if node.hotspots is not None else "root"
         print(("  " * level) + hotspot_string)
         for child in node.children:
             self._print_tree(child, level + 1)
     
     def add_node(self, parent: Node, node: Node):
+        """
+        Adds a node to the tree
+
+        Parameters:
+        - parent (Node): The parent node
+        - node (Node): The node to add
+        """
         self.nodes.append(node)
         parent.children.append(node)
         
@@ -88,8 +116,17 @@ class Trace(IntEnum):
     DOWN = 2
     DIAG = 3
 
-def run_simfold(sequence, contraints):
+def run_simfold(sequence: str, contraints: str) -> str:
     """
+    Runs Simfold with the given sequence and constraints and returns the structure with the lowest energy
+    Runs Simfold using subprocess
+
+    Parameters:
+    - sequence (str): The sequence to run Simfold on
+    - contraints (str): The constraints to use for the sequence
+
+    Returns:
+    - str: The structure with the lowest energy given the constraints
     """
     simfold_dir = '../simfold/'
     command = [simfold_dir + 'simfold', '-s', sequence, '-r', contraints]
@@ -109,13 +146,24 @@ def run_simfold(sequence, contraints):
     except Exception as e:
         raise Exception(f'An error occured: {e}')
 
-def smith_waterman(seq1, matrix, treshold = 2.0):
+def smith_waterman(sequence: str, matrix: torch.Tensor, treshold: float = 5.0) -> tuple:
     """
+    Implementation of Smith-Waterman algorithm to align an RNA sequence with itself.
+    The algorithm is used to find the top k local alignments in the sequence.
+
+    Parameters:
+    - sequence (str): The sequence to align
+    - matrix (torch.Tensor): The matrix to use for scoring the alignment
+    - treshold (float): The treshold to use for the alignment
+
+    Returns:
+    - list: A list of the top cells in the matrix
+    - torch.Tensor: The tracing matrix
     """
     top_cells = []
     basepairs = {'AU', 'UA', 'CG', 'GC', 'GU', 'UG'}
 
-    N = len(seq1)
+    N = len(sequence)
 
     # Initialize the scoring matrix.
     score_matrix = torch.zeros((N+1, N+1), device=dv)
@@ -131,7 +179,7 @@ def smith_waterman(seq1, matrix, treshold = 2.0):
 
             # It is necesary to substract one to i indices into matrix, since it doesn't have the 0 row and column
             #Calculate match score
-            diagonal = score_matrix[i+1, j-1] + matrix[i, j-1] if (seq1[i] + seq1[j-1]) in basepairs else -float('inf')
+            diagonal = score_matrix[i+1, j-1] + matrix[i, j-1] if (sequence[i] + sequence[j-1]) in basepairs else -float('inf')
             #Calculate gaps scores - should ensure that only gaps of size 1 (on one or both strands) are allowed
             vertical = score_matrix[i+1, j] - gp if (not(tracing_matrix[i+1, j] == Trace.LEFT and tracing_matrix[i+1, j-1] == Trace.DOWN)) and (not tracing_matrix[i+1, j]==Trace.DOWN) else -float('inf')
             horizontal = score_matrix[i, j-1] - gp if (not (tracing_matrix[i, j-1]==Trace.DOWN and tracing_matrix[i+1, j-1] == Trace.LEFT)) and (not tracing_matrix[i, j-1] == Trace.LEFT) else -float('inf')
@@ -157,8 +205,17 @@ def smith_waterman(seq1, matrix, treshold = 2.0):
     
     return top_cells, tracing_matrix
 
-def traceback_smith_waterman(trace_matrix, i, j):
+def traceback_smith_waterman(trace_matrix: torch.Tensor, i: int, j: int) -> list:
     """
+    Traces back the path in the matrix to find the alignment starting from cell (i, j)
+
+    Parameters:
+    - trace_matrix (torch.Tensor): The tracing matrix
+    - i (int): The row index to start from
+    - j (int): The column index to start from
+
+    Returns:
+    - list: A list of pairs of indices in the alignment
     """
     pairs = []
     while trace_matrix[i, j] != Trace.STOP: 
@@ -174,16 +231,28 @@ def traceback_smith_waterman(trace_matrix, i, j):
     return pairs
 
 
-def initialize_tree(sequence, matrix, k=20):
+def initialize_tree(sequence: str, matrix: torch.Tensor, k: int = 20) -> Tree:
     """
+    Initializes the tree with the first k hotspots with are found using the Smith-Waterman algorithm
+
+    Parameters:
+    - sequence (str): The sequence to initialize the tree with
+    - matrix (torch.Tensor): The matrix to use for scoring the alignment
+    - k (int): The number of hotspots to initialize the tree with
+
+    Returns:
+    - Tree: The initialized tree
     """
+    #Find the top hotspots using Smith-Waterman
     pq, trace = smith_waterman(sequence, matrix)
 
     tree = Tree()
     bases  = []
 
+    #Backtrack trough top hotspots to find k best hotspots
     while len(tree) < k and pq:
         score, (i, j) = pq.pop()
+        #If they overlap with hotspot already in the tree, skip
         if i in bases and j in bases:
             continue
         node = Node([HotSpot(traceback_smith_waterman(trace, i, j), score)])
@@ -194,8 +263,17 @@ def initialize_tree(sequence, matrix, k=20):
     return tree
 
 
-def constrained_structure(bases, N): 
+def constrained_structure(bases: list, N: int) -> str: 
     """
+    Makes a constrained structure of a sequence with a set of bases that are not allowed to form pairs. 
+    It creates a constrainted structure of length N with '.' in the positions of the bases that are not allowed to form pairs
+
+    Parameters:
+    - bases (list): The list of bases that are not allowed to form pairs
+    - N (int): The length of the sequence
+
+    Returns:
+    - str: The constrained structure
     """
     #Constrained structure of a sequence with a set of bases that are not allowed to form pairs
     structure = np.full(N, '_', dtype=str)
@@ -204,8 +282,15 @@ def constrained_structure(bases, N):
     return ''.join(structure)
 
 
-def db_to_pairs(structure: str):
+def db_to_pairs(structure: str) -> list:
     """
+    Converts a dot-bracket structure to a list of pairs of indices
+
+    Parameters:
+    - structure (str): The dot-bracket structure
+
+    Returns:
+    - list: A list of pairs of indices that forms base pairs in the structure
     """
     stack = []
     pairs = []
@@ -219,8 +304,19 @@ def db_to_pairs(structure: str):
     pairs.sort()
     return pairs
 
-def identify_hotspots(structure: str, matrix: torch.Tensor, k=20, treshold = 2.0):
-    
+def identify_hotspots(structure: str, matrix: torch.Tensor, k: int = 20, treshold:float = 2.0) -> list:
+    """
+    Identifies hotspots in a structure by finding stems in the structure and calculating the energy of the stems.
+
+    Parameters:
+    - structure (str): The structure to identify hotspots in
+    - matrix (torch.Tensor): The matrix to use for scoring the structure
+    - k (int): The number of hotspots to return. Default is 20
+    - treshold (float): The treshold to use for the hotspots. Default is 2.0
+
+    Returns:
+    - list: A list of the top k hotspots
+    """
     pairs = db_to_pairs(structure)
     if not pairs:
         return []
@@ -239,7 +335,6 @@ def identify_hotspots(structure: str, matrix: torch.Tensor, k=20, treshold = 2.0
 
     #Get energy of hotspots and eliminate those under treshold
     #Return top k hotspots
-    #TODO - Maybe add min length for hotspots
     hotspots = []
     for hotspot in stems:
         #Get energy
@@ -258,8 +353,16 @@ def identify_hotspots(structure: str, matrix: torch.Tensor, k=20, treshold = 2.0
             
     return hotspots
 
-def energy_from_structure(structure, matrix):
+def energy_from_structure(structure: str, matrix: torch.Tensor) -> float:
     """
+    Calculates the energy of a structure given a matrix with scores for the structure
+
+    Parameters:
+    - structure (str): The structure to calculate the energy of
+    - matrix (torch.Tensor): The matrix to use for scoring the structure
+
+    Returns:
+    - float: The energy of the structure
     """
     energy = 0
     pairs = db_to_pairs(structure)
@@ -272,12 +375,22 @@ def energy_from_structure(structure, matrix):
                 energy -= gp+gp*0.25*(pairs[i-1][1] - pair[1] - 2) #Add penalty for every gap inserted, with a higher opening penalty
     return energy
 
-def SeqStr(S: str, H: Node, matrix: torch.Tensor, output_pairs = False): 
+def SeqStr(S: str, H: Node, matrix: torch.Tensor, output_pairs: bool = False): 
     """
     Secondary structure of sequence S with hotspot set H
     s1, s2, ..., sl are the sequences obtained from S when removing the bases that are in hotspots of H
     Mfold/SimFold is used to obtain the energy of the segmeents 
     SeqStr is the union of the energies of the l segments and the hotspots in H
+
+    Parameters:
+    - S (str): The sequence to calculate the structure of
+    - H (Node): The node with the hotspots to use for the structure
+    - matrix (torch.Tensor): The matrix to use for scoring the structure
+    - output_pairs (bool): If True, return the pairs of the structure. Default is False
+
+    Returns:
+    - float: The energy of the structure if output_pairs is False
+    - list: The pairs of the structure if output_pairs is True
     """   
     
     if not H.bases: 
@@ -311,8 +424,19 @@ def SeqStr(S: str, H: Node, matrix: torch.Tensor, output_pairs = False):
 
     return H.energy + torch.sum(torch.tensor(energies, device=dv))
 
-def grow_tree(tree: Tree, sequence, matrix, k=20):
+def grow_tree(tree: Tree, sequence: str, matrix: torch.Tensor, k: int = 20) -> Tree:
     """
+    Grows the tree by adding children to the nodes in the tree. The children are added based on the hotspots in the nodes
+    Follows the HotKnots algorithm described in the paper "HotKnots: Heuristic prediction of RNA secondary structures including pseudoknots" by Ren, Rastegari, Condon and Hoos
+
+    Parameters:
+    - tree (Tree): The tree to grow
+    - sequence (str): The sequence to grow the tree with
+    - matrix (torch.Tensor): The matrix to use for scoring the structure
+    - k (int): The number of children to add to each node. Default is 20
+
+    Returns:
+    - Tree: The grown tree
     """
     N = len(sequence)
     L = [node.hotspots[0] for node in tree.root.children]
@@ -356,8 +480,21 @@ def grow_tree(tree: Tree, sequence, matrix, k=20):
     return tree
 
 
-def hotknots(matrix: torch.Tensor, sequence: str, device: str, k=20, gap_penalty=0.5, treshold_prop = 0.5):
+def hotknots(matrix: torch.Tensor, sequence: str, device: str, k: int = 20, gap_penalty: float = 0.5, treshold_prop: float = 0.5) -> list:
     """
+    HotKnots algorithm to predict RNA secondary structure with pseudoknots
+    It takes a matrix with scores returned from a neural network and a sequence and returns the pairs of the structure
+
+    Parameters:
+    - matrix (torch.Tensor): The matrix to use for scoring the structure
+    - sequence (str): The sequence to predict the structure of
+    - device (str): The device to use for the matrix
+    - k (int): The number of children to add to each node. Default is 20
+    - gap_penalty (float): The penalty for gaps in the structure. Default is 0.5
+    - treshold_prop (float): The porportion of the naive structure to use as treshold for adding new hotspots. Default is 0.5
+
+    Returns:
+    - list: The pairs of the structure
     """
     global gp, tp, dv
     gp = gap_penalty
@@ -372,39 +509,3 @@ def hotknots(matrix: torch.Tensor, sequence: str, device: str, k=20, gap_penalty
     pairs = SeqStr(sequence, best, matrix, output_pairs=True)
   
     return pairs
-    
-"""    
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-sequence = "GGCCGGCAUGGUCCCAGCCUCCUCGCUGGCGCCGGCUGGGCAACAUUCCCAGGGGACCGUCCCCUGGGUAAUGGCGAAUGGGACCCA"
-"...............................___..................................................___"
-
-pairs = [[(1, 37), (2, 36), (3, 35), (4, 34), (5, 33), (6, 32), (7, 31)],
-         [(10, 86), (11, 85), (12, 84), (13, 83), (14, 82), (15, 81), (16, 80)],
-         [(17, 30), (18, 29), (19, 28)], 
-         [(44, 73), (45, 72), (46, 71), (47, 70), (48, 68), (49, 67), (50, 66), (51, 65), (52, 64), (53, 63), (54, 62), (55, 61), (56, 60)]]
-
-matrix = torch.zeros((len(sequence), len(sequence)), device=device)
-for i, j in [pair for sublist in pairs for pair in sublist]:
-    matrix[i-1, j-1] = matrix[j-1, i-1] = 1
-
-import time
-
-print()
-start_time = time.time()
-pairs = hotknots(matrix, sequence, device, k=4, gap_penalty=0.5)
-print("--- %s seconds ---" % (time.time() - start_time))
-
-print(pairs)
-
-from model_and_training import evaluate
-
-
-final = torch.zeros((len(sequence), len(sequence)), device=device)
-for i, j in pairs:
-    final[i, j] = final[j, i] = 1
-
-_, _, F1 = evaluate(final, matrix)
-print(F1)
-
-"""

@@ -2,13 +2,10 @@ import pickle
 
 from collections import namedtuple
 
-import numpy as np
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset
-from scipy.signal import convolve2d
 
 RNA = namedtuple('RNA', 'input output length family name sequence')
 
@@ -23,7 +20,7 @@ def dice_loss(inputs: torch.Tensor, targets: torch.Tensor, smooth: float=1e-7) -
   - smooth (float): A small number to avoid division by zero. Default is 1e-5.
 
   Returns:
-  torch.Tensor: The dice loss.
+  - torch.Tensor: The dice loss.
   """
   intersection = torch.sum(targets * inputs, dim=(1,2,3))
   sum_of_squares_pred = torch.sum(torch.square(inputs), dim=(1,2,3))
@@ -39,6 +36,11 @@ def f1_score(inputs: torch.Tensor, targets: torch.Tensor, epsilon: float=1e-7, t
     - inputs (torch.Tensor): The input tensor.
     - targets (torch.Tensor): The target tensor.
     - epsilon (float): A small number to avoid division by zero. Default is 1e-7.
+    - treshold (float): The treshold to use for the binary classification. Default is 0.5.
+
+    Returns:
+    - torch.Tensor: The F1 score.
+
     """
     # Ensure tensors have the same shape
     assert inputs.shape == targets.shape
@@ -337,12 +339,14 @@ def evaluate(y_pred: torch.Tensor, y_true: torch.Tensor, device: str, epsilon: f
     if include_unpaired: 
        mask = torch.ones_like(y_true, device=device)
     else: 
+       #Mask diagonal values to exclude unpaired bases
        mask = torch.ones_like(y_true, device=device) - torch.eye(y_true.shape[-1], device=device)
     
     y_pred = y_pred * mask
     y_true = y_true * mask
 
     if allow_shift:
+      #Use convolution to allow for a 1 bp shift in the predicted matrix
       kernel = torch.tensor([[0, 1, 0], 
                              [1, 1, 1], 
                              [0, 1, 0]], device=device, dtype=torch.float32)
@@ -351,6 +355,7 @@ def evaluate(y_pred: torch.Tensor, y_true: torch.Tensor, device: str, epsilon: f
       y_pred_filtered = (y_pred_filtered>0).float()
 
       FN = (y_true * (1-y_pred_filtered)).sum()
+    
     else:
       FN = (y_true * (1-y_pred)).sum()
     
