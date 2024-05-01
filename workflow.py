@@ -193,7 +193,7 @@ def evaluate_postprocessing_gpu(files):
     export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
     nvcc --version
     export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-    python3 scripts/evaluate_postprocessing.py"""
+    python3 scripts/evaluate_postprocessing_gpu.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
 
 def evaluate_postprocessing_Mfold(files): 
