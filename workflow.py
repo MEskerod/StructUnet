@@ -166,51 +166,17 @@ def predict_nussinov(files):
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 
-def evaluate_postprocessing(files): 
+def evaluate_postprocessing_over600(files): 
     """
     Evaluate all the implemented post-processing methods and compare them
     """
     inputs = [os.path.join('RNA_Unet.pth')] + files
-    outputs = [os.path.join('results', 'average_scores_postprocess.csv'), 
-               os.path.join('figures', 'evaluation_postprocess.png'),
-               os.path.join('results', 'evalutation_postprocess.csv')]
-    options = {"memory":"16gb", "walltime":"96:00:00", "account":"RNA_Unet", "cores":20} 
+    outputs = [os.path.join('results', 'average_scores_postprocess_over600.csv'), 
+               os.path.join('figures', 'evaluation_postprocess_over600.png'),
+               os.path.join('results', 'evalutation_postprocess_over600.csv')]
+    options = {"memory":"32gb", "walltime":"160:00:00", "account":"RNA_Unet", "cores":20} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    python3 scripts/evaluate_postprocessing.py"""
-    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
-
-def evaluate_postprocessing_gpu(files): 
-    """
-    Evaluate all the implemented post-processing methods and compare them
-    """
-    inputs = [os.path.join('RNA_Unet.pth')] + files
-    outputs = [os.path.join('results', 'average_scores_postprocess_gpu.csv'), 
-               os.path.join('figures', 'evaluation_postprocess_gpu.png'),
-               os.path.join('results', 'evalutation_postprocess_gpu.csv')]
-    options = {"memory":"24gb", "walltime":"162:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} 
-    spec = """CONDA_BASE=$(conda info --base)
-    source $CONDA_BASE/etc/profile.d/conda.sh
-    conda activate RNA_Unet
-    
-    echo "Job ID: $SLURM_JOB_ID\n"
-    nvidia-smi -L
-    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
-    nvcc --version
-    export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-    python3 scripts/evaluate_postprocessing_gpu.py"""
-    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
-
-def evaluate_postprocessing_Mfold(files): 
-    """
-    Evaluate all the implemented post-processing methods and compare them
-    """
-    inputs = [os.path.join('RNA_Unet.pth')] + files
-    outputs = [os.path.join('results', 'average_scores_postprocess_Mfold.csv'), 
-               os.path.join('figures', 'evaluation_postprocess_Mfold.png'),
-               os.path.join('results', 'evalutation_postprocess_Mfold.csv')]
-    options = {"memory":"16gb", "walltime":"134:00:00", "account":"RNA_Unet","cores":8} 
-    spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    python3 scripts/evaluate_Mfold.py"""
+    python3 scripts/evaluate_postprocessing_over600.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
 
 def evaluate_postprocessing_under600(files): 
@@ -244,7 +210,11 @@ def test_model_gpu(files):
     inputs = ['RNA_Unet.pth'] + files
     outputs = ['results/times_final_gpu.csv', 'figures/time_final_gpu.png'] 
     options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime
-    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    spec = """CONDA_BASE=$(conda info --base)
+    source $CONDA_BASE/etc/profile.d/conda.sh
+    conda activate RNA_Unet
+    
+    echo "Job ID: $SLURM_JOB_ID\n"
     nvidia-smi -L
     export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
     nvcc --version
@@ -305,10 +275,8 @@ gwf.target_from_template('predict_vienna', predict_vienna(test_files))
 gwf.target_from_template('predict_nussinov', predict_nussinov(test_files))
 
 
-gwf.target_from_template('compare_postprocessing', evaluate_postprocessing(pickle.load(open('data/valid.pkl', 'rb'))))
-gwf.target_from_template('compare_postprocessing_Mfold', evaluate_postprocessing_Mfold(pickle.load(open('data/valid.pkl', 'rb'))))
+gwf.target_from_template('compare_postprocessing', evaluate_postprocessing_over600(pickle.load(open('data/valid.pkl', 'rb'))))
 gwf.target_from_template('compare_postprocessing_under600', evaluate_postprocessing_under600(pickle.load(open('data/valid_under_600.pkl', 'rb'))))
-gwf.target_from_template('compare_postprocessing_gpu', evaluate_postprocessing_gpu(pickle.load(open('data/valid.pkl', 'rb'))))
 
 #Evaluate on test set
 gwf.target_from_template('evaluate_RNAUnet_cpu', test_model_cpu(test_files))
