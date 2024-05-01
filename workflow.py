@@ -275,7 +275,7 @@ gwf.target_from_template('predict_vienna', predict_vienna(test_files))
 gwf.target_from_template('predict_nussinov', predict_nussinov(test_files))
 
 
-gwf.target_from_template('compare_postprocessing', evaluate_postprocessing_over600(pickle.load(open('data/valid.pkl', 'rb'))))
+gwf.target_from_template('compare_postprocessing_over600', evaluate_postprocessing_over600(pickle.load(open('data/valid_over_600.pkl', 'rb'))))
 gwf.target_from_template('compare_postprocessing_under600', evaluate_postprocessing_under600(pickle.load(open('data/valid_under_600.pkl', 'rb'))))
 
 #Evaluate on test set
