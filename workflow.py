@@ -186,7 +186,7 @@ def evaluate_postprocessing_gpu(files):
     inputs = [os.path.join('RNA_Unet.pth')] + files
     outputs = [os.path.join('results', 'average_scores_postprocess_gpu.csv'), 
                os.path.join('figures', 'evaluation_postprocess_gpu.png'),
-               os.path.join('results', 'evalutation_postprocess.csv')]
+               os.path.join('results', 'evalutation_postprocess_gpu.csv')]
     options = {"memory":"24gb", "walltime":"162:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     nvidia-smi -L
