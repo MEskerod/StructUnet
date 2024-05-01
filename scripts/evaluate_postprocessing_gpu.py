@@ -25,11 +25,14 @@ def evaluate_output(file: str, treshold: float = 0.5) -> list:
     - results (list): The results of the evaluation.
     """
     data = pickle.load(open(file, 'rb'))
+
+    input = data.input.unsqueeze(0).to(device)
     
     with torch.no_grad():
-        predicted = model(data.input.unsqueeze(0)).squeeze(0).squeeze(0).detach()
+        predicted = model(input).squeeze(0).squeeze(0).detach()
+
     
-    target = data.output
+    target = data.output.to(device)
     sequence = data.sequence
     
     results = list(evaluate((predicted >= treshold).float(), target, device=device)) #Evaluate binart raw output
