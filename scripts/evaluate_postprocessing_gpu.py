@@ -83,12 +83,12 @@ if __name__ == "__main__":
     print("--- Saving results ---")
     
     # Save the results
-    df.to_csv('results/evalutation_postprocess.csv', index=False)
+    df.to_csv('results/evalutation_postprocess_gpu.csv', index=False)
 
     # Plot the results
     f1 = df[df.filter(regex='f1').columns]
     f1 = f1.apply(pd.to_numeric, errors='coerce')
-    violin_plot(f1, 'Post-processing methods', outputfile='figures/evaluation_postprocess.png') 
+    violin_plot(f1, 'Post-processing methods', outputfile='figures/evaluation_postprocess_gpu.png') 
 
 
     # Make table with average scores
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     for func in funcs: 
         results.loc[func] = [df[f"{func}_precision"].mean(), df[f"{func}_recall"].mean(), df[f"{func}_f1"].mean()]
     
-    results.to_csv('results/average_scores_postprocess.csv')
+    results.to_csv('results/average_scores_postprocess_gpu.csv')
 
     print("--- Results saved ---")
 
