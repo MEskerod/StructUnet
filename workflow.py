@@ -188,7 +188,11 @@ def evaluate_postprocessing_gpu(files):
                os.path.join('figures', 'evaluation_postprocess_gpu.png'),
                os.path.join('results', 'evalutation_postprocess_gpu.csv')]
     options = {"memory":"24gb", "walltime":"162:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} 
-    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    spec = """CONDA_BASE=$(conda info --base)
+    source $CONDA_BASE/etc/profile.d/conda.sh
+    conda activate RNA_Unet
+    
+    echo "Job ID: $SLURM_JOB_ID\n"
     nvidia-smi -L
     export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
     nvcc --version
