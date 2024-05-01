@@ -55,7 +55,8 @@ if __name__ == "__main__":
     print(f"Using {device} device")  
     # Load the model
     model = RNA_Unet(channels=32)
-    model.load_state_dict(torch.load('RNA_Unet.pth', map_location=device))
+    model.load_state_dict(torch.load('RNA_Unet.pth', map_location=torch.device('cpu')))
+    model = model.to(device)
     
     # Load the data
     RNA = namedtuple('RNA', 'input output length family name sequence')
