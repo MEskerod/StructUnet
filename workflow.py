@@ -304,6 +304,7 @@ gwf.target_from_template('predict_nussinov', predict_nussinov(test_files))
 gwf.target_from_template('compare_postprocessing', evaluate_postprocessing(pickle.load(open('data/valid.pkl', 'rb'))))
 gwf.target_from_template('compare_postprocessing_Mfold', evaluate_postprocessing_Mfold(pickle.load(open('data/valid.pkl', 'rb'))))
 gwf.target_from_template('compare_postprocessing_under600', evaluate_postprocessing_under600(pickle.load(open('data/valid_under_600.pkl', 'rb'))))
+gwf.target_from_template('compare_postprocessing_gpu', evaluate_postprocessing_gpu(pickle.load(open('data/valid.pkl', 'rb'))))
 
 #Evaluate on test set
 gwf.target_from_template('evaluate_RNAUnet_cpu', test_model_cpu(test_files))
