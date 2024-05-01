@@ -179,6 +179,23 @@ def evaluate_postprocessing(files):
     python3 scripts/evaluate_postprocessing.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
 
+def evaluate_postprocessing_gpu(files): 
+    """
+    Evaluate all the implemented post-processing methods and compare them
+    """
+    inputs = [os.path.join('RNA_Unet.pth')] + files
+    outputs = [os.path.join('results', 'average_scores_postprocess_gpu.csv'), 
+               os.path.join('figures', 'evaluation_postprocess_gpu.png'),
+               os.path.join('results', 'evalutation_postprocess.csv')]
+    options = {"memory":"24gb", "walltime":"162:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} 
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    nvidia-smi -L
+    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+    nvcc --version
+    export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    python3 scripts/evaluate_postprocessing.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
+
 def evaluate_postprocessing_Mfold(files): 
     """
     Evaluate all the implemented post-processing methods and compare them
