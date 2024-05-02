@@ -32,7 +32,7 @@ def evaluate_output(file: str, treshold: float = 0.5) -> list:
     target = data.output
     sequence = data.sequence
     
-    results = list(evaluate((predicted >= treshold).float(), target, device=device)) #Evaluate binart raw output
+    results = list(evaluate((predicted >= treshold).float(), target, device=device)) #Evaluate binary raw output
 
     predicted = post_process.prepare_input(predicted, sequence, device)
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     
     print("--- Evaluating ---")
 
-    num_processes = 10
+    num_processes = 1
     print(f"Number of processes: {num_processes}")
     pool = multiprocessing.Pool(num_processes)
     shared_counter = multiprocessing.Value('i', 0)
