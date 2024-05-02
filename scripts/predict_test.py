@@ -16,7 +16,7 @@ from utils.plots import plot_timedict
 
 def predict(sequence: str, name: str): 
     start1 = time.time()
-    input = make_matrix_from_sequence_8(sequence).to(device).unsqueeze(0)
+    input = make_matrix_from_sequence_8(sequence, device=device).unsqueeze(0)
     start2 = time.time()
     output = model(input) 
     time1 = time.time()-start1 #Time without post-processing
