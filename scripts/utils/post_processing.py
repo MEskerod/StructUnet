@@ -131,7 +131,7 @@ def blossom_postprocessing(matrix: torch.Tensor, sequence: str, device: str) -> 
     """
     n = matrix.shape[0]
 
-    mask = torch.eye(n, device=device) #*2
+    mask = torch.eye(n, device=device)
 
     A = torch.zeros((2*n, 2*n), device=device)
     A[:n, :n] = matrix
