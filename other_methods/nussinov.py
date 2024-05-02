@@ -1,7 +1,6 @@
-import pickle, os, time, subprocess, datetime
+import pickle, os, time, subprocess, datetime, torch
 from collections import namedtuple
 from tqdm import tqdm
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -42,7 +41,7 @@ def run_nussinov(sequence):
         raise Exception(f'An error occured: {e}')
 
 
-def make_matrix_from_basepairs(pairs: list) -> np.ndarray:
+def make_matrix_from_basepairs(pairs: list) -> torch.Tensor:
 	"""
     Takes a list of all which base each position in the sequence is paired with. If a base is unpaired pairs[i] = 0.
     From the list a 2D matrix is made, with each cell coresponding to a base pair encoded as 1 and unpaired bases encoded as 1 at the diagonal
@@ -55,7 +54,8 @@ def make_matrix_from_basepairs(pairs: list) -> np.ndarray:
     """
 
 	N = len(pairs)
-	matrix = np.full((N,N), 0, dtype="float32")
+     
+	matrix = torch.zeros((N,N), dtype=torch.float32)
 
 	for i, p in enumerate(pairs):
 		matrix[i, int(p)] = 1 
@@ -112,7 +112,7 @@ def main() -> None:
             progress_bar.update(1)
     
     #Calculate average time for each sequence
-    times = [np.mean(t) for t in times]
+    times = [sum(t)/len(t) for t in times]
     
     progress_bar.close()
     

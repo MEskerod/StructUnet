@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-import os, sys, argparse, pickle, time, tqdm, datetime
+import os, sys, pickle, time, tqdm, datetime, torch
 import multiprocessing as mp
 from collections import namedtuple
-from argparse import RawTextHelpFormatter
 from signal import signal, SIGPIPE, SIG_DFL
 signal(SIGPIPE,SIG_DFL) 
-import numpy as np
 
 sys.path.pop(0)
 from hotknots import hotknots as hk
@@ -53,7 +51,7 @@ def dot_bracket_to_basepair(db):
 			bp[j] = i
 	return bp
 
-def make_matrix_from_basepairs(pairs: list) -> np.ndarray:
+def make_matrix_from_basepairs(pairs: list) -> torch.Tensor:
 	"""
     Takes a list of all which base each position in the sequence is paired with. If a base is unpaired pairs[i] = 0.
     From the list a 2D matrix is made, with each cell coresponding to a base pair encoded as 1 and unpaired bases encoded as 1 at the diagonal
@@ -66,7 +64,7 @@ def make_matrix_from_basepairs(pairs: list) -> np.ndarray:
     """
 
 	N = len(pairs)
-	matrix = np.full((N,N), 0, dtype="float32")
+	matrix = torch.zeros(N, N, dtype=torch.float32)
 
 	for i, p in enumerate(pairs):
 		if isinstance(p, int): 
@@ -113,7 +111,7 @@ if __name__ == '__main__':
 
 	process_bar.close()
 	
-	total_time = np.sum(times)
+	total_time = sum(times)
 	print(f"Finished in {format_time(total_time)}. Average time per sequence: {total_time/len(indices):.5f}")
 
 

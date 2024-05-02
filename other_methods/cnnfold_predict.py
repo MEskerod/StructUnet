@@ -169,9 +169,9 @@ def main(dataset):
 
         #Post-process
         predicted = binarize(predicted, threshold, use_blossom=True)
-        predicted = predicted.squeeze().cpu().numpy()
+        predicted = predicted.squeeze().cpu()
 
-        #Save
+        #Saves
         pickle.dump(predicted, open('results_CNNfold/' + name[0], 'wb'))
 
     print('==========Finish Predicting==========')

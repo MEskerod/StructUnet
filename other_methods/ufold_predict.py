@@ -69,10 +69,10 @@ def model_eval_all_test(contact_net,test_generator):
         
         #Make output binary
 
-        map_no_train = (u_no_train > 0.5).float()[:,:seq_lens[0],:seq_lens[0]].squeeze(0).cpu().numpy().astype("float32")
+        map_no_train = (u_no_train > 0.5).float()[:,:seq_lens[0],:seq_lens[0]].squeeze(0).cpu().astype("float32")
         for i in range(map_no_train.shape[0]):
             #Check if row is all zeros
-            if np.all(map_no_train[i] == 0):
+            if torch.all(map_no_train[i] == 0):
                 map_no_train[i,i] = 1
 
 

@@ -1,7 +1,6 @@
-import pickle, os, sys
+import pickle, os, sys, torch
 
 import RNA as mfold
-import numpy as np
 
 from collections import namedtuple
 from tqdm import tqdm
@@ -33,7 +32,7 @@ def dot_bracket_to_basepair(db):
 			bp[j] = i
 	return bp
 
-def make_matrix_from_basepairs(pairs: list) -> np.ndarray:
+def make_matrix_from_basepairs(pairs: list) -> torch.Tensor:
 	"""
     Takes a list of all which base each position in the sequence is paired with. If a base is unpaired pairs[i] = 0.
     From the list a 2D matrix is made, with each cell coresponding to a base pair encoded as 1 and unpaired bases encoded as 1 at the diagonal
@@ -46,7 +45,7 @@ def make_matrix_from_basepairs(pairs: list) -> np.ndarray:
     """
 
 	N = len(pairs)
-	matrix = np.full((N,N), 0, dtype="float32")
+	matrix = torch.zeros((N,N), dtype=torch.float32)
 
 	for i, p in enumerate(pairs):
 		if isinstance(p, int): 
