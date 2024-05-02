@@ -164,6 +164,16 @@ def predict_nussinov(files):
     python3 other_methods/nussinov.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
+def predict_contrafold(files):
+    """
+    """
+    inputs = [file for file in files]
+    outputs = [file.replace('data/test_files', 'steps/contrafold') for file in files]
+    options = {"memory":"8gb", "walltime":"12:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 other_methods/contrafold.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
 
 def evaluate_postprocessing_over600(files): 
     """
@@ -272,6 +282,8 @@ gwf.target_from_template('predict_ufold', predict_ufold(files))
 gwf.target_from_template('predict_cnnfold', predict_cnnfold(test_files))
 gwf.target_from_template('predict_vienna', predict_vienna(test_files))
 gwf.target_from_template('predict_nussinov', predict_nussinov(test_files))
+
+gwf.target_from_template('predict_contrafold', predict_contrafold(test_files))
 
 
 gwf.target_from_template('compare_postprocessing_over600', evaluate_postprocessing_over600(pickle.load(open('data/valid_over_600.pkl', 'rb'))))
