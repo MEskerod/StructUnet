@@ -7,6 +7,9 @@ from torch.utils.data import Dataset, DataLoader
 
 from collections import namedtuple
 
+
+### FUNCTIONS BELOW ARE COPIED FROM CNNFOLD REPOSITORY ###
+
 def keep_topk(mat, k=3):
     v, idx = torch.topk(mat, k, dim=-1)
     n = idx.size(-2)
@@ -111,6 +114,9 @@ def create_matrix(sequence, onehot=True, min_dist=3):
         return mat8
     return flat_mat
 
+
+######
+
 class ImageToImageDataset(Dataset):
     """
     Dataset class for image to image translation
@@ -127,7 +133,6 @@ class ImageToImageDataset(Dataset):
       data = pickle.load(open(self.file_list[idx], 'rb'))
 
       input = create_matrix(data.sequence, onehot=True)
-      length = len(data.sequence)
       
       return input, os.path.basename(self.file_list[idx])
 
