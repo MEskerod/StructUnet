@@ -23,6 +23,12 @@ import warnings
 warnings.filterwarnings("ignore", message="FutureWarning: elementwise comparison failed")
 
 
+"""
+FUNCTIONS ARE SLIGHTLY MODIFIED VERSION OF THE FUNCTIONS IN THE UFOLD REPOSITORY
+THEY ARE MODIFIED TO WORK WITH LOADING FILES AND TO SAVE THE PREDICTIONS FROM AND TO PICKLE FILES
+"""
+
+
 absolute_path = os.path.dirname(os.path.realpath(__file__))
 args = get_args(absolute_path=absolute_path)
 perm = list(product(np.arange(4), np.arange(4)))
@@ -71,11 +77,12 @@ def model_eval_all_test(contact_net,test_generator):
 
         map_no_train = (u_no_train > 0.5).float()[:,:seq_lens[0],:seq_lens[0]].squeeze(0).cpu().astype("float32")
         for i in range(map_no_train.shape[0]):
-            #Check if row is all zeros
+            #Check if row is all zeros and add a 1 on the diagonal
             if torch.all(map_no_train[i] == 0):
                 map_no_train[i,i] = 1
 
 
+        #Save the results to a pickle file
         pickle.dump(map_no_train, open('results_Ufold/' + seq_name[0], 'wb'))
     
 def get_cut_len(data_len,set_len):

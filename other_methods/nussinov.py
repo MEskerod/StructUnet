@@ -4,7 +4,7 @@ from tqdm import tqdm
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def format_time(seconds):
+def format_time(seconds: float) -> str:
     """
     Format a time duration in seconds to hh:mm:ss format.
     
@@ -20,8 +20,15 @@ def format_time(seconds):
     return '{:02d}:{:02d}:{:02d}'.format(hours, minutes, seconds)
 
 
-def run_nussinov(sequence):
+def run_nussinov(sequence: str) -> list:
     """
+    Calls the Nussinov executable to predict the secondary structure of an RNA sequence.
+
+    Parameters:
+    - sequence (str): The RNA sequence.
+
+    Returns:
+    - list: The predicted secondary structure in dot-bracket notation.
     """
     command = ['other_methods/nussinov', sequence]
 
@@ -43,7 +50,7 @@ def run_nussinov(sequence):
 
 def make_matrix_from_basepairs(pairs: list) -> torch.Tensor:
 	"""
-    Takes a list of all which base each position in the sequence is paired with. If a base is unpaired pairs[i] = 0.
+    Takes a list of all which base each position in the sequence is paired with. If a base is unpaired pairs[i] = i.
     From the list a 2D matrix is made, with each cell coresponding to a base pair encoded as 1 and unpaired bases encoded as 1 at the diagonal
 
     Parameters:

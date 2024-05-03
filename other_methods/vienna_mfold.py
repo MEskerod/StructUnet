@@ -5,11 +5,18 @@ import RNA as mfold
 from collections import namedtuple
 from tqdm import tqdm
 
-def dot_bracket_to_basepair(db): 
+def dot_bracket_to_basepair(db: str) -> list: 
+	"""
+	Takes a pseudoknot-free dot-bracket notation and returns a list of base pairs.
+
+	Parameters:
+	- db (str): A string of dot-bracket notation.
+
+	Returns:
+	- list: A list of integers representing the pairing state of each base.
+	"""
 	stack1 = []
-	stack2 = []
-	stack3 = []
-	bp = [None] * len(db)
+	bp = [i for i in range(len(db))]
        
 	for i, char in enumerate(db):
 		if char == '(':
@@ -18,23 +25,11 @@ def dot_bracket_to_basepair(db):
 			j = stack1.pop()
 			bp[i] = j
 			bp[j] = i
-		elif char == '[':
-			stack2.append(i)
-		elif char == ']':
-			j = stack2.pop()
-			bp[i] = j
-			bp[j] = i
-		elif char == '{':
-			stack3.append(i)
-		elif char == '}':
-			j = stack3.pop()
-			bp[i] = j
-			bp[j] = i
 	return bp
 
 def make_matrix_from_basepairs(pairs: list) -> torch.Tensor:
 	"""
-    Takes a list of all which base each position in the sequence is paired with. If a base is unpaired pairs[i] = 0.
+    Takes a list of all which base each position in the sequence is paired with. If a base is unpaired pairs[i] = i.
     From the list a 2D matrix is made, with each cell coresponding to a base pair encoded as 1 and unpaired bases encoded as 1 at the diagonal
 
     Parameters:
@@ -48,17 +43,22 @@ def make_matrix_from_basepairs(pairs: list) -> torch.Tensor:
 	matrix = torch.zeros((N,N), dtype=torch.float32)
 
 	for i, p in enumerate(pairs):
-		if isinstance(p, int): 
-			matrix[i, pairs[i]] = 1 
-		else: 
-			matrix[i,i] = 1
+		matrix[i, p] = 1
 
 	return matrix
 
-def predict_vienna(sequence):
+def predict_vienna(sequence: str) -> torch.Tensor:
 	"""
+	Predicts the RNA secondary structure using the ViennaRNA package.
+	The structure is returned as a 2D tensor with shape (len(sequence), len(sequence)).
+
+	Parameters:
+	- sequence (str): The RNA sequence.
+
+	Returns:
+	- torch.Tensor: A 2D tensor with shape (len(sequence), len(sequence)).
 	"""
-	ss, mfe = mfold.fold(sequence)
+	ss, _ = mfold.fold(sequence)
 	pairs = dot_bracket_to_basepair(ss)
 	matrix = make_matrix_from_basepairs(pairs)
 	return matrix
