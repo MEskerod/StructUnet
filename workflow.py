@@ -183,7 +183,7 @@ def evaluate_postprocessing_over600(files):
     outputs = [os.path.join('results', 'average_scores_postprocess_over600.csv'), 
                os.path.join('figures', 'evaluation_postprocess_over600.png'),
                os.path.join('results', 'evalutation_postprocess_over600.csv')]
-    options = {"memory":"32gb", "walltime":"160:00:00", "account":"RNA_Unet", "cores":35} 
+    options = {"memory":"32gb", "walltime":"168:00:00", "account":"RNA_Unet", "cores":35} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/evaluate_postprocessing_over600.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
