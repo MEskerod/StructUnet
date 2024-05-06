@@ -58,7 +58,7 @@ if __name__ == "__main__":
     
     # Load the data
     RNA = namedtuple('RNA', 'input output length family name sequence')
-    file_list = pickle.load(open('data/valid_over_600.pkl', 'rb'))
+    file_list = pickle.load(open('data/valid_over_1400.pkl', 'rb'))
     
     funcs = ['No post-processing', 'Only mask', 'Argmax', 'Blossum w/ self-loops', 'Blossum', 'Mfold']
     
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     
     print("--- Evaluating ---")
 
-    num_processes = 50
+    num_processes = 20
     print(f"Number of processes: {num_processes}")
     pool = multiprocessing.Pool(num_processes)
     shared_counter = multiprocessing.Value('i', 0)
@@ -89,12 +89,12 @@ if __name__ == "__main__":
     print("--- Saving results ---")
     
     # Save the results
-    df.to_csv('results/evalutation_postprocess_over600.csv', index=False)
+    df.to_csv('results/evalutation_postprocess_over1400.csv', index=False)
 
     # Plot the results
     f1 = df[df.filter(regex='f1').columns]
     f1 = f1.apply(pd.to_numeric, errors='coerce')
-    violin_plot(f1, 'Post-processing methods', outputfile='figures/evaluation_postprocess_over600.png') 
+    violin_plot(f1, 'Post-processing methods', outputfile='figures/evaluation_postprocess_over1400.png') 
 
 
     # Make table with average scores
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     for func in funcs: 
         results.loc[func] = [df[f"{func}_precision"].mean(), df[f"{func}_recall"].mean(), df[f"{func}_f1"].mean()]
     
-    results.to_csv('results/average_scores_postprocess_over600.csv')
+    results.to_csv('results/average_scores_postprocess_over1400.csv')
 
     print("--- Results saved ---")
 
