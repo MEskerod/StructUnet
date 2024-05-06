@@ -180,9 +180,9 @@ def evaluate_postprocessing_under1450(files):
     Evaluate all the implemented post-processing methods and compare them
     """
     inputs = [os.path.join('RNA_Unet.pth')] + files
-    outputs = [os.path.join('results', 'average_scores_postprocess_under1400.csv'), 
-               os.path.join('figures', 'evaluation_postprocess_under1400.png'),
-               os.path.join('results', 'evalutation_postprocess_under1400.csv')]
+    outputs = [os.path.join('results', 'average_scores_postprocess_under1450.csv'), 
+               os.path.join('figures', 'evaluation_postprocess_under1450.png'),
+               os.path.join('results', 'evalutation_postprocess_under1450.csv')]
     options = {"memory":"128gb", "walltime":"160:00:00", "account":"RNA_Unet", "cores":20} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/evaluate_postprocessing_under1450.py"""
@@ -193,9 +193,9 @@ def evaluate_postprocessing_over1450(files):
     Evaluate all the implemented post-processing methods and compare them
     """
     inputs = [os.path.join('RNA_Unet.pth')] + files
-    outputs = [os.path.join('results', 'average_scores_postprocess_over1400.csv'), 
-               os.path.join('figures', 'evaluation_postprocess_over1400.png'),
-               os.path.join('results', 'evalutation_postprocess_over1400.csv')]
+    outputs = [os.path.join('results', 'average_scores_postprocess_over1450.csv'), 
+               os.path.join('figures', 'evaluation_postprocess_over1450.png'),
+               os.path.join('results', 'evalutation_postprocess_over1450.csv')]
     options = {"memory":"128gb", "walltime":"200:00:00", "account":"RNA_Unet", "cores":20} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/evaluate_postprocessing_over1450.py"""
@@ -300,8 +300,8 @@ gwf.target_from_template('predict_contrafold', predict_contrafold(test_files))
 
 
 gwf.target_from_template('compare_postprocessing_under600', evaluate_postprocessing_under600(pickle.load(open('data/valid_under_600.pkl', 'rb'))))
-gwf.target_from_template('compare_postprocessing_under1400', evaluate_postprocessing_under1450(pickle.load(open('data/valid_under_1450.pkl', 'rb'))))
-gwf.target_from_template('compare_postprocessing_over1400', evaluate_postprocessing_over1450(pickle.load(open('data/valid_over_1450.pkl', 'rb'))))
+gwf.target_from_template('compare_postprocessing_under1450', evaluate_postprocessing_under1450(pickle.load(open('data/valid_under_1450.pkl', 'rb'))))
+gwf.target_from_template('compare_postprocessing_over1450', evaluate_postprocessing_over1450(pickle.load(open('data/valid_over_1450.pkl', 'rb'))))
 
 #Evaluate on test set
 gwf.target_from_template('evaluate_RNAUnet_cpu', test_model_cpu(test_files))

@@ -58,7 +58,7 @@ if __name__ == "__main__":
     
     # Load the data
     RNA = namedtuple('RNA', 'input output length family name sequence')
-    file_list = pickle.load(open('data/valid_over_1400.pkl', 'rb'))
+    file_list = pickle.load(open('data/valid_over_1450.pkl', 'rb'))
     
     funcs = ['No post-processing', 'Only mask', 'Argmax', 'Blossum w/ self-loops', 'Blossum', 'Mfold']
     
