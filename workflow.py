@@ -146,7 +146,7 @@ def predict_vienna(files):
     Predict structure with viennaRNA
     """
     inputs = [file for file in files]
-    outputs = [file.replace('data/test_files', 'steps/vienna_mfold') for file in files]
+    outputs = [file.replace('data/test_files', 'steps/viennaRNA') for file in files]
     options = {"memory":"8gb", "walltime":"2:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     
@@ -244,20 +244,34 @@ def test_model_gpu(files):
     python3 scripts/predict_test.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def compare_methods(methods_under600, files_under600, methods, files):
+def compare_methods_under600(methods, files):
     """
     Compare the different previous methods with the RNAUnet
     """
-    inputs = [file.replace('data/test_files', f'steps/{method}') for file in files_under600 for method in methods_under600] + [file.replace('data/test_files', f'steps/{method}') for file in files for method in methods]
-    outputs = ['results/test_scores_under600.csv',
-               'results/test_scores.csv',
-               'results/f1_pseudoknots.csv',
-               'results/average_scores_methods.csv',
-               'results/RNAUnet_family_scores.csv'] #TODO - Add paths for plots
+    inputs = [file.replace('data/test_files', f'steps/{method}') for file in files for method in methods]
+    outputs = ['results/testscores_under600.csv',
+               'results/pseudoknot_F1.csv',
+               'results/average_scores.csv',
+               'figures/evaluation_predictions_under600.png'] 
     options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
     spec = """echo "Job ID: $SLURM_JOB_ID\n
-    python3 scripts/compare_methods.py"""
+    python3 scripts/compare_predictions_under600.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
+
+def compare_methods_over600(methods, files):
+    """
+    Compare the different previous methods with the RNAUnet
+    """
+    inputs = [file.replace('data/test_files', f'steps/{method}') for file in files for method in methods] + ['results/pseudoknot_F1.csv', 'results/average_scores.csv', 'results/testscores_under600.csv']
+    outputs = ['results/testscores_over600.csv',
+               'results/family_scores.csv',
+               'figures/evaluation_predictions_over600.png',
+               'figures/per_sequence_F1.png'] 
+    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    spec = """echo "Job ID: $SLURM_JOB_ID\n
+    python3 scripts/compare_predictions_over600.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
+
 
 
 ### WORKFLOW ###
@@ -288,9 +302,9 @@ under_600 = pickle.load(open('data/test_under_600.pkl', 'rb'))
 test_files = pickle.load(open('data/test.pkl', 'rb'))
 
 
-files = [test_files[i] for i in under_600]
-gwf.target_from_template('predict_hotknots', predict_hotknots(files))
-gwf.target_from_template('predict_ufold', predict_ufold(files))
+files_under600 = [test_files[i] for i in under_600]
+gwf.target_from_template('predict_hotknots', predict_hotknots(files_under600))
+gwf.target_from_template('predict_ufold', predict_ufold(files_under600))
 
 gwf.target_from_template('predict_cnnfold', predict_cnnfold(test_files))
 gwf.target_from_template('predict_vienna', predict_vienna(test_files))
@@ -304,12 +318,14 @@ gwf.target_from_template('compare_postprocessing_under1450', evaluate_postproces
 gwf.target_from_template('compare_postprocessing_over1450', evaluate_postprocessing_over1450(pickle.load(open('data/valid_over_1450.pkl', 'rb'))))
 
 #Evaluate on test set
-gwf.target_from_template('evaluate_RNAUnet_cpu', test_model_cpu(test_files))
-gwf.target_from_template('evaluate_RNAUnet_gpu', test_model_gpu(test_files))
+#gwf.target_from_template('evaluate_RNAUnet_cpu', test_model_cpu(test_files))
+#gwf.target_from_template('evaluate_RNAUnet_gpu', test_model_gpu(test_files))
 
 methods_under600 = ['hotknots', 'Ufold']
-methods = ['CNNfold', 'vienna_mfold', 'RNAUnet']
+methods = ['CNNfold', 'viennaRNA', 'RNAUnet', 'nussinov', 'contrafold']
+files_over600 = [test_files[i] for i in range(len(test_files)) if i not in under_600]
 
-#gwf.target_from_template('compare_methods', compare_methods(methods_under600, files, methods, test_files))
+#gwf.target_from_template('compare_methods_under600', compare_methods_under600(methods_under600 + methods, files_under600))
+#gwf.target_from_template('compare_methods_over600', compare_methods_over600(methods, files_over600))
 
 
