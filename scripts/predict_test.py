@@ -1,7 +1,6 @@
-import torch, sys, os, pickle, time
+import torch, os, pickle, time
 
 import pandas as pd
-import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 
@@ -26,7 +25,8 @@ def predict(sequence: str, name: str):
     output = blossom(output) #TODO - CHANGE TO THE CHOSEN POST-PROCESSING METHOD
     time3 = time.time()-start2 #Total time without conversion
     time4 = time.time()-start1 #Total time
-    pickle.dump(output, open(f'steps/RNA_Unet/{name}', 'wb'))
+    if device == 'cpu':
+        pickle.dump(output, open(f'steps/RNA_Unet/{name}', 'wb'))
     return time1, time2, time3, time4
 
 if __name__ == '__main__':

@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 
 from collections import namedtuple
+from functools import partial
 
 from tqdm import tqdm
 
@@ -22,18 +23,15 @@ def has_pk(pairings: np.ndarray) -> bool:
     """
     for idx in range(len(pairings)):
         i, j = idx, pairings[idx]
-        if i>j:
-            i, j = j, i
+        start, end = min(i, j), max(i, j)
         if i==j:
             continue
-        if np.max(pairings[i:j]) > j:
-            return True
-        if np.min(pairings[i:j]) < i:
+        if torch.max(pairings[start:end]) > end or torch.min(pairings[start:end]) < start:
             return True
     return False
 
 
-def scores_pseudoknot(predicted: np.ndarray, target: np.ndarray) -> np.ndarray:
+def scores_pseudoknot(predicted: np.ndarray, target_pk: bool) -> np.ndarray:
     """
     Returns the [TN, FN, FP, TP] for pseudoknots in the predicted and target structure.
 
@@ -46,9 +44,9 @@ def scores_pseudoknot(predicted: np.ndarray, target: np.ndarray) -> np.ndarray:
     """
     pk_score = np.array([0, 0, 0, 0])
 
-    predicted, target = predicted.squeeze(), target.squeeze()
+    predicted = predicted.squeeze()
     i = has_pk(np.argmax(predicted, axis=1))
-    j = has_pk(np.argmax(target, axis=1))
+    j = target_pk
     pk_score[i*2+j] += 1
 
     return pk_score
@@ -71,7 +69,7 @@ def f1_pk_score(pk_score: np.ndarray, epsilon: float = 1e-10) -> float:
 
 
 
-def evaluate_file(file: str) -> list:
+def evaluate_file(file: str, pseudoknots, lock) -> list:
     """
     """
     data = pickle.load(open(f'data/test_files/{file}', 'rb'))
@@ -80,6 +78,8 @@ def evaluate_file(file: str) -> list:
     target = data.output
     data = None #Clear memory 
 
+    target_pk = has_pk(np.argmax(target, axis=1))
+
     for method in methods:
         predicted = pickle.load(open(f'steps/{method}/{file}', 'rb'))
         results.extend(evaluate(predicted, target, device)) #Evaluate the prediction
@@ -87,7 +87,8 @@ def evaluate_file(file: str) -> list:
 
         #Lock before updating the pseudoknots
         with lock:
-            pseudoknots[method] += scores_pseudoknot(predicted, target) #Check if predicted and/or target has pseudoknots
+            pseudoknots[method] += scores_pseudoknot(predicted, target_pk) #Check if predicted and/or target has pseudoknots
+    
     return results
 
 
@@ -113,18 +114,17 @@ if __name__ == "__main__":
 
     print("--- Starting evaluation ---")
     
-    num_processes = 20 #FIXME 
+    num_processes = 1 #FIXME 
     print(f"Number of processes: {num_processes}")
     pool = multiprocessing.Pool(num_processes)
 
     manager = multiprocessing.Manager()
+    lock = manager.Lock()
     pseudoknots = manager.dict({method: [0, 0, 0, 0] for method in methods})
-    lock = multiprocessing.Lock()
-    
-    pseudoknots = {method: [0, 0, 0, 0] for method in methods}
     
     with tqdm(total=len(files), unit='files') as pbar:
-        for i, result in enumerate(pool.imap_unordered(evaluate_file, files)):
+        partial_func = partial(evaluate_file, pseudoknots=pseudoknots, lock=lock)
+        for i, result in enumerate(pool.imap_unordered(partial_func, files)):
             df_under600.loc[i] = result
             pbar.update()
 
