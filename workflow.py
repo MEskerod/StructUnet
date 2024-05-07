@@ -193,7 +193,7 @@ def test_model_cpu(files):
     """
     inputs = ['RNA_Unet.pth'] + files
     outputs = ['results/times_final_cpu.csv', 'figures/time_final_cpu.png'] + [file.replace('data/test_files', 'steps/RNA_Unet') for file in files] 
-    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    options = {"memory":"16gb", "walltime":"48:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/predict_test.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
