@@ -289,8 +289,8 @@ gwf.target_from_template('predict_contrafold', predict_contrafold(test_files))
 gwf.target_from_template('compare_postprocessing_under600', evaluate_postprocessing_under600(pickle.load(open('data/valid_under_600.pkl', 'rb'))))
 
 #Evaluate on test set
-#gwf.target_from_template('evaluate_RNAUnet_cpu', test_model_cpu(test_files))
-#gwf.target_from_template('evaluate_RNAUnet_gpu', test_model_gpu(test_files))
+gwf.target_from_template('evaluate_RNAUnet_cpu', test_model_cpu(test_files))
+gwf.target_from_template('evaluate_RNAUnet_gpu', test_model_gpu(test_files))
 
 methods_under600 = ['hotknots', 'Ufold']
 methods = ['CNNfold', 'viennaRNA', 'RNAUnet', 'nussinov', 'contrafold']
