@@ -41,7 +41,7 @@ def predict(sequence: str, name: str) -> tuple:
     - tuple: The time it took for the prediction in the order (time without post-processing, time for only prediction, time without conversion, total time)
     """
     start1 = time.time()
-    input = make_matrix_from_sequence_8(sequence, device=device).unsqueeze(0)
+    input = make_matrix_from_sequence_8(sequence, device=device).unsqueeze(0).to(device)
     start2 = time.time()
     output = model(input) 
     time1 = time.time()-start1 #Time without post-processing
@@ -63,6 +63,7 @@ if __name__ == '__main__':
     print('-- Loading model and data --')
     model = RNA_Unet(channels=32)
     model.load_state_dict(torch.load('RNA_Unet.pth', map_location=torch.device(device)))
+    model.to(device)
 
     test_data = pickle.load(open('data/test.pkl', 'rb'))
     print('-- Model and data loaded --\n')
