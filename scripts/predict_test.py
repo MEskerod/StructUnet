@@ -28,6 +28,18 @@ def format_time(seconds: float) -> str:
     return '{:02d}:{:02d}:{:02d}'.format(hours, minutes, seconds)
 
 def predict(sequence: str, name: str) -> tuple:
+    """
+    Uses the model to predict the structure of a given sequence.
+    Saves the result and returns the time it took for the prediction.
+    The time is split into the time without post-processing, the time for only prediction, the time without conversion and the total time.
+
+    Parameters:
+    - sequence (str): The sequence to predict.
+    - name (str): The name of the sequence.
+
+    Returns:
+    - tuple: The time it took for the prediction in the order (time without post-processing, time for only prediction, time without conversion, total time)
+    """
     start1 = time.time()
     input = make_matrix_from_sequence_8(sequence, device=device).unsqueeze(0)
     start2 = time.time()
@@ -44,6 +56,7 @@ def predict(sequence: str, name: str) -> tuple:
 
 if __name__ == '__main__':
     device = 'gpu' if torch.cuda.is_available() else 'cpu'
+    print(f'Using {device} for prediction\n')
 
     RNA = namedtuple('RNA', 'input output length family name sequence')
 
@@ -82,6 +95,7 @@ if __name__ == '__main__':
 
     print('-- Predictions done --')
     print(f'Total time: {format_time(sum(times_total))}. Average time per sequence: {sum(times_total)/len(test_data):.5f}\n')
+    
     print('-- Plot and save times --')
     data = {'lengths': lengths, 
             'times w/o post-processing': times_wo_postprocessing, 

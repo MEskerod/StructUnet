@@ -63,7 +63,7 @@ def train_model_small(files):
     """
     Train the model on the entire data set
     """
-    inputs = ['data/complete_set.tar.gz']
+    inputs = ['data/complete_set.tar.gz'] #TODO - Change to the correct inputs
     outputs = ['RNA_Unet.pth']
     options = {"memory":"8gb", "walltime":"168:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} 
     spec = """CONDA_BASE=$(conda info --base)
@@ -204,7 +204,7 @@ def test_model_gpu(files):
     """
     inputs = ['RNA_Unet.pth'] + files
     outputs = ['results/times_final_gpu.csv', 'figures/time_final_gpu.png'] 
-    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime
+    options = {"memory":"16gb", "walltime":"32:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime
     spec = """CONDA_BASE=$(conda info --base)
     source $CONDA_BASE/etc/profile.d/conda.sh
     conda activate RNA_Unet
