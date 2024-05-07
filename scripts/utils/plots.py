@@ -232,6 +232,7 @@ def set_axis_style(ax, labels: list, ylabel: str) -> None:
   ax.tick_params(axis='x', labelsize = 12)
   ax.set_ylim(0.25, len(labels) + 0.75)
   ax.set_ylabel(ylabel, fontsize = 10)
+  ax.set_xlabel('F1 score', fontsize = 10)
   ax.tick_params(axis= 'both', which = 'both', bottom = False, left = False)
   ax.grid(axis = 'x', linestyle = '--', alpha = 0.3, zorder = 0)
   ax.set_axisbelow(True)
@@ -294,7 +295,7 @@ def violin_plot(df: pd.DataFrame, ylabel: str, cmap='Accent', outputfile=None) -
 
   #Set style for the axes
   labels = [name.split('_')[0] for name in df.columns]
-  set_axis_style(ax, labels, ylabel)
+  set_axis_style(ax, labels, ylabel) 
   plt.box(False)
 
   plt.subplots_adjust(bottom=0.15, wspace=0.05)
