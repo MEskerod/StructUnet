@@ -55,7 +55,7 @@ def predict(sequence: str, name: str) -> tuple:
     return time1, time2, time3, time4
 
 if __name__ == '__main__':
-    device = 'gpu' if torch.cuda.is_available() else 'cpu'
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f'Using {device} for prediction\n')
 
     RNA = namedtuple('RNA', 'input output length family name sequence')
