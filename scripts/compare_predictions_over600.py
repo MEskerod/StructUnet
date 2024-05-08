@@ -24,13 +24,10 @@ def has_pk(pairings: np.ndarray) -> bool:
     """
     for idx in range(len(pairings)):
         i, j = idx, pairings[idx]
-        if i>j:
-            i, j = j, i
+        start, end = min(i, j), max(i, j)
         if i==j:
             continue
-        if np.max(pairings[i:j]) > j:
-            return True
-        if np.min(pairings[i:j]) < i:
+        if torch.max(pairings[start:end]) > end or torch.min(pairings[start:end]) < start:
             return True
     return False
 
