@@ -14,10 +14,13 @@ Made as part of a master thesis in Bioinformatics
 - results   
 - scripts
     - utils --> Folder containing the functions used in various scripts
+    - compare_predictions_over600.py --> script that evaluates the predictions made of the method able to predict on sequences longer than 600 nucleotides
+    - compare_precitions_under600.py --> script that evaluates the predictions made of all methods on sequences below 600
     - compare_methods.py --> script that evaluates the predicted structure by different methods
     - complete_dataset.py --> script for converting entire dataset using 8-channel input
+    - count_loops.py --> script used to count all hairpin loops in all sequences
     - evaluate_hotknot.py --> script that uses different k with hotknots on a very small subset of the data to evaluate its performance
-    - evaluate_postprocessing.py --> script that uses the final model to evaluate all available post-processing methods
+    - evaluate_postprocessing_under600.py --> script that uses the final model to evaluate all available post-processing methods on all sequences in the validation set below 600 nucleotides
     - experiment_files.py --> script for converting sequences in RNAStralign used for experiments to matrices. Can convert inputs to 8, 9 or 17-channel input
     - make_test_under_600.py --> script that writes the index of all the files in the test set with sequence lengths below 600 to pickle file
     - predict_test.py --> script that uses the final model to predict and post-process the files in the test set
