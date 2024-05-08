@@ -73,7 +73,7 @@ def f1_pk_score(pk_score: np.ndarray, epsilon: float = 1e-10) -> float:
 
 
 
-def evaluate_file(file: str, pseudonots, lock) -> list:
+def evaluate_file(file: str, pseudoknots, lock) -> list:
     """
     """
     data = pickle.load(open(f'data/test_files/{file}', 'rb'))
