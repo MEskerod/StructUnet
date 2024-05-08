@@ -1,0 +1,13 @@
+,precision,recall,f1,precision_shift,recall_shift,f1_shift
+Ufold_under600,,,,,,
+hotknots_under600,,,,,,
+CNNfold_under600,,,,,,
+viennaRNA_under600,,,,,,
+nussinov_under600,,,,,,
+contrafold_under600,,,,,,
+RNA_Unet_under600,,,,,,
+CNNfold,,,,,,
+viennaRNA,,,,,,
+nussinov,,,,,,
+contrafold,,,,,,
+RNA_Unet,,,,,,
