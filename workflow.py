@@ -193,7 +193,7 @@ def test_model_cpu(files):
     """
     inputs = ['RNA_Unet.pth'] + files
     outputs = [file.replace('data/test_files', 'steps/RNA_Unet') for file in files] 
-    options = {"memory":"16gb", "walltime":"48:00:00", "account":"RNA_Unet"}
+    options = {"memory":"16gb", "walltime":"12:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/predict_test.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
@@ -215,6 +215,17 @@ def test_model_gpu(files):
     nvcc --version
     export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     python3 scripts/predict_test.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+def time_final_model(files):
+    """
+    Find the average time of prediction using the RNA_Unet model
+    """
+    inputs = ['RNA_Unet.pth'] + files
+    outputs = ['results/time_final_cpu.csv', 'figures/time_final_cpu.png']
+    options = {"memory":"16gb", "walltime":"52:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/time_final.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def compare_methods_under600(methods, files):
@@ -291,6 +302,8 @@ gwf.target_from_template('compare_postprocessing_under600', evaluate_postprocess
 #Evaluate on test set
 gwf.target_from_template('evaluate_RNAUnet_cpu', test_model_cpu(test_files))
 gwf.target_from_template('evaluate_RNAUnet_gpu', test_model_gpu(test_files))
+
+gwf.target_from_template('time_final_model', time_final_model(test_files))
 
 methods_under600 = ['hotknots', 'Ufold']
 methods = ['CNNfold', 'viennaRNA', 'RNA_Unet', 'nussinov', 'contrafold']
