@@ -240,7 +240,7 @@ def compare_methods_over600(methods, files):
                'results/family_scores.csv',
                'figures/evaluation_predictions_over600.png',
                'figures/per_sequence_F1.png'] 
-    options = {"memory":"24gb", "walltime":"72:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    options = {"memory":"16gb", "walltime":"32:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/compare_predictions_over600.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
