@@ -98,7 +98,7 @@ if __name__ == "__main__":
     device = 'cpu'
     RNA = namedtuple('RNA', 'input output length family name sequence')
 
-    methods = ['Ufold', 'hotknots', 'CNNfold', 'viennaRNA', 'nussinov', 'contrafold', 'RNAUnet']
+    methods = ['Ufold', 'hotknots', 'CNNfold', 'viennaRNA', 'nussinov', 'contrafold', 'RNA_Unet']
     metrics = ['precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']
 
     test = pickle.load(open('data/test.pkl', 'rb'))
@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
     print("--- Starting evaluation ---")
     
-    num_processes = 1 #FIXME 
+    num_processes = 1 
     print(f"Number of processes: {num_processes}")
     pool = multiprocessing.Pool(num_processes)
 

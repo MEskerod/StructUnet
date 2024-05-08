@@ -145,7 +145,7 @@ if __name__ == "__main__":
     device = 'cpu'
     RNA = namedtuple('RNA', 'input output length family name sequence')
 
-    methods = ['CNNfold', 'viennaRNA', 'nussinov', 'contrafold', 'RNAUnet']
+    methods = ['CNNfold', 'viennaRNA', 'nussinov', 'contrafold', 'RNA_Unet']
     metrics = ['precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']
 
     test = pickle.load(open('data/test.pkl', 'rb'))
