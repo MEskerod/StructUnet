@@ -204,7 +204,7 @@ def test_model_gpu(files):
     """
     inputs = ['RNA_Unet.pth'] + files
     outputs = ['results/times_final_gpu.csv', 'figures/time_final_gpu.png'] 
-    options = {"memory":"16gb", "walltime":"32:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime
+    options = {"memory":"16gb", "walltime":"72:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime
     spec = """CONDA_BASE=$(conda info --base)
     source $CONDA_BASE/etc/profile.d/conda.sh
     conda activate RNA_Unet
