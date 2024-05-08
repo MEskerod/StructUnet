@@ -96,23 +96,24 @@ if __name__ == '__main__':
 
     print('-- Predictions done --')
     print(f'Total time: {format_time(sum(times_total))}. Average time per sequence: {sum(times_total)/len(test_data):.5f}\n')
-    
-    print('-- Plot and save times --')
-    data = {'lengths': lengths, 
-            'times w/o post-processing': times_wo_postprocessing, 
-            'times for only prediction': times_only_predict,
-            'times w/o conversion': times_wo_conversion,
-            'times total': times_total}
-    
-    df = pd.DataFrame(data)
-    df = df.sort_values('lengths') #Sort the data by length
-    df.to_csv(f'results/times_final_{device}.csv', index=False)
 
-    data = {'times w/o post-processing': df['times w/o post-processing'].tolist(), 
-            'times for only prediction': df['times for only prediction'].tolist(),
-            'times w/o conversion': df['times w/o conversion'].tolist(),
-            'times total': df['times total'].tolist()}
+    if device == 'cuda':
+        print('-- Plot and save times --')
+        data = {'lengths': lengths, 
+                'times w/o post-processing': times_wo_postprocessing, 
+                'times for only prediction': times_only_predict,
+                'times w/o conversion': times_wo_conversion,
+                'times total': times_total}
     
-    plot_timedict(data, df['lengths'].tolist(), f'figures/time_final_{device}.png')
+        df = pd.DataFrame(data)
+        df = df.sort_values('lengths') #Sort the data by length
+        df.to_csv(f'results/times_final_{device}.csv', index=False)
+
+        data = {'times w/o post-processing': df['times w/o post-processing'].tolist(), 
+                'times for only prediction': df['times for only prediction'].tolist(),
+                'times w/o conversion': df['times w/o conversion'].tolist(),
+                'times total': df['times total'].tolist()}
+    
+        plot_timedict(data, df['lengths'].tolist(), f'figures/time_final_{device}.png')
 
 

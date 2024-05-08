@@ -115,7 +115,7 @@ def evaluate_families(df: pd.DataFrame, method: str) -> pd.DataFrame:
     return family_df
 
 
-def plot_F1(df: pd.DataFrame, outputfile: str, method: str = 'RNAUnet'):
+def plot_F1(df: pd.DataFrame, outputfile: str, method: str = 'RNA_Unet'):
     """
     """
     plt.figure(figsize=(12, 4))
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     device = 'cpu'
     RNA = namedtuple('RNA', 'input output length family name sequence')
 
-    methods = ['CNNfold', 'viennaRNA', 'nussinov', 'contrafold', 'RNA_Unet']
+    methods = ['nussinov', 'viennaRNA', 'contrafold', 'CNNfold', 'RNA_Unet']
     metrics = ['precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']
 
     test = pickle.load(open('data/test.pkl', 'rb'))
@@ -159,7 +159,7 @@ if __name__ == "__main__":
 
     print("--- Starting evaluation ---")
     
-    num_processes = 20 #FIXME 
+    num_processes = 1 
     print(f"Number of processes: {num_processes}")
     pool = multiprocessing.Pool(num_processes)
 
@@ -199,7 +199,7 @@ if __name__ == "__main__":
     mean_scores.to_csv('results/average_scores.csv')
 
     #Evaluate families
-    family_df = evaluate_families(df_all, 'RNAUnet')
+    family_df = evaluate_families(df_all, 'RNA_Unet')
     family_df.to_csv('results/family_scores.csv')
 
     print("--- Making plots ---")

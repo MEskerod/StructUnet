@@ -226,7 +226,7 @@ def compare_methods_under600(methods, files):
                'results/pseudoknot_F1.csv',
                'results/average_scores.csv',
                'figures/evaluation_predictions_under600.png'] 
-    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    options = {"memory":"8gb", "walltime":"1:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/compare_predictions_under600.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
