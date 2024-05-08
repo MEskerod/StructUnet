@@ -296,7 +296,7 @@ methods_under600 = ['hotknots', 'Ufold']
 methods = ['CNNfold', 'viennaRNA', 'RNAUnet', 'nussinov', 'contrafold']
 files_over600 = [test_files[i] for i in range(len(test_files)) if i not in under_600]
 
-#gwf.target_from_template('compare_methods_under600', compare_methods_under600(methods_under600 + methods, files_under600))
-#gwf.target_from_template('compare_methods_over600', compare_methods_over600(methods, files_over600))
+gwf.target_from_template('compare_methods_under600', compare_methods_under600(methods_under600 + methods, files_under600))
+gwf.target_from_template('compare_methods_over600', compare_methods_over600(methods, files_over600))
 
 
