@@ -121,7 +121,7 @@ def plot_F1(df: pd.DataFrame, outputfile: str, method: str = 'RNA_Unet'):
     plt.figure(figsize=(12, 4))
     
     for family, group in df.groupby('family'):
-        plt.scatter(group['length'], group[f'{method}_f1'], label=family)
+        plt.scatter(group['length'], group[f'{method}_f1'], label=family, s=10)
     
     plt.xlabel('Length')
     plt.ylabel('F1 score')
@@ -204,9 +204,9 @@ if __name__ == "__main__":
 
     print("--- Making plots ---")
     #Make plots
-    f1 = df_over600[[f'{method}_f1' for method in methods]]
+    f1 = df_all[[f'{method}_f1' for method in methods]]
     f1 = f1.apply(pd.to_numeric, errors='coerce')
-    violin_plot(f1, 'Methods', outputfile='figures/evaluation_predictions_over600.png')
+    violin_plot(f1, 'Methods', outputfile='figures/evaluation_predictions_all.png')
 
     plot_F1(df_all, 'figures/per_sequence_F1.png')
 

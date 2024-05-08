@@ -192,8 +192,8 @@ def test_model_cpu(files):
     Test the model of the test set and time it
     """
     inputs = ['RNA_Unet.pth'] + files
-    outputs = ['results/times_final_cpu.csv', 'figures/time_final_cpu.png'] + [file.replace('data/test_files', 'steps/RNA_Unet') for file in files] 
-    options = {"memory":"16gb", "walltime":"48:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    outputs = [file.replace('data/test_files', 'steps/RNA_Unet') for file in files] 
+    options = {"memory":"16gb", "walltime":"48:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/predict_test.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
@@ -226,7 +226,7 @@ def compare_methods_under600(methods, files):
                'results/pseudoknot_F1.csv',
                'results/average_scores.csv',
                'figures/evaluation_predictions_under600.png'] 
-    options = {"memory":"8gb", "walltime":"1:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    options = {"memory":"8gb", "walltime":"1:00:00", "account":"RNA_Unet"} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/compare_predictions_under600.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
@@ -238,9 +238,9 @@ def compare_methods_over600(methods, files):
     inputs = [file.replace('data/test_files', f'steps/{method}') for file in files for method in methods] + ['results/pseudoknot_F1.csv', 'results/average_scores.csv', 'results/testscores_under600.csv']
     outputs = ['results/testscores_over600.csv',
                'results/family_scores.csv',
-               'figures/evaluation_predictions_over600.png',
+               'figures/evaluation_predictions_all.png',
                'figures/per_sequence_F1.png'] 
-    options = {"memory":"16gb", "walltime":"32:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    options = {"memory":"8gb", "walltime":"1:00:00", "account":"RNA_Unet"} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/compare_predictions_over600.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
