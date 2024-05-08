@@ -293,7 +293,7 @@ gwf.target_from_template('evaluate_RNAUnet_cpu', test_model_cpu(test_files))
 gwf.target_from_template('evaluate_RNAUnet_gpu', test_model_gpu(test_files))
 
 methods_under600 = ['hotknots', 'Ufold']
-methods = ['CNNfold', 'viennaRNA', 'RNAUnet', 'nussinov', 'contrafold']
+methods = ['CNNfold', 'viennaRNA', 'RNA_Unet', 'nussinov', 'contrafold']
 files_over600 = [test_files[i] for i in range(len(test_files)) if i not in under_600]
 
 gwf.target_from_template('compare_methods_under600', compare_methods_under600(methods_under600 + methods, files_under600))
