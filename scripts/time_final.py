@@ -11,7 +11,7 @@ from utils.model_and_training import RNA_Unet
 from utils.post_processing import prepare_input, blossom_weak
 from utils.plots import plot_timedict
 
-def predict(sequence: str, name: str) -> tuple:
+def predict(sequence: str) -> tuple:
     """
     Uses the model to predict the structure of a given sequence.
     Saves the result and returns the time it took for the prediction.
@@ -19,7 +19,6 @@ def predict(sequence: str, name: str) -> tuple:
 
     Parameters:
     - sequence (str): The sequence to predict.
-    - name (str): The name of the sequence.
 
     Returns:
     - tuple: The time it took for the prediction in the order (time without post-processing, time for only prediction, time without conversion, total time)
@@ -56,10 +55,10 @@ if __name__ == '__main__':
 
     N = len(test_data)
 
-    times_wo_postprocessing = [[]*N]
-    times_only_predict = [[]*N]
-    times_wo_conversion = [[]*N]
-    times_total = [[]*N]
+    times_wo_postprocessing = [[] for _ in range(N)]
+    times_only_predict = [[] for _ in range(N)]
+    times_wo_conversion = [[] for _ in range(N)]
+    times_total = [[] for _ in range(N)]
     lengths = []
 
     
