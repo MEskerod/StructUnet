@@ -45,7 +45,7 @@ def scores_pseudoknot(predicted: np.ndarray, target_pk: bool) -> np.ndarray:
     """
     pk_score = np.array([0, 0, 0, 0])
 
-    predicted, target = predicted.squeeze(), target.squeeze()
+    predicted = predicted.squeeze()
     i = has_pk(np.argmax(predicted, axis=1))
     j = target_pk
     pk_score[i*2+j] += 1
