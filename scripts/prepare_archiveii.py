@@ -22,7 +22,7 @@ def make_matrix_from_basepairs(basepairs: list) -> torch.Tensor:
     matrix = torch.zeros(N, N)
 
     for i, j in enumerate(basepairs):
-        matrix[i, j] = 1
+        matrix[i, int(j)] = 1
 
     return matrix
 
