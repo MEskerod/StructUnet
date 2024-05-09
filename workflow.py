@@ -170,7 +170,7 @@ def predict_contrafold(files):
     """
     inputs = [file for file in files]
     outputs = [file.replace('data/test_files', 'steps/contrafold') for file in files]
-    options = {"memory":"8gb", "walltime":"12:00:00", "account":"RNA_Unet"} #NOTE - Think about memory and walltime
+    options = {"memory":"8gb", "walltime":"6:00:00", "account":"RNA_Unet"} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 other_methods/contrafold.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
@@ -257,6 +257,18 @@ def compare_methods_over600(methods, files):
     python3 scripts/compare_predictions_over600.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
 
+### EVALUATION ON ARCHIVE II ###
+def convert_archiveII():
+    """
+    Convert the archive II data to matrices
+    """
+    inputs = [os.path.join('data', 'archiveii.csv')]
+    outputs = ['data/archiveii.pkl']
+    options = {"memory":"16gb", "walltime":"6:00:00", "account":"RNA_Unet"}
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/prepare_archiveii.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
 
 
 ### WORKFLOW ###
@@ -314,3 +326,5 @@ gwf.target_from_template('compare_methods_under600', compare_methods_under600(me
 gwf.target_from_template('compare_methods_over600', compare_methods_over600(methods, files_over600))
 
 
+#Evaluate on archive II
+gwf.target_from_template('convert_archiveII', convert_archiveII())
