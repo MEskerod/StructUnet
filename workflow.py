@@ -274,13 +274,13 @@ def convert_archiveII():
     python3 scripts/prepare_archiveii.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def predict_RNAUnet(input_file, output_dir): 
+def predict_RNAUnet(input_file, output_dir, input_dir): 
     """
     Predict structure with RNAUnet
     """
     files = pickle.load(open(input_file, 'rb'))
     inputs = [file for file in files]
-    outputs = [file.replace('data/test_files', output_dir) for file in files]
+    outputs = [file.replace(input_dir, output_dir) for file in files]
     options = {"memory":"16gb", "walltime":"18:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
 
@@ -294,7 +294,7 @@ def compare_archiveII(methods, files):
     """
     Compare the different previous methods with the RNAUnet
     """
-    inputs = [file.replace('data/test_files', f'steps/{method}_archive') for file in files for method in methods]
+    inputs = [file.replace('data/archiveii', f'steps/{method}_archive') for file in files for method in methods]
     outputs = ['results/testscores_archive.csv',
                'results/family_scores_archive.csv',
                'results/pseudoknot_F1_archive.csv',
@@ -367,7 +367,7 @@ gwf.target_from_template('compare_methods_over600', compare_methods_over600(meth
 
 #Evaluate on archive II
 gwf.target_from_template('convert_archiveII', convert_archiveII())
-gwf.target_from_template('predict_RNAUnet_archiveII', predict_RNAUnet('data/archiveii.pkl', 'steps/RNAUnet_archive'))
+gwf.target_from_template('predict_RNAUnet_archiveII', predict_RNAUnet('data/archiveii.pkl', 'steps/RNAUnet_archive', 'data/archiveii'))
 
 methods = ['CNNfold', 'viennaRNA', 'RNAUnet', 'nussinov', 'contrafold']
 gwf.target_from_template('compare_archiveII', compare_archiveII(methods, pickle.load(open('data/archiveii.pkl', 'rb'))))
