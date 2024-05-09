@@ -121,7 +121,8 @@ def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8'
 if __name__ == "__main__": 
     rd.seed(42)
     matrix_type = sys.argv[1]
-    unpaired = bool(sys.argv[2])
+    unpaired = sys.argv[2] == 'True'
+    print(unpaired)
     
     RNA_data = namedtuple('RNA_data', 'input output length family name pairs')
 
