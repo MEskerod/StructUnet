@@ -281,7 +281,7 @@ def predict_RNAUnet(input_file, output_dir, input_dir):
     files = pickle.load(open(input_file, 'rb'))
     inputs = [file for file in files]
     outputs = [file.replace(input_dir, output_dir) for file in files]
-    options = {"memory":"16gb", "walltime":"18:00:00", "account":"RNA_Unet"}
+    options = {"memory":"24gb", "walltime":"18:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
 
     python3 scripts/predict_from_file.py {file}

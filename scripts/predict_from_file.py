@@ -33,6 +33,7 @@ if __name__ == '__main__':
         file_data = pickle.load(open(file, 'rb'))
         sequence = file_data.sequence
         input = file_data.input.unsqueeze(0).to(device)
+        file_data = None #Clear memory
 
         #Predict
         output = model(input)
