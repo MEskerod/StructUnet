@@ -103,7 +103,7 @@ def evaluate_families(df: pd.DataFrame, method: str) -> pd.DataFrame:
     Returns:
     - pd.DataFrame: A new dataframe with the average scores for each family.
     """
-    families = {family:{'count': 0, 'precision': 0, 'recall':0, 'F1': 0, 'precision_shift': 0, 'recall_shift': 0, 'F1_shift': 0, 'min_len': 0, 'max_len': 0} for family in df['family'].unique()}
+    families = {family:{'count': 0, 'precision': 0, 'recall':0, 'F1': 0, 'precision_shift': 0, 'recall_shift': 0, 'F1_shift': 0, 'min_len':  float('inf'), 'max_len': 0} for family in df['family'].unique()}
 
     for _, row in df.iterrows():
         family = row['family']
