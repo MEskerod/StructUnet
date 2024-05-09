@@ -9,7 +9,7 @@ def make_experiment_data(matrix_type):
     Test sets contains a sequences under 500 and no more than 5000 sequences from each family.
     """
     inputs = [os.path.join('data', 'RNAStralign.tar.gz')]
-    outputs = [os.path.join('data', f'experiment{matrix_type}{'_wo_unpaired' if not matrix_type[1] else ''}.tar.gz')]
+    outputs = [os.path.join('data', f'experiment{matrix_type[0]}{'_wo_unpaired' if not matrix_type[1] else ''}.tar.gz')]
     options = {"memory":"16gb", "walltime":"03:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID"
     echo "Output folder: data/experiment{matrix_type}{unpaired_str}\n"
