@@ -93,10 +93,19 @@ def evaluate_file(file: str, pseudoknots, lock) -> list:
 
 def evaluate_families(df: pd.DataFrame, method: str) -> pd.DataFrame:
     """
-    """
-    families = {family:{'count': 0, 'precision': 0, 'recall':0, 'F1': 0, 'precision_shift': 0, 'recall_shift': 0, 'F1_shift': 0} for family in df['family'].unique()}
+    Evaluates the families in the dataframe and returns a new dataframe with the results.
+    The evaluation is based on the average scores for each family.
 
-    for index, row in df.iterrows():
+    Parameters:
+    - df (pd.DataFrame): The dataframe with the evaluation results.
+    - method (str): The method to evaluate.
+
+    Returns:
+    - pd.DataFrame: A new dataframe with the average scores for each family.
+    """
+    families = {family:{'count': 0, 'precision': 0, 'recall':0, 'F1': 0, 'precision_shift': 0, 'recall_shift': 0, 'F1_shift': 0, 'min_len': 0, 'max_len': 0} for family in df['family'].unique()}
+
+    for _, row in df.iterrows():
         family = row['family']
         families[family]['count'] += 1
         families[family]['precision'] += row[f'{method}_precision']
@@ -105,12 +114,20 @@ def evaluate_families(df: pd.DataFrame, method: str) -> pd.DataFrame:
         families[family]['precision_shift'] += row[f'{method}_precision_shift']
         families[family]['recall_shift'] += row[f'{method}_recall_shift']
         families[family]['F1_shift'] += row[f'{method}_f1_shift']
+
+        #Find min and max length of the family
+        if row['length'] < families[family]['min_len']:
+            families[family]['min_len'] = row['length']
+
+        if row['length'] > families[family]['max_len']:
+            families[family]['max_len'] = row['length']
     
-    family_df = pd.DataFrame(index=families.keys(), columns=['count', 'precision', 'recall', 'F1', 'precision_shift', 'recall_shift', 'F1_shift'])
+    family_df = pd.DataFrame(index=families.keys(), columns=['count', 'lengths', 'precision', 'recall', 'F1', 'precision_shift', 'recall_shift', 'F1_shift'])
     
     for family in families.keys():
         count = families[family]['count']
-        family_df.loc[family] = [count, families[family]['precision']/count, families[family]['recall']/count, families[family]['F1']/count, families[family]['precision_shift']/count, families[family]['recall_shift']/count, families[family]['F1_shift']/count]
+        len_range = f"{families[family]['min_len']}-{families[family]['max_len']}"
+        family_df.loc[family] = [count, len_range, families[family]['precision']/count, families[family]['recall']/count, families[family]['F1']/count, families[family]['precision_shift']/count, families[family]['recall_shift']/count, families[family]['F1_shift']/count]
 
     return family_df
 

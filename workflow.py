@@ -80,22 +80,7 @@ def train_model_small(files):
     python3 scripts/training.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-
-### EVALUATION ###
-
-def evaluate_hotknots():
-    """
-    Evaluate the hotknots post-processing with different hyper-parameters
-    """
-    inputs = [os.path.join('data', 'test_RNA_sample', file) for file in os.listdir('data/test_RNA_sample')]
-    outputs = ['results/F1_hotknots.csv', 
-               'figures/F1_hotknots.png', 
-               'results/time_hotknots.csv']
-    options = {"memory":"8gb", "walltime":"48:00:00", "account":"RNA_Unet", "cores":1}
-    spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    python3 scripts/evaluate_hotknot.py"""
-    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
-
+### OTHER METHODS ###
 def predict_hotknots(files): 
     """
     Predict structure with hotknots 
@@ -128,51 +113,69 @@ def predict_ufold(files):
     rm input.txt""".format(files = '\n'.join(files))
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def predict_cnnfold(files): 
+def predict_cnnfold(files, data_set = 'RNAStrAlign'): 
     """
     Predict structure with CNNfold
     """
     inputs = [file for file in files]
-    outputs = [file.replace('data/test_files', 'steps/CNNfold') for file in files]
+    outputs = [file.replace('data/test_files', f'{'steps/CNNfold' if data_set == 'RNAStrAlign' else 'steps/CNNfold_archive'}') for file in files]
     options = {"memory":"16gb", "walltime":"18:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
 
-    python3 ../CNNfold/cnnfold_predict.py
-    mv results_CNNfold/* steps/CNNfold/
-    rm -r results_CNNfold"""
+    python3 ../CNNfold/cnnfold_predict.py {data_set}
+    mkdir {output_dir}
+    mv results_CNNfold/* {output_dir}/
+    rm -r results_CNNfold""".format(data_set = data_set, output_dir = 'steps/CNNfold' if data_set == 'RNAStrAlign' else 'steps/CNNfold_archive')
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def predict_vienna(files): 
+def predict_vienna(files, data_set = 'RNAStrAlign'): 
     """
     Predict structure with viennaRNA
     """
     inputs = [file for file in files]
-    outputs = [file.replace('data/test_files', 'steps/viennaRNA') for file in files]
+    outputs = [file.replace('data/test_files', 'steps/viennaRNA'  f'{'steps/viennaRNA' if data_set == 'RNAStrAlign' else 'steps/viennaRNA_archive'}') for file in files]
     options = {"memory":"8gb", "walltime":"2:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     
-    python3 other_methods/vienna_mfold.py"""
+    python3 other_methods/vienna_mfold.py {data_set}""".format(data_set = data_set)
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def predict_nussinov(files):
+def predict_nussinov(files, data_set = 'RNAStrAlign'):
     """
     Predict structure with Nussinov algorithm
     """
     inputs = [file for file in files]
-    outputs = [file.replace('data/test_files', 'steps/nussinov') for file in files] + ['results/times_nussinov.csv', 'figures/times_nussinov.png']
+    outputs = [file.replace('data/test_files', f'{'steps/nussinov' if data_set == 'RNAStrAlign' else 'steps/nussinov_archive'}') for file in files]
     options = {"memory":"8gb", "walltime":"12:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    python3 other_methods/nussinov.py"""
+    python3 other_methods/nussinov.py {data_set}""".format(data_set = data_set)
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def predict_contrafold(files):
+def predict_contrafold(files, data_set = 'RNAStrAlign'):
     """
+    Predict structure with Contrafold
     """
     inputs = [file for file in files]
-    outputs = [file.replace('data/test_files', 'steps/contrafold') for file in files]
+    outputs = [file.replace('data/test_files', f'{'steps/contrafold' if data_set == 'RNAStrAlign' else 'steps/contrafold_archive'}') for file in files]
     options = {"memory":"8gb", "walltime":"6:00:00", "account":"RNA_Unet"} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    python3 other_methods/contrafold.py"""
+    python3 other_methods/contrafold.py {data_set}""".format(data_set = data_set)
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+
+### EVALUATION ###
+
+def evaluate_hotknots():
+    """
+    Evaluate the hotknots post-processing with different hyper-parameters
+    """
+    inputs = [os.path.join('data', 'test_RNA_sample', file) for file in os.listdir('data/test_RNA_sample')]
+    outputs = ['results/F1_hotknots.csv', 
+               'figures/F1_hotknots.png', 
+               'results/time_hotknots.csv']
+    options = {"memory":"8gb", "walltime":"48:00:00", "account":"RNA_Unet", "cores":1}
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/evaluate_hotknot.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def evaluate_postprocessing_under600(files): 
@@ -252,7 +255,7 @@ def compare_methods_over600(methods, files):
                'results/family_scores.csv',
                'figures/evaluation_predictions_all.png',
                'figures/per_sequence_F1.png'] 
-    options = {"memory":"8gb", "walltime":"1:00:00", "account":"RNA_Unet"} 
+    options = {"memory":"8gb", "walltime":"2:00:00", "account":"RNA_Unet"} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/compare_predictions_over600.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 
@@ -269,6 +272,37 @@ def convert_archiveII():
     options = {"memory":"16gb", "walltime":"6:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/prepare_archiveii.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+def predict_RNAUnet(input_file, output_dir): 
+    """
+    Predict structure with RNAUnet
+    """
+    files = pickle.load(open(input_file, 'rb'))
+    inputs = [file for file in files]
+    outputs = [file.replace('data/test_files', output_dir) for file in files]
+    options = {"memory":"16gb", "walltime":"18:00:00", "account":"RNA_Unet"}
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+
+    python3 scripts/predict_from_file.py {file}
+    mkdir {output_dir}
+    mv results_RNAUnet/* {output_dir}/
+    rm -r results_RNAUnet""".format(file = input_file, output_dir = output_dir) 
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+def compare_archiveII(methods, files):
+    """
+    Compare the different previous methods with the RNAUnet
+    """
+    inputs = [file.replace('data/test_files', f'steps/{method}_archive') for file in files for method in methods]
+    outputs = ['results/testscores_archive.csv',
+               'results/family_scores_archive.csv',
+               'results/pseudoknot_F1_archive.csv',
+               'figures/evaluation_predictions_archive.png',
+               'figures/per_sequence_F1_archive.png'] 
+    options = {"memory":"8gb", "walltime":"5:00:00", "account":"RNA_Unet"} 
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/compare_predictions_archive.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 
@@ -305,11 +339,14 @@ files_under600 = [test_files[i] for i in under_600]
 gwf.target_from_template('predict_hotknots', predict_hotknots(files_under600))
 gwf.target_from_template('predict_ufold', predict_ufold(files_under600))
 
-gwf.target_from_template('predict_cnnfold', predict_cnnfold(test_files))
-gwf.target_from_template('predict_vienna', predict_vienna(test_files))
-gwf.target_from_template('predict_nussinov', predict_nussinov(test_files))
 
-gwf.target_from_template('predict_contrafold', predict_contrafold(test_files))
+datasets = [(test_files, 'RNAStrAlign'), (pickle.load(open('data/archiveii.pkl', 'rb')), 'ArchiveII')]
+
+for dataset in datasets: 
+    gwf.target_from_template(f'predict_vienna_{dataset[1]}', predict_vienna(dataset[0], dataset[1]))
+    gwf.target_from_template(f'predict_nussinov_{dataset[1]}', predict_nussinov(dataset[0], dataset[1]))
+    gwf.target_from_template(f'predict_contrafold_{dataset[1]}', predict_contrafold(dataset[0], dataset[1]))
+    gwf.target_from_template(f'predict_cnnfold_{dataset[1]}', predict_cnnfold(dataset[0], dataset[1]))
 
 
 gwf.target_from_template('compare_postprocessing_under600', evaluate_postprocessing_under600(pickle.load(open('data/valid_under_600.pkl', 'rb'))))
@@ -330,3 +367,7 @@ gwf.target_from_template('compare_methods_over600', compare_methods_over600(meth
 
 #Evaluate on archive II
 gwf.target_from_template('convert_archiveII', convert_archiveII())
+gwf.target_from_template('predict_RNAUnet_archiveII', predict_RNAUnet('data/archiveii.pkl', 'steps/RNAUnet_archive'))
+
+methods = ['CNNfold', 'viennaRNA', 'RNAUnet', 'nussinov', 'contrafold']
+gwf.target_from_template('compare_archiveII', compare_archiveII(methods, pickle.load(open('data/archiveii.pkl', 'rb'))))

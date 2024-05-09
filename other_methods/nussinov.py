@@ -1,4 +1,4 @@
-import pickle, os, time, subprocess, datetime, torch
+import pickle, os, time, subprocess, datetime, torch, sys
 from collections import namedtuple
 from tqdm import tqdm
 import pandas as pd
@@ -42,7 +42,7 @@ def run_nussinov(sequence: str) -> list:
             return result
         else:
             error_msg = error.decode() if error else 'Unknown error'
-            raise Exception(f'Simfold execution failed: {error_msg}')
+            raise Exception(f'Nussinov execution failed: {error_msg}')
     
     except Exception as e:
         raise Exception(f'An error occured: {e}')
@@ -91,25 +91,43 @@ def plot_time(time, lengths):
 
 def main() -> None: 
     
-    os.makedirs('steps/nussinov', exist_ok=True)
-    test = pickle.load(open('data/test.pkl', 'rb'))
+    data_set = sys.argv[1]
 
-    print(f"Predicting structure using Nussinov algorithm.\n Total: {len(test)} sequences.")
+    print(f'Running Nussinov algorithm on {data_set} dataset.')
+
+    if data_set == 'RNAStrAlign':
+        output_path = 'steps/nussinov'
+        test_path = 'data/test.pkl'
+    
+    elif data_set == 'ArchiveII':
+        output_path = 'steps/nussinov_archive'
+        test_path = 'data/archiveii.pkl'
+    
+    
+    os.makedirs(output_path, exist_ok=True)
+    test = pickle.load(open(test_path, 'rb'))
+
+    print(f"Total: {len(test)} sequences.")
     print('-- Predicting --')
 
     times = [[]*len(test)]
     lengths = []
 
-    progress_bar = tqdm(total=len(test)*3, unit='sequence')
+    if data_set == 'RNAStrAlign':
+        repeats = 3
+    else:
+        repeats = 1
+
+    progress_bar = tqdm(total=len(test)*repeats, unit='sequence')
 
     start_time = time.time()
 
     #Predict for all sequences in test set 3 times and save the time it took
-    for _ in range(3):
+    for _ in range(repeats):
         lengths = []
         for i in range(len(test)): 
             sequence = pickle.load(open(test[i], 'rb')).sequence
-            name = os.path.join('steps', 'nussinov', os.path.basename(test[i])) 
+            name = os.path.join(output_path, os.path.basename(test[i])) 
             start = time.time()
             output = make_matrix_from_basepairs(run_nussinov(sequence))
             times[i].append(time.time()-start)
@@ -129,12 +147,13 @@ def main() -> None:
 
     print(f'Total time: {format_time(total_time)}. Average prediction time: {total_time/len(test):.5f}')
 
-    print('-- Plot and save times --')
-    data = {'lengths': lengths, 'times': times}
-    df = pd.DataFrame(data)
-    df = df.sort_values('lengths')
-    df.to_csv('results/times_nussinov.csv', index=False)
-    plot_time(df['times'].tolist(), df['lengths'].tolist())
+    if data_set == 'RNAStrAlign':
+        print('-- Plot and save times --')
+        data = {'lengths': lengths, 'times': times}
+        df = pd.DataFrame(data)
+        df = df.sort_values('lengths')
+        df.to_csv('results/times_nussinov.csv', index=False)
+        plot_time(df['times'].tolist(), df['lengths'].tolist())
 
    
 if __name__ == '__main__': 

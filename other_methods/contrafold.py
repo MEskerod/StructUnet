@@ -80,13 +80,23 @@ def dot_bracket_to_matrix(db: str) -> torch.Tensor:
 
 
 if __name__ == '__main__': 
+    data_set = sys.argv[1]
+
+    print(f'Predicting RNA secondary structure using CONTRAfold with {data_set}\n')
+
+    if data_set == 'RNAStrAlign':
+        data_path = 'data/test.pkl'
+        output_dir = 'steps/contrafold'
+    elif data_set == 'ArchiveII':
+        data_path = 'data/archiveii.pkl'
+        output_dir = 'steps/contrafold_archive'
     
     print('--- Loading data ---\n')
 
     RNA = namedtuple('RNA', 'input output length family name sequence')
-    files = pickle.load(open('data/test.pkl', 'rb'))
+    files = pickle.load(open(data_path, 'rb'))
 
-    os.makedirs('steps/contrafold', exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
 
     total_time = 0
     
@@ -105,7 +115,7 @@ if __name__ == '__main__':
             start_time = time.time() 
             structure = contrafold(temp_file.name)
             structure = dot_bracket_to_matrix(structure)
-            pickle.dump(structure, open(f'steps/contrafold/{name}', 'wb'))
+            pickle.dump(structure, open(f'{output_dir}/{name}', 'wb'))
             total_time += (time.time() - start_time)
         
         finally:

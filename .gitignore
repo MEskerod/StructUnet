@@ -7,6 +7,8 @@ data/complete_set/*
 data/complete_set.tar.gz
 data/test_files/*
 data/test_files.tar.gz
+data/archiveii/*
+data/archiveii.tar.gz
 
 __pycache__
 */__pycache__

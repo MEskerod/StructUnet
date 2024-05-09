@@ -64,18 +64,30 @@ def predict_vienna(sequence: str) -> torch.Tensor:
 	return matrix
 
 if __name__ == "__main__":
-    RNA = namedtuple('RNA', 'input output length family name sequence')
-	
-    os.makedirs('steps/vienna_mfold', exist_ok=True)
-    
-    test = pickle.load(open('data/test.pkl', 'rb'))
+	data_set = sys.argv[1]
 
-    print("Predicting RNA secondary structure using ViennaRNA")
-    progress_bar = tqdm(total=len(test), desc="Predicting vienna mfold", unit="file", file=sys.stdout)
-    for file in test: 
-        progress_bar.update(1)
-        sequence = pickle.load(open(file, 'rb')).sequence
-        output = predict_vienna(sequence)
-        pickle.dump(output, open(os.path.join('steps/vienna_mfold', os.path.basename(file)), 'wb'))
+	print(f"Predicting RNA secondary structure using ViennaRNA with {data_set}")
+
+	if data_set == 'RNAStrAlign':
+		data_path = 'data/test.pkl'
+		output_path = 'steps/viennaRNA'
+	
+	elif data_set == 'ArchiveII':
+		data_path = 'data/archiveii.pkl'
+		output_path = 'steps/viennaRNA_archive'
+
+	RNA = namedtuple('RNA', 'input output length family name sequence')
+	
+	os.makedirs(output_path, exist_ok=True)
     
-    progress_bar.close()
+	test = pickle.load(open(data_path, 'rb'))
+
+	print("Predicting RNA secondary structure using ViennaRNA")
+	progress_bar = tqdm(total=len(test), desc="Predicting vienna mfold", unit="file", file=sys.stdout)
+	for file in test: 
+		progress_bar.update(1)
+		sequence = pickle.load(open(file, 'rb')).sequence
+		output = predict_vienna(sequence)
+		pickle.dump(output, open(os.path.join(output_path, os.path.basename(file)), 'wb'))
+    
+	progress_bar.close()

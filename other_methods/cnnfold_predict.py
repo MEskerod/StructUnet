@@ -1,4 +1,4 @@
-import torch, pickle, os
+import torch, pickle, os, sys
 
 import networkx as nx
 import numpy as np
@@ -184,9 +184,18 @@ def main(dataset):
 
 
 if __name__ == '__main__':
+    dataset = sys.argv[1]
+
+    if dataset == 'RNAStrAlign':
+        data_path = 'data/test.pkl'
+
+    elif dataset == 'ArchiveII':
+        data_path = 'data/archiveii.pkl'
+
+
     bases = ['A', 'U', 'G', 'C']
     topk_k = 5
     threshold = .0
     RNA = namedtuple('RNA', 'input output length family name sequence')
-    dataset = ImageToImageDataset('data/test.pkl')
+    dataset = ImageToImageDataset(data_path)
     main(dataset)
