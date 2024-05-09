@@ -9,12 +9,12 @@ def make_experiment_data(matrix_type):
     Test sets contains a sequences under 500 and no more than 5000 sequences from each family.
     """
     inputs = [os.path.join('data', 'RNAStralign.tar.gz')]
-    outputs = [os.path.join('data', f'experiment{matrix_type}.tar.gz')]
+    outputs = [os.path.join('data', f'experiment{matrix_type}{'_wo_unpaired' if not matrix_type[1] else ''}.tar.gz')]
     options = {"memory":"16gb", "walltime":"03:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
-    python3 scripts/experiment_files.py {matrix_type}
-    tar -czf data/experiment{matrix_type}.tar.gz data/experiment{matrix_type}
-    rm -r data/experiment{matrix_type}""".format(matrix_type = matrix_type)
+    python3 scripts/experiment_files.py {matrix_type} {unpaired}
+    tar -czf data/experiment{matrix_type}{unpaired_str}.tar.gz data/experiment{matrix_type}{unpaired_str}
+    rm -r data/experiment{matrix_type}{unpaired_str}""".format(matrix_type = matrix_type[0], unpaired = matrix_type[1], unpaired_str = '_wo_unpaired' if not matrix_type[1] else '')
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 def postprocess_time(): 
@@ -262,8 +262,8 @@ def compare_methods_over600(methods, files):
 gwf = Workflow()
 
 #Make data for experiments
-for matrix_type in [8, 9, 17]:
-    gwf.target_from_template(f'experiment_data_{matrix_type}', make_experiment_data(matrix_type))
+for matrix_type in [(8, True), (9, True), (17, True), (8, False)]:
+    gwf.target_from_template(f'experiment_data_{matrix_type[0]}_unpaired_{matrix_type[1]}', make_experiment_data(matrix_type))
 
 #Make experiment of post processing time 
 gwf.target_from_template('time_postprocess', postprocess_time())

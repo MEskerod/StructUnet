@@ -45,7 +45,7 @@ def underGivenLength(length: int, data_size: int, file_list: list) -> list:
           files+=family
   return files
 
-def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8'):
+def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8', unpaired: bool = True):
   """
   Takes a list of ct files and converts them into a namedtuple type element containing: 
   - input
@@ -91,7 +91,10 @@ def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8'
         else: 
             raise ValueError("Wrong matrix type")
         
-        output_matrix = make_matrix_from_basepairs(pairs)
+        if unpaired:
+            output_matrix = make_matrix_from_basepairs(pairs)
+        else: 
+            output_matrix = make_matrix_from_basepairs(pairs, unpaired = False)
 
         if input_matrix.shape[-1] == 0 or output_matrix.shape[-1] == 0: 
             continue
@@ -115,6 +118,7 @@ def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8'
 if __name__ == "__main__": 
     rd.seed(42)
     matrix_type = sys.argv[1]
+    unpaired = sys.argv[2]
     
     RNA_data = namedtuple('RNA_data', 'input output length family name pairs')
 
@@ -131,7 +135,10 @@ if __name__ == "__main__":
         print(f"Total of {len(file_list)} files chosen\n", file=sys.stdout)
         
         print("Convert to matrices\n", file=sys.stdout)
-        process_and_save(file_list, f"data/experiment{matrix_type}", matrix_type=matrix_type)
+        if unpaired:
+            process_and_save(file_list, f"data/experiment{matrix_type}", matrix_type=matrix_type)
+        else:
+            process_and_save(file_list, f"data/experiment{matrix_type}_wo_unpaired", matrix_type=matrix_type, unpaired=unpaired)
     
     finally: 
         shutil.rmtree(temp_dir)

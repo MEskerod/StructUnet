@@ -185,15 +185,15 @@ if __name__ == "__main__":
     df_over600.to_csv('results/testscores_over600.csv', index=False)
 
     df_under600 = pd.read_csv('results/testscores_under600.csv')
-    df_all = pd.concat([df_under600, df_over600])
-    df_all.to_csv('results/testscores.csv')
+    df_all = pd.concat([df_under600, df_over600], ignore_index=True)
+    df_all.to_csv('results/testscores.csv', index=False)
 
     #Add results to dataframes
     for method in methods:
         #Calculate the F1 score for pseudoknots as a balanced average of the under and over 600 nucleotides
         pseudoknot_F1.loc['all', method] = (f1_pk_score(pseudoknots[method])*len(files) + pseudoknot_F1.loc['under', method]*len(under600))/(len(under600)+len(files))
         #Find the average scores for the method over all sequences
-        mean_scores.loc[method] = df_all[[f'{method}_{metric}' for metric in metrics]].mean()
+        mean_scores.loc[method] = df_all[[f'{method}_{metric}' for metric in metrics]].mean().tolist()
 
     pseudoknot_F1.to_csv('results/pseudoknot_F1.csv')
     mean_scores.to_csv('results/average_scores.csv')

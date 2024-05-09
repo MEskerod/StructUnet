@@ -291,27 +291,29 @@ def make_matrix_from_sequence_8(sequence: str, device: str = 'cpu') -> torch.Ten
     return matrix.permute(2, 0, 1)
 
 
-def make_matrix_from_basepairs(pairs: list) -> torch.Tensor:
+def make_matrix_from_basepairs(pairs: list, unpaired: bool = True) -> torch.Tensor:
     """
     Takes a list of all which base each position in the sequence is paired with. If a base is unpaired pairs[i] = 0.
     From the list a 2D matrix is made, with each cell coresponding to a base pair encoded as 1 and unpaired bases encoded as 1 at the diagonal
 
     Parameters:
     - pairs (list): A list of integers representing the pairing state of each base.
+    - unpaired (bool, optional): If True the unpaired bases are encoded as 1 at the diagonal. Default is True.
 
     Returns:
     - torch.Tensor: A 2D tensor with shape (len(pairs), len(pairs)).
     """
 
     N = len(pairs)
-    matrix = np.full((N,N), 0, dtype="float32")
+    matrix = torch.zeros((N,N), dtype=torch.float32)
 
-    pairs = [p if isinstance(p, int) else index for index, p in enumerate(pairs)]
+    for i, j in enumerate(pairs):
+        if isinstance(j, int):
+            matrix[i, j] = 1
+        elif unpaired:
+            matrix[i, i] = 1
 
-    for i in range(N):
-        matrix[i, pairs[i]] = 1 
-
-    return torch.from_numpy(matrix)
+    return matrix
 
 def make_pairs_from_list(pairs: list) -> list: 
     """
