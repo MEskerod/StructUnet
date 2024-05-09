@@ -11,7 +11,8 @@ def make_experiment_data(matrix_type):
     inputs = [os.path.join('data', 'RNAStralign.tar.gz')]
     outputs = [os.path.join('data', f'experiment{matrix_type}{'_wo_unpaired' if not matrix_type[1] else ''}.tar.gz')]
     options = {"memory":"16gb", "walltime":"03:00:00", "account":"RNA_Unet"}
-    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    spec = """echo "Job ID: $SLURM_JOB_ID"
+    echo "Output folder: data/experiment{matrix_type}{unpaired_str}\n"
     python3 scripts/experiment_files.py {matrix_type} {unpaired}
     tar -czf data/experiment{matrix_type}{unpaired_str}.tar.gz data/experiment{matrix_type}{unpaired_str}
     rm -r data/experiment{matrix_type}{unpaired_str}""".format(matrix_type = matrix_type[0], unpaired = matrix_type[1], unpaired_str = '_wo_unpaired' if not matrix_type[1] else '')

@@ -64,6 +64,9 @@ def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8'
   Returns:
   - None
   """
+  if unpaired: 
+      print("Converting files with unpaired bases", file=sys.stdout)
+  
   converted = 0
 
   os.makedirs(output_folder, exist_ok=True)
@@ -118,7 +121,7 @@ def process_and_save(file_list: list, output_folder: str, matrix_type: str = '8'
 if __name__ == "__main__": 
     rd.seed(42)
     matrix_type = sys.argv[1]
-    unpaired = sys.argv[2]
+    unpaired = bool(sys.argv[2])
     
     RNA_data = namedtuple('RNA_data', 'input output length family name pairs')
 
