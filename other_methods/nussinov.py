@@ -110,7 +110,7 @@ def main() -> None:
     print(f"Total: {len(test)} sequences.")
     print('-- Predicting --')
 
-    times = [[]*len(test)]
+    times = [[] for _ in range(len(test))]
     lengths = []
 
     if data_set == 'RNAStrAlign':
