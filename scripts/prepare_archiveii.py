@@ -7,6 +7,7 @@ from tqdm import tqdm
 from collections import namedtuple
 
 from utils.prepare_data import make_matrix_from_sequence_8
+from utils.plots import plot_families, plot_len_histogram
 
 def make_matrix_from_basepairs(basepairs: list) -> torch.Tensor:
     """
@@ -102,3 +103,9 @@ if __name__ == '__main__':
 
     files = [os.path.join('data/archiveii', file) for file in os.listdir('data/archiveii')]
     pickle.dump(files, open('data/archiveii.pkl', 'wb'))
+
+    print('Data processed and saved', file=sys.stdout)
+    print('Plotting histograms', file=sys.stdout)
+
+    plot_families({'data': files}, 'figures/families_archiveii.png')
+    plot_len_histogram({'data': files}, 'figures/lengths_archiveii.png')

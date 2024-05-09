@@ -263,7 +263,9 @@ def convert_archiveII():
     Convert the archive II data to matrices
     """
     inputs = [os.path.join('data', 'archiveii.csv')]
-    outputs = ['data/archiveii.pkl']
+    outputs = ['data/archiveii.pkl',
+               'figures/families_archiveii.png',
+               'figures/lengths_archiveii.png']
     options = {"memory":"16gb", "walltime":"6:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/prepare_archiveii.py"""

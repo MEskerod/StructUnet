@@ -55,7 +55,8 @@ def plot_families(file_dict: dict, output_file = None) -> None:
   ax.set_axisbelow(True)
   ax.set_xticks(x + width / 2)
   ax.set_xticklabels(families, rotation = 45, ha='right')
-  ax.legend(loc='center left', bbox_to_anchor=(1, 0.94))
+  if len(file_dict) > 1:
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.94))
 
   ax.set_ylabel("Density")
   ax.set_title('Distribution of data (families)')
@@ -103,7 +104,8 @@ def plot_len_histogram(file_dict: dict, output_file = None) -> None:
   plt.title('Distribution of data (lengths)')
   plt.xlabel('Sequence Length')
   plt.ylabel("Density")
-  plt.legend(loc='center left', bbox_to_anchor=(1, 0.94))
+  if len(file_dict) > 1:
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.94))
   plt.grid(axis = 'y', linestyle='--', zorder=0)
   plt.tight_layout()
 
