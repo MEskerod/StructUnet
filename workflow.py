@@ -118,7 +118,7 @@ def predict_cnnfold(files, data_set = 'RNAStrAlign'):
     Predict structure with CNNfold
     """
     inputs = [file for file in files]
-    outputs = [file.replace('data/test_files', f'{'steps/CNNfold' if data_set == 'RNAStrAlign' else 'steps/CNNfold_archive'}') for file in files]
+    outputs = [file.replace(f'{'data/test_files' if data_set == 'RNAStrAlign' else 'data/archiveii'}', f'{'steps/CNNfold' if data_set == 'RNAStrAlign' else 'steps/CNNfold_archive'}') for file in files]
     options = {"memory":"16gb", "walltime":"18:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
 
@@ -133,7 +133,7 @@ def predict_vienna(files, data_set = 'RNAStrAlign'):
     Predict structure with viennaRNA
     """
     inputs = [file for file in files]
-    outputs = [file.replace('data/test_files', 'steps/viennaRNA'  f'{'steps/viennaRNA' if data_set == 'RNAStrAlign' else 'steps/viennaRNA_archive'}') for file in files]
+    outputs = [file.replace(f'{'data/test_files' if data_set == 'RNAStrAlign' else 'data/archiveii'}', f'{'steps/viennaRNA' if data_set == 'RNAStrAlign' else 'steps/viennaRNA_archive'}') for file in files]
     options = {"memory":"8gb", "walltime":"2:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     
@@ -145,7 +145,7 @@ def predict_nussinov(files, data_set = 'RNAStrAlign'):
     Predict structure with Nussinov algorithm
     """
     inputs = [file for file in files]
-    outputs = [file.replace('data/test_files', f'{'steps/nussinov' if data_set == 'RNAStrAlign' else 'steps/nussinov_archive'}') for file in files]
+    outputs = [file.replace(f'{'data/test_files' if data_set == 'RNAStrAlign' else 'data/archiveii'}', f'{'steps/nussinov' if data_set == 'RNAStrAlign' else 'steps/nussinov_archive'}') for file in files]
     options = {"memory":"8gb", "walltime":"12:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 other_methods/nussinov.py {data_set}""".format(data_set = data_set)
@@ -156,7 +156,7 @@ def predict_contrafold(files, data_set = 'RNAStrAlign'):
     Predict structure with Contrafold
     """
     inputs = [file for file in files]
-    outputs = [file.replace('data/test_files', f'{'steps/contrafold' if data_set == 'RNAStrAlign' else 'steps/contrafold_archive'}') for file in files]
+    outputs = [file.replace(f'{'data/test_files' if data_set == 'RNAStrAlign' else 'data/archiveii'}', f'{'steps/contrafold' if data_set == 'RNAStrAlign' else 'steps/contrafold_archive'}') for file in files]
     options = {"memory":"8gb", "walltime":"6:00:00", "account":"RNA_Unet"} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 other_methods/contrafold.py {data_set}""".format(data_set = data_set)
