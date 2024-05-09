@@ -131,9 +131,8 @@ def main() -> None:
             start = time.time()
             output = make_matrix_from_basepairs(run_nussinov(sequence))
             times[i].append(time.time()-start)
-            if i == 0:
-                pickle.dump(output, open(name, 'wb'))
-                lengths.append(len(sequence))
+            pickle.dump(output, open(name, 'wb'))
+            lengths.append(len(sequence))
             progress_bar.update(1)
     
     #Calculate average time for each sequence
