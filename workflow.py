@@ -340,7 +340,7 @@ gwf.target_from_template('predict_hotknots', predict_hotknots(files_under600))
 gwf.target_from_template('predict_ufold', predict_ufold(files_under600))
 
 
-datasets = [(test_files, 'RNAStrAlign', 'data/test', ''), (pickle.load(open('data/archiveii.pkl', 'rb')), 'ArchiveII', 'data/archiveii', '_archive')]
+datasets = [(test_files, 'RNAStrAlign', 'data/test_files', ''), (pickle.load(open('data/archiveii.pkl', 'rb')), 'ArchiveII', 'data/archiveii', '_archive')]
 
 for dataset in datasets: 
     gwf.target_from_template(f'predict_vienna_{dataset[1]}', predict_vienna(dataset[0], dataset[1], dataset[2], dataset[3]))
