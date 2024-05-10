@@ -132,7 +132,7 @@ def evaluate_families(df: pd.DataFrame, method: str) -> pd.DataFrame:
     return family_df
 
 
-def plot_F1(df: pd.DataFrame, outputfile: str, method: str = 'RNA_Unet'):
+def plot_F1(df: pd.DataFrame, outputfile: str, method: str = 'RNAUnet'):
     """
     """
     plt.figure(figsize=(12, 4))
