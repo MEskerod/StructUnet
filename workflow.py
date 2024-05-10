@@ -113,12 +113,12 @@ def predict_ufold(files):
     rm input.txt""".format(files = '\n'.join(files))
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def predict_cnnfold(files, data_set = 'RNAStrAlign'): 
+def predict_cnnfold(files, data_set = 'RNAStrAlign', input_dir = 'data/test_files', output_dir = ''): 
     """
     Predict structure with CNNfold
     """
     inputs = [file for file in files]
-    outputs = [file.replace(f'{'data/test_files' if data_set == 'RNAStrAlign' else 'data/archiveii'}', f'{'steps/CNNfold' if data_set == 'RNAStrAlign' else 'steps/CNNfold_archive'}') for file in files]
+    outputs = [file.replace(input_dir, f'steps/CNNfold{output_dir}') for file in files]
     options = {"memory":"16gb", "walltime":"18:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
 
@@ -128,35 +128,35 @@ def predict_cnnfold(files, data_set = 'RNAStrAlign'):
     rm -r results_CNNfold""".format(data_set = data_set, output_dir = 'steps/CNNfold' if data_set == 'RNAStrAlign' else 'steps/CNNfold_archive')
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def predict_vienna(files, data_set = 'RNAStrAlign'): 
+def predict_vienna(files, data_set = 'RNAStrAlign', input_dir = 'data/test_files', output_dir = ''): 
     """
     Predict structure with viennaRNA
     """
     inputs = [file for file in files]
-    outputs = [file.replace(f'{'data/test_files' if data_set == 'RNAStrAlign' else 'data/archiveii'}', f'{'steps/viennaRNA' if data_set == 'RNAStrAlign' else 'steps/viennaRNA_archive'}') for file in files]
+    outputs = [file.replace(input_dir, f'steps/viennaRNA{output_dir}') for file in files]
     options = {"memory":"8gb", "walltime":"2:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     
     python3 other_methods/vienna_mfold.py {data_set}""".format(data_set = data_set)
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def predict_nussinov(files, data_set = 'RNAStrAlign'):
+def predict_nussinov(files, data_set = 'RNAStrAlign', input_dir = 'data/test_files', output_dir = ''):
     """
     Predict structure with Nussinov algorithm
     """
     inputs = [file for file in files]
-    outputs = [file.replace(f'{'data/test_files' if data_set == 'RNAStrAlign' else 'data/archiveii'}', f'{'steps/nussinov' if data_set == 'RNAStrAlign' else 'steps/nussinov_archive'}') for file in files]
+    outputs = [file.replace(input_dir, f'steps/nussinov{output_dir}') for file in files]
     options = {"memory":"8gb", "walltime":"12:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 other_methods/nussinov.py {data_set}""".format(data_set = data_set)
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def predict_contrafold(files, data_set = 'RNAStrAlign'):
+def predict_contrafold(files, data_set = 'RNAStrAlign', input_dir = 'data/test_files', output_dir = ''):
     """
     Predict structure with Contrafold
     """
     inputs = [file for file in files]
-    outputs = [file.replace(f'{'data/test_files' if data_set == 'RNAStrAlign' else 'data/archiveii'}', f'{'steps/contrafold' if data_set == 'RNAStrAlign' else 'steps/contrafold_archive'}') for file in files]
+    outputs = [file.replace(input_dir, f'steps/contrafold{output_dir}') for file in files]
     options = {"memory":"8gb", "walltime":"6:00:00", "account":"RNA_Unet"} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 other_methods/contrafold.py {data_set}""".format(data_set = data_set)
@@ -207,7 +207,7 @@ def test_model_gpu(files):
     Test the model of the test set and time it
     """
     inputs = ['RNA_Unet.pth'] + files
-    outputs = ['results/times_final_gpu.csv', 'figures/time_final_gpu.png'] 
+    outputs = ['results/times_final_cuda.csv', 'figures/time_final_cuda.png'] 
     options = {"memory":"16gb", "walltime":"72:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} #NOTE - Think about memory and walltime
     spec = """CONDA_BASE=$(conda info --base)
     source $CONDA_BASE/etc/profile.d/conda.sh
@@ -340,13 +340,13 @@ gwf.target_from_template('predict_hotknots', predict_hotknots(files_under600))
 gwf.target_from_template('predict_ufold', predict_ufold(files_under600))
 
 
-datasets = [(test_files, 'RNAStrAlign'), (pickle.load(open('data/archiveii.pkl', 'rb')), 'ArchiveII')]
+datasets = [(test_files, 'RNAStrAlign', 'data/test', ''), (pickle.load(open('data/archiveii.pkl', 'rb')), 'ArchiveII', 'data/archiveii', '_archive')]
 
 for dataset in datasets: 
-    gwf.target_from_template(f'predict_vienna_{dataset[1]}', predict_vienna(dataset[0], dataset[1]))
-    gwf.target_from_template(f'predict_nussinov_{dataset[1]}', predict_nussinov(dataset[0], dataset[1]))
-    gwf.target_from_template(f'predict_contrafold_{dataset[1]}', predict_contrafold(dataset[0], dataset[1]))
-    gwf.target_from_template(f'predict_cnnfold_{dataset[1]}', predict_cnnfold(dataset[0], dataset[1]))
+    gwf.target_from_template(f'predict_vienna_{dataset[1]}', predict_vienna(dataset[0], dataset[1], dataset[2], dataset[3]))
+    gwf.target_from_template(f'predict_nussinov_{dataset[1]}', predict_nussinov(dataset[0], dataset[1], dataset[2], dataset[3]))
+    gwf.target_from_template(f'predict_contrafold_{dataset[1]}', predict_contrafold(dataset[0], dataset[1], dataset[2], dataset[3]))
+    gwf.target_from_template(f'predict_cnnfold_{dataset[1]}', predict_cnnfold(dataset[0], dataset[1], dataset[2], dataset[3]))
 
 
 gwf.target_from_template('compare_postprocessing_under600', evaluate_postprocessing_under600(pickle.load(open('data/valid_under_600.pkl', 'rb'))))

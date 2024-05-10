@@ -162,7 +162,7 @@ if __name__ == "__main__":
     methods = ['nussinov', 'viennaRNA', 'contrafold', 'CNNfold', 'RNAUnet']
     metrics = ['precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']
 
-    files = pickle.load(open('data/archiveii.pkl', 'rb'))
+    files = [os.path.basename(file) for file in pickle.load(open('data/archiveii.pkl', 'rb'))]
 
     #Allocate dataframes
     pseudoknot_F1 = pd.DataFrame(index = ['all'], columns = methods)
