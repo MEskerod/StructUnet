@@ -1,8 +1,9 @@
-,total_time,average_time(s)
-CNNfold,13:13:37,12.83477
-vienna,00:40:02,0.64744
-Ufold,00:17:41,0.40807 
-hotknots,98:38:40,135.67717
-nussinov,01:10:50,1.14562
-CONTRAfold,4:32:59,4.41509
-RNA_Unet,8:47:05,8.52434
+,RNAStrAlign,RNAStrAlign,RNAStrAlign,ArchiveII,ArchiveII,ArchiveII
+,total_time,average_time(s),average_length,total_time,average_time(s),average_length
+hotknots,98:38:40,135.67717,156,,,
+Ufold,00:17:41,0.40807,156,,, 
+nussinov,01:10:50,1.14562,504,00:08:39,0.13063,213
+vienna,00:40:02,0.64744,504,00:12:18,0.18578,213
+CONTRAfold,4:32:59,4.41509,504,00:32:45,0.49459,213
+CNNfold,13:13:37,12.83477,504,01:06:27,1.0035,213
+RNA_Unet,8:47:05,8.52434,504,1:06:18,1.00126,213
