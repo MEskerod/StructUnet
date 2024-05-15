@@ -298,7 +298,7 @@ def compare_archiveII(methods, files):
     outputs = ['results/testscores_archive.csv',
                'results/family_scores_archive.csv',
                'results/pseudoknot_F1_archive.csv',
-               'figures/evaluation_predictions_archive.png',
+               'figures/evaluation_predictions_all_archive.png',
                'figures/per_sequence_F1_archive.png'] 
     options = {"memory":"8gb", "walltime":"5:00:00", "account":"RNA_Unet"} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
