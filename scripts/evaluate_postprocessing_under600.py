@@ -60,7 +60,7 @@ if __name__ == "__main__":
     RNA = namedtuple('RNA', 'input output length family name sequence')
     file_list = pickle.load(open('data/valid_under_600.pkl', 'rb'))
     
-    funcs = ['No post-processing', 'Only mask', 'Argmax', 'Blossum w/ self-loops', 'Blossum', 'Mfold']
+    funcs = ['No post-processing', 'Only mask', 'Argmax', 'Blossom w/ self-loops', 'Blossom', 'Mfold']
     
     # Evaluate the model
     columns = ['family', 'length'] + [f'{name}_{metric}' for name in funcs for metric in ['precision', 'recall', 'f1']] 
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     print("--- Saving results ---")
     
     # Save the results
-    df.to_csv('results/evalutation_postprocess_under600.csv', index=False)
+    df.to_csv('results/evaluation_postprocess_under600.csv', index=False)
 
     # Plot the results
     f1 = df[df.filter(regex='f1').columns]
