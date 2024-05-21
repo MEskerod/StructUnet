@@ -36,6 +36,8 @@ def evaluate_output(file: str, treshold: float = 0.5) -> list:
 
     results.extend(list(evaluate((post_process.prepare_input(predicted, sequence, device) >= treshold).float(), target, device=device))) #Evaluate binary masked output
     
+    predicted = (predicted + predicted.T)/2 #Make the matrix symmetric
+
     functions = [post_process.argmax_postprocessing, post_process.blossom_postprocessing, post_process.blossom_weak, post_process.Mfold_param_postprocessing]
 
     for func in functions:
