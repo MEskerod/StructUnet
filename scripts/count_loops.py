@@ -70,8 +70,10 @@ if __name__ == '__main__':
             if column != '>2':
                 below_limit += df[column].sum()
 
+        selected_columns = df.loc[:, df.columns != '>2']
+
         print("Percentage of loops below limit: ", below_limit/df.sum().sum() *100, "%")
-        print("Percentage of sequences with loops below limit: ", (len(df)-df.apply(lambda row: row.iloc[:-1].eq(0).all(), axis=1).sum())/len(df)*100, "%" )
+        print("Percentage of sequences with loops below limit: ", (len(df)-selected_columns.apply(lambda row: row.eq(0).all(), axis=1).sum())/len(df)*100, "%" )
         
     finally:
         shutil.rmtree(temp_dir)

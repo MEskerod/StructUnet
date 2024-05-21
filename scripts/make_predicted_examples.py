@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 
 from utils.model_and_training import RNA_Unet, evaluate
+from utils.post_processing import blossom_weak, prepare_input
 
 
 def has_pk(pairings: np.ndarray) -> bool:
@@ -31,7 +32,7 @@ def has_pk(pairings: np.ndarray) -> bool:
             return True
     return False
 
-def output_to_bpseq(output: torch.Tensor, sequence: str, name:str) -> str: 
+def output_to_bpseq(output: torch.Tensor, sequence: str) -> str: 
     """
     """
     pairs = torch.nonzero(output)
@@ -41,8 +42,6 @@ def output_to_bpseq(output: torch.Tensor, sequence: str, name:str) -> str:
     for row, col in pairs: 
         if not row == col:
             bpseq[row][2] = str(col.item()+1)
-    
-    bpseq = [f'Filename: {name}'] + bpseq
 
     return '\n'.join([' '.join(line) for line in bpseq])
 
@@ -181,8 +180,11 @@ def predict(examples: dict) -> None:
     
     for _, item in examples.items():
         input = item['input'].unsqueeze(0).to(device)
+        sequence = item['sequence']
         output = model(input)
-        item['predicted'] = output.squeeze(0).squeeze(0).detach()
+        output = prepare_input(output.squeeze(0).squeeze(0).detach(), sequence, device)
+        output = blossom_weak(output, sequence, device)
+        item['predicted'] = output
         progress_bar.update(1)
     
     progress_bar.close()
@@ -200,10 +202,10 @@ def save_examples(examples: dict) -> None:
     """
     for family, example in examples.items(): 
         with open(f'steps/examples/{family}_predicted.bpseq', 'w') as file: 
-            file.write(output_to_bpseq(example['predicted'], example['sequence'], example['name']))
+            file.write(output_to_bpseq(example['predicted'], example['sequence']))
         
         with open(f'steps/examples/{family}_true.bpseq', 'w') as file: 
-            file.write(output_to_bpseq(example['output'], example['sequence'], example['name']))
+            file.write(output_to_bpseq(example['output'], example['sequence']))
 
 
 
@@ -214,7 +216,7 @@ def record_f1_scores(examples: dict) -> None:
     
     for family, example in examples.items(): 
         precision, recall, F1 = evaluate(example['predicted'], example['output'], device=device)
-        scores.append({'example': family, 'family': example['family'], 'length': len(example['sequence']), 'precision': precision, 'recall': recall, 'F1': F1})
+        scores.append({'example': family, 'family': example['family'], 'length': len(example['sequence']), 'precision': precision, 'recall': recall, 'F1': F1, 'file': example['name']})
         progress_bar.update(1)
 
     progress_bar.close()
@@ -243,9 +245,8 @@ if __name__ == '__main__':
 
     print('\nSaving examples\n')
     os.makedirs('steps/examples', exist_ok=True)
-    record_f1_scores(examples)
     save_examples(examples) 
-
+    record_f1_scores(examples)
     
 
 
