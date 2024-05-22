@@ -181,7 +181,7 @@ def predict(examples: dict) -> None:
     for _, item in examples.items():
         input = item['input'].unsqueeze(0).to(device)
         sequence = item['sequence']
-        output = model(input)
+        output = model(input).squeeze(0).squeeze(0).detach()
         #output = prepare_input(output.squeeze(0).squeeze(0).detach(), sequence, device)
         output = (output + output.T)/2 #Make the matrix symmetric
         output = blossom_weak(output, sequence, device)
