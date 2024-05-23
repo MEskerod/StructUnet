@@ -186,7 +186,7 @@ def evaluate_postprocessing_under600(files):
     outputs = [os.path.join('results', 'average_scores_postprocess_under600.csv'), 
                os.path.join('figures', 'evaluation_postprocess_under600.png'),
                os.path.join('results', 'evaluation_postprocess_under600.csv')]
-    options = {"memory":"16gb", "walltime":"40:00:00", "account":"RNA_Unet","cores":15} 
+    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet","cores":15} 
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/evaluate_postprocessing_under600.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec) 

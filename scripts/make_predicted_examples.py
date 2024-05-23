@@ -52,14 +52,14 @@ def find_examples() -> dict:
     results = {}
 
 
-    telomerase, RNAaseP, srp, tmRNA, group_I_intron, tRNA, fiveS_rRNA, sixteeenS_rRNA = False, False, False, False, False, False, False, False
+    telomerase, RNAaseP, srp, tmRNA, group_I_intron, tRNA_1, tRNA_2, tRNA_3, fiveS_rRNA, sixteeenS_rRNA = False, False, False, False, False, False, False, False, False, False
     pseudoknot1, pseudoknot2, pseudoknot3 = False, False, False
     twentythreeS_rRNA, group_II_intron = False, False
 
     align = pickle.load(open('data/test.pkl', 'rb'))
 
     i = 0
-    while not all([telomerase, RNAaseP, srp, tmRNA, group_I_intron, tRNA, fiveS_rRNA, sixteeenS_rRNA, pseudoknot1, pseudoknot2] ): 
+    while not all([telomerase, RNAaseP, srp, tmRNA, group_I_intron, tRNA_1, tRNA_2, tRNA_3, fiveS_rRNA, sixteeenS_rRNA, pseudoknot1, pseudoknot2] ): 
         #Shouldn't be used, but check to ensure infinity loop and out of range indexing
         if i == len(align):
             break
@@ -100,11 +100,24 @@ def find_examples() -> dict:
             print('Found group I intron') 
             continue
 
-        if not tRNA and family == 'tRNA':
-            results['tRNA'] = {'sequence': file.sequence, 'output': file.output, 'name': file.name, 'input': file.input, 'family': family}
+        if not tRNA_1 and family == 'tRNA':
+            results['tRNA_1'] = {'sequence': file.sequence, 'output': file.output, 'name': file.name, 'input': file.input, 'family': family}
             tRNA = True
-            print('Found tRNA')
+            print('Found tRNA number 1/3')
             continue
+
+        if not tRNA_2 and tRNA_1 and family == 'tRNA':
+            results['tRNA_2'] = {'sequence': file.sequence, 'output': file.output, 'name': file.name, 'input': file.input, 'family': family}
+            tRNA = True
+            print('Found tRNA number 2/3')
+            continue
+
+        if not tRNA_3 and tRNA_1 and tRNA_2 and family == 'tRNA':
+            results['tRNA_3'] = {'sequence': file.sequence, 'output': file.output, 'name': file.name, 'input': file.input, 'family': family}
+            tRNA = True
+            print('Found tRNA number 3/3')
+            continue
+
 
         if not fiveS_rRNA and family == '5S_rRNA':
             results['5S_rRNA'] = {'sequence': file.sequence, 'output': file.output, 'name': file.name, 'input': file.input, 'family': family}
@@ -124,13 +137,13 @@ def find_examples() -> dict:
         if not pseudoknot1 and pk:
             results['pseudoknot1'] = {'sequence': file.sequence, 'output': file.output, 'name': file.name, 'input': file.input, 'family': family}
             pseudoknot1 = True
-            print('Found first pseudoknot')
+            print('Found pseudoknot number 1/3')
             continue
 
         if not pseudoknot2 and pk and pseudoknot1 and family != results['pseudoknot1']['family']:
             results['pseudoknot2'] = {'sequence': file.sequence, 'output': file.output, 'name': file.name, 'input': file.input, 'family': family}
             pseudoknot2 = True
-            print('Found second pseudoknot')
+            print('Found pseudoknot number 2/3')
             continue
 
         i += 1
@@ -169,7 +182,7 @@ def find_examples() -> dict:
         if not pseudoknot3 and pk and pseudoknot1 and pseudoknot2 and family != results['pseudoknot1']['family'] and family != results['pseudoknot2']['family']:
             results['pseudoknot3'] = {'sequence': file.sequence, 'output': file.output, 'name': file.name, 'input': file.input, 'family': family}
             pseudoknot3 = True
-            print('Found third pseudoknot')
+            print('Found pseudoknot number 3/3')
             continue
 
     return results
