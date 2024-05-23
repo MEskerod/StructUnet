@@ -481,7 +481,7 @@ def fit_model(model, train_dataset, validation_dataset, loss_func = F.binary_cro
 def plot_f1_curves(training_df, output_file = None):
     """
     """
-    colors = mpl.colormaps["tab10"].colors
+    colors = mpl.colormaps["cet_glasbey_dark"].colors
     fig, ax = plt.subplots(constrained_layout=True, figsize = (10, 6))
 
     handles = []
@@ -492,12 +492,12 @@ def plot_f1_curves(training_df, output_file = None):
 
       x = [i for i in range(1, len(training_f1)+1)]
 
-      ax.scatter(x=x, y=training_f1, marker="o", color=colors[index], s = 6)
-      ax.scatter(x=x, y=valid_f1, marker="x", color=colors[index], s = 6)
+      ax.scatter(x=x, y=training_f1, marker="o", color=colors[index], s = 10)
+      ax.scatter(x=x, y=valid_f1, marker="x", color=colors[index], s = 10)
 
       # Create line plots for training and validation
-      ax.plot(x, training_f1, linestyle="-", color=colors[index], linewidth = 0.5)
-      ax.plot(x, valid_f1, linestyle="--", color=colors[index], linewidth = 0.5)
+      ax.plot(x, training_f1, linestyle="-", color=colors[index], linewidth = 0.8)
+      ax.plot(x, valid_f1, linestyle="--", color=colors[index], linewidth = 0.8)
 
       #Add handles for legend
       handles.append(Line2D([0], [0], color = colors[index], linestyle = "-", marker = "o", label = f"Training {loss_name}", linewidth=0.5, markersize=3))
@@ -520,7 +520,7 @@ def plot_f1_curves(training_df, output_file = None):
 def plot_loss_curves(training_df, output_file = None):
     """
     """
-    colors = mpl.colormaps["tab10"].colors
+    colors = mpl.colormaps["cet_glasbey_dark"].colors
 
     fig, ax = plt.subplots(constrained_layout=True, figsize = (10, 6))
 
@@ -532,18 +532,16 @@ def plot_loss_curves(training_df, output_file = None):
 
       x = [i for i in range(1, len(training_loss)+1)]
 
-      ax.scatter(x=x, y=training_loss, marker="o", color=colors[index], s=6)
-      ax.scatter(x=x, y=valid_loss, marker="x", color=colors[index], s=6)
+      ax.scatter(x=x, y=training_loss, marker="o", color=colors[index], s=10)
+      ax.scatter(x=x, y=valid_loss, marker="x", color=colors[index], s=10)
 
       # Create line plots for training and validation
-      ax.plot(x, training_loss, linestyle="-", color=colors[index], linewidth = 0.5)
-      ax.plot(x, valid_loss, linestyle="--", color=colors[index], linewidth = 0.5)
+      ax.plot(x, training_loss, linestyle="-", color=colors[index], linewidth = 0.8)
+      ax.plot(x, valid_loss, linestyle="--", color=colors[index], linewidth = 0.8)
 
       #Add handles for legend
       handles.append(Line2D([0], [0], color = colors[index], linestyle = "-", marker = "o", label = f"Training {model_name}", linewidth=0.5, markersize=3))
       handles.append(Line2D([0], [0], color = colors[index], linestyle = "--", marker = "x", label = f"Validation {model_name}", linewidth=0.5, markersize=3))
-
-    #ax.set_yscale('log')
 
     ax.set_xlabel("Epochs", size = 11)
     ax.legend(handles = handles, loc = 'upper right', fontsize=8, frameon=False)

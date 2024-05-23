@@ -125,6 +125,7 @@ def plot_time(time, lengths, outputfile = None):
     - time (list): A list of floats representing the time it took to predict the structure of each sequence.
     - lengths (list): A list of integers representing the length of each sequence.
     """
+    col = mpl.colormaps['cet_glasbey_dark'].colors[0]
 
     plt.figure(figsize=(10, 6))
     plt.scatter(lengths, time, facecolor='none', edgecolor = 'C0', s=20, linewidths = 1)
@@ -153,14 +154,14 @@ def plot_timedict(timedict: dict, lengths: list, outputfile = None) -> None:
     - None
     """
 
-    colors = ['C0', 'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9']
+    colors = mpl.colormaps['cet_glasbey_dark'].colors
     
     
     fig, ax = plt.subplots(figsize = (10, 6)) 
     handles = []
 
     for i, func in enumerate(timedict):
-        ax.scatter(x= lengths, y=timedict[func], facecolor='none', edgecolor = colors[i], s=20, linewidths = 1)
+        ax.scatter(x= lengths, y=timedict[func], facecolor='none', edgecolor = colors[i], s=15, linewidths = 1)
         ax.plot(lengths, timedict[func], color = colors[i], linestyle = '--', linewidth = 0.8)
         #Add handles to make a legend
         handles.append(Line2D([0], [0], color = colors[i], linestyle = '--', linewidth = 0.8, marker = 'o', markerfacecolor = 'none', markeredgecolor = colors[i], label = func))

@@ -77,9 +77,8 @@ def plot_time(time, lengths):
     - time (list): A list of floats representing the time it took to predict the structure of each sequence.
     - lengths (list): A list of integers representing the length of each sequence.
     """
-
-    plt.scatter(lengths, time, facecolor='none', edgecolor = 'C0', s=20, linewidths = 1)
-    plt.plot(lengths, time, linestyle = '--', linewidth = 0.8)
+    plt.scatter(lengths, time, facecolor='none', edgecolor = 'C0', s=10, linewidths = 1)
+    plt.plot(lengths, time, linestyle = '--', linewidth = 0.8, color = 'C0')
     plt.xlabel('Sequence length')
     plt.ylabel('Time (s)')
     plt.grid(linestyle='--')
