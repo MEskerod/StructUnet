@@ -46,8 +46,7 @@ def predict(sequence: str, name: str) -> tuple:
     output = model(input).squeeze(0).squeeze(0).detach() 
     time1 = time.time()-start1 #Time without post-processing
     time2 = time.time()-start2 #Time for only prediction
-    #output = prepare_input(output, sequence, device)
-    output = (output + output.T)/2 #Make the matrix symmetric
+    output = prepare_input(output, sequence, device)
     output = blossom_weak(output, sequence, device)
     time3 = time.time()-start2 #Total time without conversion
     time4 = time.time()-start1 #Total time

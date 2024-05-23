@@ -182,8 +182,7 @@ def predict(examples: dict) -> None:
         input = item['input'].unsqueeze(0).to(device)
         sequence = item['sequence']
         output = model(input).squeeze(0).squeeze(0).detach()
-        #output = prepare_input(output.squeeze(0).squeeze(0).detach(), sequence, device)
-        output = (output + output.T)/2 #Make the matrix symmetric
+        output = prepare_input(output.squeeze(0).squeeze(0).detach(), sequence, device)
         output = blossom_weak(output, sequence, device)
         item['predicted'] = output
         progress_bar.update(1)

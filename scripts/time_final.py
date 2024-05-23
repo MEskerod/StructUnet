@@ -30,8 +30,7 @@ def predict(sequence: str) -> tuple:
     end_time1 = time.time()
     time1 = end_time1-start1 #Time without post-processing
     time2 = end_time1-start2 #Time for only prediction
-    #output = prepare_input(output, sequence, device)
-    output = (output + output.T)/2 #Make the matrix symmetric
+    output = prepare_input(output, sequence, device)
     output = blossom_weak(output, sequence, device)
     end_time2 = time.time()
     time3 = end_time2-start2 #Total time without conversion

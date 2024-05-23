@@ -39,8 +39,7 @@ if __name__ == '__main__':
         output = model(input).squeeze(0).squeeze(0).detach()
 
         #Post-process
-        #output = prepare_input(output, sequence, device)
-        output = (output + output.T)/2 #Make the matrix symmetric
+        output = prepare_input(output, sequence, device)
         output = blossom_weak(output, sequence, device)
 
         #Save results
