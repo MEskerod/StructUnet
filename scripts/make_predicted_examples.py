@@ -102,19 +102,19 @@ def find_examples() -> dict:
 
         if not tRNA_1 and family == 'tRNA':
             results['tRNA_1'] = {'sequence': file.sequence, 'output': file.output, 'name': file.name, 'input': file.input, 'family': family}
-            tRNA = True
+            tRNA_1 = True
             print('Found tRNA number 1/3')
             continue
 
         if not tRNA_2 and tRNA_1 and family == 'tRNA':
             results['tRNA_2'] = {'sequence': file.sequence, 'output': file.output, 'name': file.name, 'input': file.input, 'family': family}
-            tRNA = True
+            tRNA_2 = True
             print('Found tRNA number 2/3')
             continue
 
         if not tRNA_3 and tRNA_1 and tRNA_2 and family == 'tRNA':
             results['tRNA_3'] = {'sequence': file.sequence, 'output': file.output, 'name': file.name, 'input': file.input, 'family': family}
-            tRNA = True
+            tRNA_3 = True
             print('Found tRNA number 3/3')
             continue
 

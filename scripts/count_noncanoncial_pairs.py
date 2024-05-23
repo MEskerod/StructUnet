@@ -12,7 +12,7 @@ def find_basepairs(sequence: str, pairs: list) -> dict:
     watson_crick = {'AU', 'UA', 'CG', 'GC'}
     wobble = {'GU', 'UG'}
 
-    basepairs = {"Non-canonical": 0, "Watson-Crick": 0, "Paired with N": 0, "Wobble": 0} 
+    basepairs = {"Non-canoncial": 0, "Watson-Crick": 0, "Paired with N": 0, "Wobble": 0} 
 
     for i, j in enumerate(pairs):
         if j == None or j < i:
@@ -27,7 +27,7 @@ def find_basepairs(sequence: str, pairs: list) -> dict:
         elif sequence[i] == 'N' or sequence[j] == 'N':
             basepairs["Paired with N"] += 1
         else:
-            basepairs["Non-canonical"] += 1
+            basepairs["Non-canoncial"] += 1
     
     return basepairs
 
@@ -72,16 +72,12 @@ if __name__ == '__main__':
         #Calculate stats
         for column in df_pair.columns: 
             print(f"Number of {column} basepairs: {df_pair[column].sum()}")
-
-        non_canoncial = df_pair.loc[:, df_pair.columns == 'Non-canonical']
                 
-        print("Percentage of basepairs that are non-canonical: ", df_pair["Non-canonical"].sum()/df_pair.sum().sum() *100, "%")
-        print("Percentage of sequences with non-canonical basepairs: ", (non_canoncial.apply(lambda row: row.eq(0).all(), axis=1).sum())/len(df_pair)*100, "%")
-
-        n = df_pair.loc[:, df_pair.columns == "Paired with N"]
+        print("Percentage of basepairs that are non-canonical: ", df_pair["Non-canoncial"].sum()/df_pair.sum().sum() *100, "%")
+        print("Percentage of sequences with non-canonical basepairs: ", (df_pair["Non-canoncial"] != 0).sum()/len(df_pair)*100, "%")
         
         print("Percentage of basepairs with N: ", df_pair["Paired with N"].sum()/df_pair.sum().sum() * 100, "%")
-        print("Percentage of sequences with N: ", (n.apply(lambda row: row.eq(0).all(), axis=1).sum())/len(df_pair)*100, "%")
+        print("Percentage of sequences with N: ", (df_pair["Paired with N"] != 0).sum()/len(df_pair)*100, "%")
         
     finally:
         shutil.rmtree(temp_dir)
