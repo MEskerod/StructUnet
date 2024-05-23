@@ -1,5 +1,7 @@
 example,family,length,precision,recall,F1,file
-tRNA,tRNA,64,0.9090909361839294,0.6060606241226196,0.7272728085517883,/scratch/35224107/tmpec1j8tyv/RNAStrAlign-master-aedbaf9e95ebad34d15752fe1b750f5ff3960bca/tRNA_database/tdbD00002395.ct
+tRNA_1,tRNA,64,0.9090909361839294,0.6060606241226196,0.7272728085517883,/scratch/35224107/tmpec1j8tyv/RNAStrAlign-master-aedbaf9e95ebad34d15752fe1b750f5ff3960bca/tRNA_database/tdbD00002395.ct
+tRNA_2,tRNA,70,1.0,0.9714285731315613,0.9855071902275085,/scratch/35224107/tmpec1j8tyv/RNAStrAlign-master-aedbaf9e95ebad34d15752fe1b750f5ff3960bca/tRNA_database/tdbD00003258.ct
+tRNA_3,tRNA,70,0.8947368264198303,0.8947368264198303,0.8947368264198303,/scratch/35224107/tmpec1j8tyv/RNAStrAlign-master-aedbaf9e95ebad34d15752fe1b750f5ff3960bca/tRNA_database/tdbD00010500.ct
 16S_rRNA,16S_rRNA,54,1.0,1.0,1.0,/scratch/35224107/tmpec1j8tyv/RNAStrAlign-master-aedbaf9e95ebad34d15752fe1b750f5ff3960bca/16S_rRNA_database/Bacilli/X89895.ct
 pseudoknot1,16S_rRNA,189,1.0,0.8421052694320679,0.9142857193946838,/scratch/35224107/tmpec1j8tyv/RNAStrAlign-master-aedbaf9e95ebad34d15752fe1b750f5ff3960bca/16S_rRNA_database/Bacilli/AY459331.ct
 5S_rRNA,5S_rRNA,106,0.9166666865348816,0.8301886916160583,0.8712871074676514,/scratch/35224107/tmpec1j8tyv/RNAStrAlign-master-aedbaf9e95ebad34d15752fe1b750f5ff3960bca/5S_rRNA_database/Bacteria/B01644.ct
