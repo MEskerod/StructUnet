@@ -43,10 +43,11 @@ def predict(sequence: str, name: str) -> tuple:
     start1 = time.time()
     input = make_matrix_from_sequence_8(sequence, device=device).unsqueeze(0).to(device)
     start2 = time.time()
-    output = model(input) 
+    output = model(input).squeeze(0).squeeze(0).detach() 
     time1 = time.time()-start1 #Time without post-processing
     time2 = time.time()-start2 #Time for only prediction
-    output = prepare_input(output.squeeze(0).squeeze(0).detach(), sequence, device)
+    #output = prepare_input(output, sequence, device)
+    output = (output + output.T)/2 #Make the matrix symmetric
     output = blossom_weak(output, sequence, device)
     time3 = time.time()-start2 #Total time without conversion
     time4 = time.time()-start1 #Total time

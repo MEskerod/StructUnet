@@ -36,10 +36,11 @@ if __name__ == '__main__':
         file_data = None #Clear memory
 
         #Predict
-        output = model(input)
+        output = model(input).squeeze(0).squeeze(0).detach()
 
         #Post-process
-        output = prepare_input(output.squeeze(0).squeeze(0).detach(), sequence, device)
+        #output = prepare_input(output, sequence, device)
+        output = (output + output.T)/2 #Make the matrix symmetric
         output = blossom_weak(output, sequence, device)
 
         #Save results

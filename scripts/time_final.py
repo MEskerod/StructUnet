@@ -26,13 +26,16 @@ def predict(sequence: str) -> tuple:
     start1 = time.time()
     input = make_matrix_from_sequence_8(sequence, device=device).unsqueeze(0).to(device)
     start2 = time.time()
-    output = model(input) 
-    time1 = time.time()-start1 #Time without post-processing
-    time2 = time.time()-start2 #Time for only prediction
-    output = prepare_input(output.squeeze(0).squeeze(0).detach(), sequence, device)
+    output = model(input).squeeze(0).squeeze(0).detach() 
+    end_time1 = time.time()
+    time1 = end_time1-start1 #Time without post-processing
+    time2 = end_time1-start2 #Time for only prediction
+    #output = prepare_input(output, sequence, device)
+    output = (output + output.T)/2 #Make the matrix symmetric
     output = blossom_weak(output, sequence, device)
-    time3 = time.time()-start2 #Total time without conversion
-    time4 = time.time()-start1 #Total time
+    end_time2 = time.time()
+    time3 = end_time2-start2 #Total time without conversion
+    time4 = end_time2-start1 #Total time
     return time1, time2, time3, time4
 
 
@@ -102,4 +105,4 @@ if __name__ == '__main__':
             'times w/o conversion': df['times w/o conversion'].tolist(),
             'times total': df['times total'].tolist()}
     
-    plot_timedict(data, df['lengths'].tolist(), f'figures/time_final_{device}.png')
+    plot_timedict(data, df['lengths'].tolist(), f'figures/times_final_{device}.png')
