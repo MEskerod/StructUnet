@@ -3,6 +3,7 @@ import os, pickle, torch, multiprocessing
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 from collections import namedtuple
 from functools import partial
@@ -132,13 +133,15 @@ def evaluate_families(df: pd.DataFrame, method: str) -> pd.DataFrame:
     return family_df
 
 
-def plot_F1(df: pd.DataFrame, outputfile: str, method: str = 'RNAUnet'):
+def plot_F1(df: pd.DataFrame, outputfile: str, method: str = 'RNA_Unet'):
     """
     """
+    colors = mpl.colormaps['cet_glasbey_dark'].colors
+
     plt.figure(figsize=(12, 4))
     
-    for family, group in df.groupby('family'):
-        plt.scatter(group['length'], group[f'{method}_f1'], label=family, s=10)
+    for i, (family, group) in enumerate(df.groupby('family')):
+        plt.scatter(group['length'], group[f'{method}_f1'], label=family, s=10, color=colors[i], alpha=0.5)
     
     plt.xlabel('Length')
     plt.ylabel('F1 score')

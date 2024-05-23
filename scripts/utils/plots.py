@@ -240,7 +240,7 @@ def set_axis_style(ax, labels: list, ylabel: str) -> None:
   ax.grid(axis = 'x', linestyle = '--', alpha = 0.3, zorder = 0)
   ax.set_axisbelow(True)
 
-def violin_plot(df: pd.DataFrame, ylabel: str, cmap='Accent', outputfile=None) -> None:
+def violin_plot(df: pd.DataFrame, ylabel: str, cmap='cet_glasbey_dark', outputfile=None) -> None:
   """
   Generate a violin plot for the given DataFrame.
 
