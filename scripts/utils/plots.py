@@ -1,7 +1,10 @@
 import os, pickle
+
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from matplotlib.lines import Line2D
+import colorcet as cet
+
 import numpy as np
 import pandas as pd
 
