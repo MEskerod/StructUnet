@@ -1,16 +1,16 @@
 name: RNAUnet
 channels:
-  - anaconda
   - gwforg
   - nvidia
   - pytorch
+  - anaconda
   - conda-forge
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=2_kmp_llvm
   - attrs=23.1.0=py312h06a4308_0
-  - blas=1.0=mkl
+  - blas=1.0=openblas
   - bottleneck=1.3.5=py312ha883a20_0
   - brotli=1.0.9=h5eee18b_7
   - brotli-bin=1.0.9=h5eee18b_7
@@ -23,6 +23,7 @@ dependencies:
   - click=8.1.7=py312h06a4308_0
   - click-plugins=1.1.1=pyhd3eb1b0_0
   - colorama=0.4.6=py312h06a4308_0
+  - colorcet=3.0.1=py312h06a4308_0
   - contourpy=1.2.0=py312hdb19cb5_0
   - cpuonly=2.0=0
   - cryptography=41.0.7=py312hdda0065_0
@@ -46,6 +47,7 @@ dependencies:
   - fontconfig=2.14.1=hef1e5e3_0
   - fonttools=4.25.0=pyhd3eb1b0_0
   - freetype=2.12.1=h4a9f257_0
+  - fsspec=2024.3.1=py312h06a4308_0
   - giflib=5.2.1=h5eee18b_3
   - glib=2.69.1=he621ea3_2
   - gmp=6.2.1=h295c915_3
@@ -65,9 +67,12 @@ dependencies:
   - lcms2=2.12=h3be6417_0
   - ld_impl_linux-64=2.38=h1181459_1
   - lerc=3.0=h295c915_0
+  - libabseil=20240116.2=cxx17_h6a678d5_0
+  - libblas=3.9.0=16_linux64_openblas
   - libbrotlicommon=1.0.9=h5eee18b_7
   - libbrotlidec=1.0.9=h5eee18b_7
   - libbrotlienc=1.0.9=h5eee18b_7
+  - libcblas=3.9.0=16_linux64_openblas
   - libclang=14.0.6=default_hc6dbbc7_1
   - libclang13=14.0.6=default_he11475f_1
   - libcublas=12.1.0.26=0
@@ -92,15 +97,19 @@ dependencies:
   - libnsl=2.0.1=hd590300_0
   - libnvjitlink=12.1.105=0
   - libnvjpeg=12.1.1.14=0
+  - libopenblas=0.3.21=h043d6bf_0
   - libopus=1.3.1=h7b6447c_0
   - libpng=1.6.39=h5eee18b_0
   - libpq=12.17=hdbd6064_0
+  - libprotobuf=4.25.3=he621ea3_0
   - libsqlite=3.44.2=h2797004_0
   - libstdcxx-ng=13.2.0=h7e041cc_4
   - libtasn1=4.19.0=h5eee18b_0
   - libtiff=4.5.1=h6a678d5_0
+  - libtorch=2.3.0=cpu_mkl_h0bb0d08_101
   - libunistring=0.9.10=h27cfd23_0
   - libuuid=2.38.1=h0b41bf4_0
+  - libuv=1.48.0=hd590300_0
   - libvpx=1.7.0=h439df22_0
   - libwebp=1.3.2=h11a3e52_0
   - libwebp-base=1.3.2=h5eee18b_0
@@ -109,12 +118,12 @@ dependencies:
   - libxkbcommon=1.0.1=hfa300c1_0
   - libxml2=2.9.14=h74e7548_0
   - libzlib=1.2.13=hd590300_5
-  - llvm-openmp=14.0.6=h9e868ea_0
+  - llvm-openmp=18.1.5=ha31de31_0
   - lz4-c=1.9.4=h6a678d5_0
   - markupsafe=2.1.1=py312h5eee18b_0
-  - matplotlib=3.8.2=py312h7900ff3_0
-  - matplotlib-base=3.8.2=py312he5832f3_0
-  - mkl=2023.1.0=h213fc3f_46344
+  - matplotlib=3.8.4=py312h7900ff3_2
+  - matplotlib-base=3.8.4=py312h20ab3a6_2
+  - mkl=2023.2.0=h84fe81f_50496
   - mkl-service=2.4.0=py312h5eee18b_1
   - mpmath=1.3.0=py312h06a4308_0
   - munkres=1.1.4=py_0
@@ -122,19 +131,21 @@ dependencies:
   - ncurses=6.4=h6a678d5_0
   - nettle=3.7.3=hbbd107a_1
   - networkx=3.1=py312h06a4308_0
-  - numexpr=2.8.7=py312hf827012_0
-  - numpy=1.26.0=py312hc5e2394_0
-  - numpy-base=1.26.0=py312h0da6c21_0
+  - numexpr=2.8.7=py312he7dcb8a_0
+  - numpy=1.26.0=py312h2809609_0
+  - numpy-base=1.26.0=py312he1a6c75_0
   - openh264=2.1.1=h4ff587b_0
   - openjpeg=2.4.0=h3ad879b_0
   - openssl=3.2.1=hd590300_1
   - packaging=23.1=py312h06a4308_0
   - pandas=2.1.1=py312h526ad5a_0
+  - param=2.1.0=py312h06a4308_0
   - pcre=8.45=h295c915_0
   - pillow=10.0.1=py312ha6cbd5a_0
   - pip=23.3.1=py312h06a4308_0
   - ply=3.11=py312h06a4308_1
   - pycparser=2.21=pyhd3eb1b0_0
+  - pyct=0.5.0=py312h06a4308_0
   - pyopenssl=23.2.0=py312h06a4308_0
   - pyparsing=3.0.9=py312h06a4308_0
   - pyqt=5.15.10=py312h6a678d5_0
@@ -144,7 +155,7 @@ dependencies:
   - python-dateutil=2.8.2=pyhd3eb1b0_0
   - python-tzdata=2023.3=pyhd3eb1b0_0
   - python_abi=3.12=4_cp312
-  - pytorch=2.2.2=py3.12_cpu_0
+  - pytorch=2.3.0=cpu_mkl_py312h3b258cc_101
   - pytorch-cuda=12.1=ha16c6d3_5
   - pytorch-mutex=1.0=cpu
   - pytz=2023.3.post1=py312h06a4308_0
@@ -153,21 +164,22 @@ dependencies:
   - readline=8.2=h5eee18b_0
   - requests=2.31.0=py312h06a4308_0
   - scikit-learn=1.3.0=py312h526ad5a_2
-  - scipy=1.11.3=py312hc5e2394_0
+  - scipy=1.11.3=py312h2809609_0
   - setuptools=68.2.2=py312h06a4308_0
   - sip=6.7.12=py312h6a678d5_0
   - six=1.16.0=pyhd3eb1b0_1
+  - sleef=3.5.1=h9b69904_2
   - sqlite=3.41.2=h5eee18b_0
   - sympy=1.12=py312h06a4308_0
   - tbb=2021.8.0=hdb19cb5_0
   - termcolor=2.4.0=pyhd8ed1ab_0
   - threadpoolctl=2.2.0=pyh0d69192_0
   - tk=8.6.13=noxft_h4845f30_101
-  - torchaudio=2.2.2=py312_cpu
+  - torchaudio=2.3.0=py312_cpu
   - torchinfo=1.8.0=pyhd8ed1ab_0
-  - torchvision=0.17.2=py312_cpu
+  - torchvision=0.18.0=py312_cpu
   - tornado=6.3.3=py312h5eee18b_0
-  - tqdm=4.66.2=pyhd8ed1ab_0
+  - tqdm=4.66.4=pyhd8ed1ab_0
   - typing_extensions=4.9.0=py312h06a4308_1
   - tzdata=2023d=h04d1e81_0
   - urllib3=1.26.18=py312h06a4308_0
@@ -176,7 +188,7 @@ dependencies:
   - xz=5.4.5=h5eee18b_0
   - yaml=0.2.5=h7b6447c_0
   - zlib=1.2.13=hd590300_5
-  - zstd=1.5.5=hc292b87_0
+  - zstd=1.5.6=ha6fb4c9_0
   - pip:
       - viennarna==2.6.4
 prefix: /home/mari256s/miniconda3/envs/RNAUnet

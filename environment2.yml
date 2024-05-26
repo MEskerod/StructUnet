@@ -1,9 +1,9 @@
 name: RNA_Unet
 channels:
   - conda-forge
-  - anaconda
   - pytorch
   - nvidia
+  - anaconda
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
@@ -18,6 +18,7 @@ dependencies:
   - certifi=2024.2.2=py312h06a4308_0
   - charset-normalizer=2.0.4=pyhd3eb1b0_0
   - colorama=0.4.6=py312h06a4308_0
+  - colorcet=3.0.1=py312h06a4308_0
   - contourpy=1.2.0=py312hdb19cb5_0
   - cuda-cudart=12.1.105=0
   - cuda-cupti=12.1.105=0
@@ -108,13 +109,15 @@ dependencies:
   - numpy-base=1.26.0=py312h0da6c21_0
   - openh264=2.1.1=h4ff587b_0
   - openjpeg=2.4.0=h3ad879b_0
-  - openssl=3.0.13=h7f8727e_0
+  - openssl=3.0.13=h7f8727e_2
   - packaging=23.2=py312h06a4308_0
   - pandas=2.1.1=py312h526ad5a_0
+  - param=2.1.0=py312h06a4308_0
   - pcre2=10.42=hebb0a14_0
   - pillow=10.2.0=py312h5eee18b_0
   - pip=23.3.1=py312h06a4308_0
   - ply=3.11=py312h06a4308_1
+  - pyct=0.5.0=py312h06a4308_0
   - pyparsing=3.0.9=py312h06a4308_0
   - pyqt=5.15.10=py312h6a678d5_0
   - pyqt5-sip=12.13.0=py312h5eee18b_0
@@ -140,7 +143,7 @@ dependencies:
   - torchaudio=2.2.2=py312_cu121
   - torchvision=0.17.2=py312_cu121
   - tornado=6.3.3=py312h5eee18b_0
-  - tqdm=4.66.2=pyhd8ed1ab_0
+  - tqdm=4.66.4=pyhd8ed1ab_0
   - typing_extensions=4.9.0=py312h06a4308_1
   - tzdata=2024a=h04d1e81_0
   - urllib3=2.1.0=py312h06a4308_1
