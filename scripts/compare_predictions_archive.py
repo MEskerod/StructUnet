@@ -33,6 +33,13 @@ def has_pk(pairings: np.ndarray) -> bool:
             return True
     return False
 
+def calculate_weighted_f1(lengths, f1s): 
+    total_length = sum(lengths)
+
+    weighted_f1s = [f1s[i] * lengths[i] / total_length for i in range(len(f1s))]
+
+    return sum(weighted_f1s)
+
 
 def scores_pseudoknot(predicted: np.ndarray, target_pk: bool) -> np.ndarray:
     """
@@ -172,7 +179,7 @@ if __name__ == "__main__":
     pseudoknot_F1 = pd.DataFrame(index = ['all'], columns = methods)
     columns = ['length', 'family'] + [f'{name}_{metric}' for name in methods for metric in metrics]
     df = pd.DataFrame(index = range(len(files)), columns=columns)
-    mean_scores= pd.DataFrame(columns = metrics)
+    mean_scores= pd.DataFrame(columns = metrics + ['f1_weighted'])
 
 
     print("--- Starting evaluation ---")
@@ -208,7 +215,7 @@ if __name__ == "__main__":
         #Calculate the F1 score for pseudoknots as a balanced average of the under and over 600 nucleotides
         pseudoknot_F1.loc['all', method] = f1_pk_score(pseudoknots[method])
         #Find the average scores for the method over all sequences
-        mean_scores.loc[method] = df[[f'{method}_{metric}' for metric in metrics]].mean().tolist()
+        mean_scores.loc[method] = df[[f'{method}_{metric}' for metric in metrics]].mean().tolist() + [calculate_weighted_f1(df['length'], df[f'{method}_f1'])]
 
     pseudoknot_F1.to_csv('results/pseudoknot_F1_archive.csv')
     mean_scores.to_csv('results/average_scores_archive.csv')

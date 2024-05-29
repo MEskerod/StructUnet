@@ -67,6 +67,12 @@ def f1_pk_score(pk_score: np.ndarray, epsilon: float = 1e-10) -> float:
     recall = TP / (TP + FN + epsilon)
     return 2 * (precision * recall) / (precision + recall + epsilon)
 
+def calculate_weighted_f1(lengths, f1s): 
+    total_length = sum(lengths)
+
+    weighted_f1s = [f1s[i] * lengths[i] / total_length for i in range(len(f1s))]
+
+    return sum(weighted_f1s)
 
 
 def evaluate_file(file: str, pseudoknots, lock) -> list:
@@ -110,7 +116,7 @@ if __name__ == "__main__":
     pseudoknot_F1 = pd.DataFrame(index = ['under', 'all'], columns = methods)
     columns = ['length', 'family'] + [f'{name}_{metric}' for name in methods for metric in metrics]
     df_under600 = pd.DataFrame(index = range(len(files)), columns=columns)
-    mean_scores= pd.DataFrame(columns = metrics)
+    mean_scores= pd.DataFrame(columns = metrics + ['f1_weighted'])
 
     print("--- Starting evaluation ---")
     
@@ -135,7 +141,7 @@ if __name__ == "__main__":
     #Add results to dataframes
     for method in methods:
         pseudoknot_F1.loc['under', method] = f1_pk_score(pseudoknots[method])
-        mean_scores.loc[f'{method}_under600'] = df_under600[[f'{method}_{metric}' for metric in metrics]].mean().tolist()
+        mean_scores.loc[f'{method}_under600'] = df_under600[[f'{method}_{metric}' for metric in metrics]].mean().tolist() + [calculate_weighted_f1(df_under600['length'], df_under600[f'{method}_f1'])]
 
 
 
