@@ -1,5 +1,7 @@
 import sys, argparse, os, time
 
+from tqdm import tqdm
+
 from Bio import SeqIO
 
 import torch
@@ -352,21 +354,6 @@ def blossom_postprocessing(matrix: torch.Tensor,  device: str) -> torch.Tensor:
     
     return y_out
 
-def binary_confidence(matrix: torch.Tensor) -> float:
-    """
-    Function that calculates the average binary confidence of a matrix.
-
-    Parameters:
-    - matrix (torch.Tensor): The matrix to calculate the confidence of.
-
-    Returns:
-    - float: The average binary confidence.
-    """
-    confidence_scores = 2*torch.abs(matrix-0.5)
-    average_confidence = torch.mean(confidence_scores)
-
-    return average_confidence.item()
-
 
 ### HANDLING FILES AND COMMAND LINE INPUT ###
 def prepare_sequence(sequence: str) -> str: 
@@ -429,6 +416,7 @@ def write_ct(outputfile: str, sequence: str, output: torch.Tensor, seq_name: str
    with open(outputfile, 'w') as f:
        f.write(f'{len(sequence)}\tENERGY =\t?\t{seq_name}\n')
        f.write('\n'.join(['\t'.join(line) for line in ct]))
+       f.write('\n')
 
 
 
@@ -456,6 +444,7 @@ def write_bpseq(outputfile: str, sequence: str, output: torch.Tensor, seq_name: 
     with open(outputfile, 'w') as f:
         f.write(f'Filename: {outputfile}\nOrganism: Unknown\nAccession Number: 000000\nCitation and related information available at?\n')
         f.write('\n'.join([' '.join(line) for line in bpseq]))
+        f.write('\n')
 
 
 def write_to_stdout(outputfile: str, sequence: str, output: torch.Tensor, seq_name: str) -> None:
@@ -489,10 +478,10 @@ if __name__ == '__main__':
                                         This program predicts the RNA secondary structure of a given sequence.
                                         The program takes a sequence as input and outputs the secondary structure in dot-bracket notation.
                                         Implemented by Maria Eskerod, master thesis at Aarhus University, spring 2024""")
-    argparser.add_argument('-i', '--input', type=str, help='Input sequence provided in command line')
-    argparser.add_argument('-f', '--file', type=argparse.FileType('r'), help='Fasta file containing sequence')
-    argparser.add_argument('-m', '--mutifile', type=argparse.FileType('r'), help='Fasta file containing multiple sequences. Output will be written to multiple bpseq files.')
-    argparser.add_argument('-o', '--output', default=sys.stdout, help='Output file for the secondary structure. Default is stdout. Valid file formats are .dbn, .ct and .bpseq')
+    argparser.add_argument('-i', '--input', metavar='', type=str, help='Input sequence provided in command line')
+    argparser.add_argument('-f', '--file', metavar='', type=argparse.FileType('r'), help='Fasta file containing sequence')
+    argparser.add_argument('-m', '--multifile', metavar='', type=argparse.FileType('r'), help='Fasta file containing multiple sequences. Output will be written to multiple bpseq files.')
+    argparser.add_argument('-o', '--output', metavar='', default=sys.stdout, help='Output file for the secondary structure. Default is stdout. Valid file formats are .dbn, .ct and .bpseq')
 
     args = argparser.parse_args()
 
@@ -505,10 +494,10 @@ if __name__ == '__main__':
        sequence = prepare_sequence(sequence)
 
     if args.output != sys.stdout:
-        output_map = {'ct': write_ct, 'bpseq': write_bpseq}
+        output_map = {'.ct': write_ct, '.bpseq': write_bpseq}
         file_type = os.path.splitext(args.output)[1]
         if file_type not in output_map:
-            raise ValueError("Invalid output file format. Valid file formats are .dbn, .ct and .bpseq")
+            raise ValueError(f"Invalid output file format. Valid file formats are .dbn, .ct and .bpseq. {file_type} is not valid")
         to_outputfile = output_map[file_type]
     else:
         to_outputfile = write_to_stdout
@@ -522,28 +511,28 @@ if __name__ == '__main__':
     model.to(device)
 
     if args.multifile: 
+        print('--Predicting--')
         os.makedirs('StructUnet_predictions', exist_ok=True)
+        progress_bar = tqdm(total=len(list(SeqIO.parse(args.multifile, 'fasta'))), unit='seq', file=sys.stdout)
         for record in SeqIO.parse(args.multifile, 'fasta'):
             sequence = prepare_sequence(str(record.seq))
             name = record.id
             input = make_matrix_from_sequence_8(sequence, device=device).to(device)
             output = model(input).squeeze(0).squeeze(0).detach()
-            confidence_score = binary_confidence(output)
             output = mask(output, sequence, device)
             output = blossom_postprocessing(output, device)
             write_bpseq(f'StructUnet_predictions/{name}.bpseq', sequence, output, name)
-            print(f'Prediction done for {name}. Confidence score: {confidence_score:.2f}')
+            progress_bar.update(1)
+        progress_bar.close()
 
+    else:
+        print('-- Predicting --')
+        start_time = time.time()
+        input = make_matrix_from_sequence_8(sequence, device=device).to(device)
+        output = model(input).squeeze(0).squeeze(0).detach()
+        output = mask(output, sequence, device)
+        output = blossom_postprocessing(output, device)
+        total_time = time.time() - start_time
 
-    print('-- Predicting --')
-    start_time = time.time()
-    input = make_matrix_from_sequence_8(sequence, device=device).to(device)
-    output = model(input).squeeze(0).squeeze(0).detach()
-    confidence_score = binary_confidence(output)
-    output = mask(output, sequence, device)
-    output = blossom_postprocessing(output, device)
-    total_time = time.time() - start_time
-
-    to_outputfile(args.output, sequence, output, name)
-    print(f'-- Prediction done in {total_time:.2f} seconds --')
-    print(f'-- Average binary confidence: {confidence_score:.2f} --')
+        to_outputfile(args.output, sequence, output, name)
+        print(f'-- Prediction done in {total_time:.2f} seconds --')
