@@ -1,4 +1,4 @@
-# RNA UNET
+# StructUnet
 **WORK IN PROGRESS!**
 
 Made as part of a master thesis in Bioinformatics 
