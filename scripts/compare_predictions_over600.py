@@ -33,7 +33,17 @@ def has_pk(pairings: np.ndarray) -> bool:
             return True
     return False
 
-def calculate_weighted_f1(lengths, f1s): 
+def calculate_weighted_f1(lengths: list, f1s: list) -> float: 
+    """
+    Calculates the weighted F1 score. The weights are based on the sequence lengths.
+
+    Parameters:
+    - lengths (list): The lengths of the sequences.
+    - f1s (list): The F1 scores of the sequences.
+
+    Returns:
+    - float: The weighted F1 score.
+    """ 
     total_length = sum(lengths)
 
     weighted_f1s = [f1s[i] * lengths[i] / total_length for i in range(len(f1s))]
@@ -81,6 +91,15 @@ def f1_pk_score(pk_score: np.ndarray, epsilon: float = 1e-10) -> float:
 
 def evaluate_file(file: str, pseudoknots, lock) -> list:
     """
+    Evaluates the predictions for a given file.
+
+    Parameters:
+    - file (str): The name of the file to evaluate.
+    - pseudoknots (dict): A dictionary to store the pseudoknot scores.
+    - lock (multiprocessing.Lock): A lock to write to the pseudoknots dictionary.
+
+    Returns:
+    - list: A list with the evaluation results.
     """
     data = pickle.load(open(f'data/test_files/{file}', 'rb'))
 
@@ -141,8 +160,17 @@ def evaluate_families(df: pd.DataFrame, method: str) -> pd.DataFrame:
     return family_df
 
 
-def plot_F1(df: pd.DataFrame, outputfile: str, method: str = 'RNA_Unet'):
+def plot_F1(df: pd.DataFrame, outputfile: str, method: str = 'RNA_Unet') -> None:
     """
+    Plots the F1 score for each sequence length.
+
+    Parameters:
+    - df (pd.DataFrame): The dataframe with the evaluation results.
+    - outputfile (str): The name of the output file.
+    - method (str): The method to plot.
+
+    Returns:
+    - None
     """
     colors = mpl.colormaps['cet_glasbey_dark'].colors
 

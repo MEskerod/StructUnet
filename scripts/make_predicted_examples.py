@@ -34,6 +34,13 @@ def has_pk(pairings: np.ndarray) -> bool:
 
 def output_to_bpseq(output: torch.Tensor, sequence: str) -> str: 
     """
+    Converts the output of the model to a bpseq file.
+
+    Parameters:
+    - output (torch.Tensor): The output of the model.
+
+    Returns:
+    - str: The bpseq file.
     """
     pairs = torch.nonzero(output)
 
@@ -48,6 +55,10 @@ def output_to_bpseq(output: torch.Tensor, sequence: str) -> str:
 
 def find_examples() -> dict:
     """
+    Finds examples for the different RNA families.
+
+    Returns:
+    - dict: A dictionary containing the examples.
     """
     results = {}
 
@@ -188,6 +199,16 @@ def find_examples() -> dict:
     return results
 
 def predict(examples: dict) -> None: 
+    """
+    Predicts the structures for the examples. 
+    The predicted structures are stored in the examples dictionary.
+
+    Parameters:
+    - examples (dict): A dictionary containing the examples.
+
+    Returns:
+    - None
+    """
 
     progress_bar = tqdm(total=len(examples), unit='example', desc='Predicting structures', file=sys.stdout)
     
@@ -223,6 +244,16 @@ def save_examples(examples: dict) -> None:
 
 
 def record_f1_scores(examples: dict) -> None:
+    """
+    Records the F1 scores for the examples.
+    The F1 score is stored in a csv file.
+
+    Parameters:
+    - examples (dict): A dictionary containing the examples.
+
+    Returns:
+    - None
+    """
     scores = []
 
     progress_bar = tqdm(total=len(examples), unit='example', desc='Recording F1 scores', file=sys.stdout)

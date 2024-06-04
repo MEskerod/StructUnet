@@ -8,6 +8,14 @@ from utils.prepare_data import read_ct, list_all_files
 
 def find_basepairs(sequence: str, pairs: list) -> dict:
     """
+    Find the number of different basepairs in a sequence.
+
+    Parameters:
+    - sequence (str): The sequence to evaluate.
+    - pairs (list): The list of basepair indices.
+
+    Returns:
+    - dict: A dictionary with the number of different basepairs.
     """
     watson_crick = {'AU', 'UA', 'CG', 'GC'}
     wobble = {'GU', 'UG'}

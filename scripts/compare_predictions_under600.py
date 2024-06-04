@@ -67,7 +67,17 @@ def f1_pk_score(pk_score: np.ndarray, epsilon: float = 1e-10) -> float:
     recall = TP / (TP + FN + epsilon)
     return 2 * (precision * recall) / (precision + recall + epsilon)
 
-def calculate_weighted_f1(lengths, f1s): 
+def calculate_weighted_f1(lengths: list, f1s: list) -> float:  
+    """
+    Calculates the weighted F1 score. The weights are based on the sequence lengths.
+
+    Parameters:
+    - lengths (list): The lengths of the sequences.
+    - f1s (list): The F1 scores of the sequences.
+
+    Returns:
+    - float: The weighted F1 score.
+    """ 
     total_length = sum(lengths)
 
     weighted_f1s = [f1s[i] * lengths[i] / total_length for i in range(len(f1s))]
@@ -77,6 +87,15 @@ def calculate_weighted_f1(lengths, f1s):
 
 def evaluate_file(file: str, pseudoknots, lock) -> list:
     """
+    Evaluates the predictions for a given file.
+
+    Parameters:
+    - file (str): The name of the file to evaluate.
+    - pseudoknots (dict): A dictionary to store the pseudoknot scores.
+    - lock (multiprocessing.Lock): A lock to write to the pseudoknots dictionary.
+
+    Returns:
+    - list: A list with the evaluation results.
     """
     data = pickle.load(open(f'data/test_files/{file}', 'rb'))
 

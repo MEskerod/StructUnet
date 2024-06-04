@@ -3,8 +3,9 @@
 
 Made as part of a master thesis in Bioinformatics 
 
+Files that are too big can be located at: https://drive.google.com/drive/folders/15VAdY8AYT4Z6OosgDE6-HZ-c1UZ5YQeW?usp=sharing
 ## Folder structure
-- data --> Files are too big for gitHub
+- data --> Most files are too big for GitHub (or scripts exists for converting from other files)
 - experiments   
     - utils.py --> functions used in experiments on google CoLab  
     - RNAUnet_experiment... --> Notebooks containing the three experiments
@@ -18,7 +19,8 @@ Made as part of a master thesis in Bioinformatics
     - compare_precitions_under600.py --> script that evaluates the predictions made of all methods on sequences below 600
     - compare_methods.py --> script that evaluates the predicted structure by different methods
     - complete_dataset.py --> script for converting entire dataset using 8-channel input
-    - count_loops.py --> script used to count all hairpin loops in all sequences
+    - count_loops.py --> script used to count all hairpin loops in all sequences in RNAStralign
+    - count_noncanoncial_pairs.py --> script used to count the different base pair types in RNAStralign
     - evaluate_hotknot.py --> script that uses different k with hotknots on a very small subset of the data to evaluate its performance
     - evaluate_postprocessing_under600.py --> script that uses the final model to evaluate all available post-processing methods on all sequences in the validation set below 600 nucleotides
     - experiment_files.py --> script for converting sequences in RNAStralign used for experiments to matrices. Can convert inputs to 8, 9 or 17-channel input
@@ -29,7 +31,9 @@ Made as part of a master thesis in Bioinformatics
     - time_postprocessing.py --> script for timing use of different post-processing methods
     - traning.py --> script used for training the model on the entire data set using the device available
 - workflow.py --> GWF workflow used to run some scripts on cluster
-- environment1.yml --> File containing *RNAUnet* conda environment
-- environment2.yml --> File containing *RNA_Unet* conda environment (used when using GPU)
+- environment1.yml --> file containing *RNAUnet* conda environment
+- environment2.yml --> file containing *RNA_Unet* conda environment (used when using GPU)
+- blossom.py --> script containing modified version of NetworkX maximum weight matching 
+- predict.py --> script that can be used to predict RNA secondary structure using StructUnet. Input it either sequence inputted directly or in fasta file. Output can be .ct or .bpseq file
 
 
