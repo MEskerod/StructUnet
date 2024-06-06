@@ -160,7 +160,7 @@ if __name__ == '__main__':
     df = pd.DataFrame(index= range(n_files), columns=columns)
 
     print('Make and evaluate random predictions...')
-    progress_bar = tqdm(total=len(n_files), unit='files')
+    progress_bar = tqdm(total=n_files, unit='files')
 
     pseudoknots_archive = [0, 0, 0, 0]
     for i, file in enumerate(archive): 
