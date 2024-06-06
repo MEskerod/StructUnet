@@ -20,6 +20,8 @@ def find_basepairs(sequence: str, pairs: list) -> dict:
     watson_crick = {'AU', 'UA', 'CG', 'GC'}
     wobble = {'GU', 'UG'}
 
+    n_basepairs = 0
+
     basepairs = {"Non-standard": 0, "Watson-Crick": 0, "Paired with N": 0, "Wobble": 0} 
 
     for i, j in enumerate(pairs):
@@ -27,6 +29,8 @@ def find_basepairs(sequence: str, pairs: list) -> dict:
             continue
 
         pair = sequence[i]+sequence[j]
+
+        n_basepairs += 1
 
         if pair in watson_crick:
             basepairs["Watson-Crick"] += 1
@@ -37,7 +41,7 @@ def find_basepairs(sequence: str, pairs: list) -> dict:
         else:
             basepairs["Non-standard"] += 1
     
-    return basepairs
+    return basepairs, n_basepairs
 
 def getFamily(file_name: str) -> str:
   '''
@@ -70,14 +74,19 @@ if __name__ == '__main__':
         print('Start counting loops')
         progress_bar = tqdm(total=len(files), unit='files')
 
+        unpaired = 0
         pair_list = []
         families = {}
 
         for file in files:
             try:
                 sequence, pairs = read_ct(file)
-                p = find_basepairs(sequence, pairs)
+                p, n_pairs = find_basepairs(sequence, pairs)
                 pair_list.append(p)
+
+                #Check for completely unpaired sequences
+                if not n_pairs:
+                    unpaired += 1
                 
                 family = getFamily(file)
                 if family not in families:
@@ -100,8 +109,6 @@ if __name__ == '__main__':
         df_families = pd.DataFrame(families).T
         df_families.to_csv('results/non_standard_pr_family.csv')
 
-        below_limit = 0
-
         #Calculate stats
         for column in df_pair.columns: 
             print(f"Number of {column} basepairs: {df_pair[column].sum()}")
@@ -116,6 +123,9 @@ if __name__ == '__main__':
         print("\nFamilies with non-standard basepairs: ")
         for family, count in families.items():
             print(f"Non-standard basepairs in family {family}: {count['non_standard']} ({count['non_standard']/count['total']*100}%)")
+
+
+        print(f"\nNumber of completely unpaired sequences: {unpaired}")
         
     finally:
         shutil.rmtree(temp_dir)

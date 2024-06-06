@@ -258,6 +258,6 @@ if __name__ == "__main__":
     f1 = f1.apply(pd.to_numeric, errors='coerce')
     violin_plot(f1, 'Methods', outputfile='figures/evaluation_predictions_all_archive.png')
 
-    plot_F1(df, 'figures/per_sequence_F1_archive.png')
+    plot_F1(df, 'figures/per_sequence_F1_archive.png', 'RNAUnet')
 
     

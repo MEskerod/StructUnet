@@ -306,6 +306,24 @@ def compare_archiveII(methods, files):
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 
+#ADDITIONAL ANALYSIS
+def evaluate_random_predictions(files): 
+    """
+    Evaluate random predictions
+    """
+    inputs = ['RNA_Unet.pth'] + files
+    outputs = ['results/testscores_random.csv',
+               'results/pseudoknot_F1_random.csv',
+               'results/average_scores_random.csv',
+               'results/family_scores_random.csv',
+               'results/family_scores_random_archive.csv',
+               'results/family_scores_random_align.csv']
+    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet"}
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/random_predictions.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+
 
 ### WORKFLOW ###
 gwf = Workflow()
@@ -371,3 +389,6 @@ gwf.target_from_template('predict_RNAUnet_archiveII', predict_RNAUnet('data/arch
 
 methods = ['CNNfold', 'viennaRNA', 'RNAUnet', 'nussinov', 'contrafold']
 gwf.target_from_template('compare_archiveII', compare_archiveII(methods, pickle.load(open('data/archiveii.pkl', 'rb'))))
+
+#Additional analysis
+gwf.target_from_template('evaluate_random_predictions', evaluate_random_predictions(pickle.load(open('data/test.pkl', 'rb'))+pickle.load(open('data/archiveii.pkl', 'rb'))))
