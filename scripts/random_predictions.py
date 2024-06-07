@@ -1,7 +1,8 @@
-import os, pickle, torch
+import os, pickle, torch, multiprocessing
 
 from collections import namedtuple
 from tqdm import tqdm
+from functools import partial
 
 import pandas as pd
 import numpy as np
@@ -94,7 +95,7 @@ def make_random_prediction(sequence):
     
     return predicted
 
-def evaluate_random_prediction(file, dataset, pseudoknots):
+def evaluate_random_prediction(file, dataset, pseudoknots, lock):
     data = pickle.load(open(file, 'rb'))
 
     results = [data.length, data.family, dataset]
@@ -107,7 +108,8 @@ def evaluate_random_prediction(file, dataset, pseudoknots):
     results.extend(evaluate(predicted, target, device))
     results.extend(evaluate(predicted, target, device, allow_shift=True))
 
-    pseudoknots += scores_pseudoknot(predicted, target_pk) #Check if pseudoknots are present in the predicted and target structure
+    with lock:
+        pseudoknots += scores_pseudoknot(predicted, target_pk) #Check if pseudoknots are present in the predicted and target structure
 
     return results 
 
@@ -159,20 +161,31 @@ if __name__ == '__main__':
     columns = ['length', 'family', 'dataset', 'precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']
     df = pd.DataFrame(index= range(n_files), columns=columns)
 
+    num_cores = 10
+    print(f'Number of cores: {num_cores}')
+    pool = multiprocessing.Pool(num_cores)
+    manager = multiprocessing.Manager()
+    lock = manager.Lock()
+
     print('Make and evaluate random predictions...')
-    progress_bar = tqdm(total=n_files, unit='files')
-
-    pseudoknots_archive = [0, 0, 0, 0]
-    for i, file in enumerate(archive): 
-        df.loc[i] = evaluate_random_prediction(file, 'archiveII', pseudoknots_archive)
-        progress_bar.update()
-
-    pseudoknots_align = [0, 0, 0, 0]
-    for i, file in enumerate(align):
-        df.loc[i+len(archive)] = evaluate_random_prediction(file, 'RNAStralign', pseudoknots_align)
-        progress_bar.update()
+    pseudoknots_archive = manager.list([0, 0, 0, 0])
+    with tqdm(total=len(archive), unit='files', desc='ArchiveII') as progress_bar:
+        partial_func = partial(evaluate_random_prediction, dataset='archiveII', pseudoknots=pseudoknots_archive, lock=lock)
+        for i, result in enumerate(pool.imap_unordered(partial_func, archive)):
+            df.loc[i] = result
+            progress_bar.update()
     
-    progress_bar.close()
+    
+    pseudoknots_align = manager.list([0, 0, 0, 0])
+    with tqdm(total=len(align), unit='files', desc='RNAStralign') as progress_bar:
+        partial_func = partial(evaluate_random_prediction, dataset='RNAStralign', pseudoknots=pseudoknots_align, lock=lock)
+        for i, result in enumerate(pool.imap_unordered(partial_func, align)):
+            df.loc[i+len(archive)] = result
+            progress_bar.update()
+
+    
+    pool.close()
+    pool.join()
 
     print('Evaluation done. Saving results...')
 
