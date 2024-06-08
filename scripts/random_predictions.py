@@ -108,8 +108,10 @@ def evaluate_random_prediction(file, dataset, pseudoknots, lock):
     results.extend(evaluate(predicted, target, device))
     results.extend(evaluate(predicted, target, device, allow_shift=True))
 
+    sequence_pk = scores_pseudoknot(predicted, target_pk) #Check if pseudoknots are present in the predicted and target structure
     with lock:
-        pseudoknots += scores_pseudoknot(predicted, target_pk) #Check if pseudoknots are present in the predicted and target structure
+        for i in range(len(pseudoknots)):
+            pseudoknots[i] += sequence_pk[i] 
 
     return results 
 
@@ -161,7 +163,7 @@ if __name__ == '__main__':
     columns = ['length', 'family', 'dataset', 'precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']
     df = pd.DataFrame(index= range(n_files), columns=columns)
 
-    num_cores = 10
+    num_cores = 15
     print(f'Number of cores: {num_cores}')
     pool = multiprocessing.Pool(num_cores)
     manager = multiprocessing.Manager()

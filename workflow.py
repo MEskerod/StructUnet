@@ -318,7 +318,7 @@ def evaluate_random_predictions(files):
                'results/family_scores_random.csv',
                'results/family_scores_random_archive.csv',
                'results/family_scores_random_align.csv']
-    options = {"memory":"16gb", "walltime":"24:00:00", "account":"RNA_Unet", "cores":10}
+    options = {"memory":"16gb", "walltime":"12:00:00", "account":"RNA_Unet", "cores":15}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/random_predictions.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
