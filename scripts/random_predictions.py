@@ -191,8 +191,6 @@ if __name__ == '__main__':
 
     df.to_csv('results/testscores_random.csv', index=False)
 
-    print('Pseudoknots:', pseudoknots)
-
     #Calculate F1 scores for pseudoknots
     pseudoknots['combined'] = pseudoknots['archiveII'] + pseudoknots['RNAStralign']
     pseudoknots = pd.DataFrame(data = {'F1': [f1_pk_score(pseudoknots['archiveII']), f1_pk_score(pseudoknots['RNAStralign']), f1_pk_score(pseudoknots['combined'])]}, index = ['ArchiveII', 'RNAStralign', 'combined'])
@@ -204,9 +202,9 @@ if __name__ == '__main__':
     archive_df = df[df['dataset'] == 'archiveII']
     align_df = df[df['dataset'] == 'RNAStralign']
     
-    mean_scores.loc['archiveII'] = archive_df[['precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']].mean().tolist() + [calculate_weighted_f1(archive_df['length'], archive_df['f1'])]
-    mean_scores.loc['RNAStralign'] = align_df[['precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']].mean().tolist() + [calculate_weighted_f1(align_df['length'], align_df['f1'])]
-    mean_scores.loc['combined'] = df[['precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']].mean().tolist() + [calculate_weighted_f1(df['length'], df['f1'])]
+    mean_scores.loc['archiveII'] = archive_df[['precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']].mean().tolist() + [calculate_weighted_f1(archive_df['length'].tolist(), archive_df['f1'].tolist())]
+    mean_scores.loc['RNAStralign'] = align_df[['precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']].mean().tolist() + [calculate_weighted_f1(align_df['length'].tolist(), align_df['f1'].tolist())]
+    mean_scores.loc['combined'] = df[['precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']].mean().tolist() + [calculate_weighted_f1(df['length'].tolist(), df['f1'].tolist())]
 
     mean_scores.to_csv('results/average_scores_random.csv')
 

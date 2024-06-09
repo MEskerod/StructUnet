@@ -160,7 +160,7 @@ if __name__ == "__main__":
     #Add results to dataframes
     for method in methods:
         pseudoknot_F1.loc['under', method] = f1_pk_score(pseudoknots[method])
-        mean_scores.loc[f'{method}_under600'] = df_under600[[f'{method}_{metric}' for metric in metrics]].mean().tolist() + [calculate_weighted_f1(df_under600['length'], df_under600[f'{method}_f1'])]
+        mean_scores.loc[f'{method}_under600'] = df_under600[[f'{method}_{metric}' for metric in metrics]].mean().tolist() + [calculate_weighted_f1(df_under600['length'].tolist(), df_under600[f'{method}_f1'].tolist())]
 
 
 

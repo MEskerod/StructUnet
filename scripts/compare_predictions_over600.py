@@ -249,7 +249,7 @@ if __name__ == "__main__":
         #Calculate the F1 score for pseudoknots as a balanced average of the under and over 600 nucleotides
         pseudoknot_F1.loc['all', method] = (f1_pk_score(pseudoknots[method])*len(files) + pseudoknot_F1.loc['under', method]*len(under600))/(len(under600)+len(files))
         #Find the average scores for the method over all sequences
-        mean_scores.loc[method] = df_all[[f'{method}_{metric}' for metric in metrics]].mean().tolist() + [calculate_weighted_f1(df_all['length'], df_all[f'{method}_f1'])]
+        mean_scores.loc[method] = df_all[[f'{method}_{metric}' for metric in metrics]].mean().tolist() + [calculate_weighted_f1(df_all['length'].tolist(), df_all[f'{method}_f1'].tolist())]
 
     pseudoknot_F1.to_csv('results/pseudoknot_F1.csv')
     mean_scores.to_csv('results/average_scores.csv')
