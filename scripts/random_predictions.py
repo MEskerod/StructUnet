@@ -110,9 +110,7 @@ def evaluate_random_prediction(file, dataset, pseudoknots, lock):
 
     sequence_pk = scores_pseudoknot(predicted, target_pk) #Check if pseudoknots are present in the predicted and target structure
     with lock:
-        for i in range(len(pseudoknots)):
-            pseudoknots[i] += sequence_pk[i] 
-
+        pseudoknots[dataset] += sequence_pk
     return results 
 
 def evaluate_families(df: pd.DataFrame, dataset = None):
@@ -163,24 +161,24 @@ if __name__ == '__main__':
     columns = ['length', 'family', 'dataset', 'precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']
     df = pd.DataFrame(index= range(n_files), columns=columns)
 
-    num_cores = 15
+    num_cores = 10
     print(f'Number of cores: {num_cores}')
     pool = multiprocessing.Pool(num_cores)
     manager = multiprocessing.Manager()
     lock = manager.Lock()
 
+    pseudoknots = manager.dict({method: np.array([0, 0, 0, 0]) for method in ['archiveII', 'RNAStralign']})
+
     print('Make and evaluate random predictions...')
-    pseudoknots_archive = manager.list([0, 0, 0, 0])
     with tqdm(total=len(archive), unit='files', desc='ArchiveII') as progress_bar:
-        partial_func = partial(evaluate_random_prediction, dataset='archiveII', pseudoknots=pseudoknots_archive, lock=lock)
+        partial_func = partial(evaluate_random_prediction, dataset='archiveII', pseudoknots=pseudoknots, lock=lock)
         for i, result in enumerate(pool.imap_unordered(partial_func, archive)):
             df.loc[i] = result
             progress_bar.update()
     
     
-    pseudoknots_align = manager.list([0, 0, 0, 0])
     with tqdm(total=len(align), unit='files', desc='RNAStralign') as progress_bar:
-        partial_func = partial(evaluate_random_prediction, dataset='RNAStralign', pseudoknots=pseudoknots_align, lock=lock)
+        partial_func = partial(evaluate_random_prediction, dataset='RNAStralign', pseudoknots=pseudoknots, lock=lock)
         for i, result in enumerate(pool.imap_unordered(partial_func, align)):
             df.loc[i+len(archive)] = result
             progress_bar.update()
@@ -193,9 +191,11 @@ if __name__ == '__main__':
 
     df.to_csv('results/testscores_random.csv', index=False)
 
+    print('Pseudoknots:', pseudoknots)
+
     #Calculate F1 scores for pseudoknots
-    pseudoknots_combined = [pseudoknots_archive[i] + pseudoknots_align[i] for i in range(4)]
-    pseudoknots = pd.DataFrame(data = {'F1': [f1_pk_score(pseudoknots_archive), f1_pk_score(pseudoknots_align), f1_pk_score(pseudoknots_combined)]}, index = ['ArchiveII', 'RNAStralign', 'combined'])
+    pseudoknots['combined'] = pseudoknots['archiveII'] + pseudoknots['RNAStralign']
+    pseudoknots = pd.DataFrame(data = {'F1': [f1_pk_score(pseudoknots['archiveII']), f1_pk_score(pseudoknots['RNAStralign']), f1_pk_score(pseudoknots['combined'])]}, index = ['ArchiveII', 'RNAStralign', 'combined'])
     pseudoknots.to_csv('results/pseudoknot_F1_random.csv')
 
 
