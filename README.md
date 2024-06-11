@@ -1,5 +1,5 @@
 # StructUnet
-Made as part of a master's thesis in Bioinformatics spring 2024
+Made as part of a master's thesis in Bioinformatics spring 2024 at Bioinformatic Research Center, Aarhus University. 
 
 The master's thesis focused on the implementation of a neural network for predicting RNA secondary structure. The core architecture is built upon a U-Net framework, tailored to tackle the intricate challenges inherent in RNA structure prediction.   
 The final network is called StructUnet for its fusion of the U-Net architecture with RNA secondary structure prediction capabilities. 
