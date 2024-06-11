@@ -6,7 +6,6 @@ The final network is called StructUnet for its fusion of the U-Net architecture 
 
 StructUnet was extensively tested and compared with existing models, demonstrating superior performance in predicting pseudoknots and achieving significant improvements in RNA structure prediction, as measured by the F1 score. The model performed better than existing models on both the test set RNAStralign and on ArchiveII, displaying robust performance across different sequence lengths and known families.
 
-Files that are too big can be located at: https://drive.google.com/drive/folders/15VAdY8AYT4Z6OosgDE6-HZ-c1UZ5YQeW?usp=sharing
 ## Folder structure
 - data --> Most files are too big for GitHub (or scripts exists for converting from other files)
 - experiments   
@@ -44,5 +43,8 @@ Files that are too big can be located at: https://drive.google.com/drive/folders
 - environment2.yml --> file containing *RNA_Unet* conda environment (used when using GPU)
 - blossom.py --> script containing modified version of NetworkX maximum weight matching 
 - predict.py --> script that can be used to predict RNA secondary structure using StructUnet. Input it either sequence inputted directly or in fasta file. Output can be .ct or .bpseq file
+
+## Data
+Files that are too big can be located at: https://drive.google.com/drive/folders/15VAdY8AYT4Z6OosgDE6-HZ-c1UZ5YQeW?usp=sharing
 
 
