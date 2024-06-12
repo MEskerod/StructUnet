@@ -273,7 +273,7 @@ def make_matrix_from_sequence_8(sequence: str, device: str = 'cpu') -> torch.Ten
     Returns:
     - torch.Tensor: A 3D tensor with shape (8, len(sequence), len(sequence)).
     """
-    coding = torch.tensor([
+    coding = np.array([
         [1, 0, 0, 0, 0, 0, 0, 0],  # invalid pairing
         [0, 1, 0, 0, 0, 0, 0, 0],  # unpaired
         [0, 0, 1, 0, 0, 0, 0, 0],  # GC
@@ -282,26 +282,25 @@ def make_matrix_from_sequence_8(sequence: str, device: str = 'cpu') -> torch.Ten
         [0, 0, 0, 0, 0, 1, 0, 0],  # GU
         [0, 0, 0, 0, 0, 0, 1, 0],  # UA
         [0, 0, 0, 0, 0, 0, 0, 1],  # AU
-    ], dtype=torch.float32, device=device)
+    ], dtype=np.float32, device=device)
 
     basepairs = ["GC", "CG", "UG", "GU", "UA", "AU"]
 
     N = len(sequence)
 
     # Create an array filled with "invalid pairing" vectors
-    matrix = coding[0].repeat(N, N, 1)
+    matrix = np.tile(coding[0], (N, N, 1))
 
     # Update the diagonal with "unpaired" vectors
-    matrix[torch.arange(N), torch.arange(N)] = coding[1]
+    matrix[np.arange(N), np.arange(N), :] = coding[1]
     
     # Update base pair positions directly
-    for i in range(N):
-        for j in range(N):
-            pair = sequence[i] + sequence[j]
-            if pair in basepairs and abs(i-j) >=4:
-                matrix[i, j, :] = coding[basepairs.index(pair)+2]
+    for i, j in np.ndindex(N, N):
+        pair = sequence[i] + sequence[j]
+        if pair in basepairs and abs(i-j) >=4:
+            matrix[i, j, :] = coding[basepairs.index(pair)+2]
 
-    return matrix.permute(2, 0, 1)
+    return torch.from_numpy(matrix.transpose(2, 0, 1))
 
 
 def make_matrix_from_basepairs(pairs: list, unpaired: bool = True) -> torch.Tensor:
