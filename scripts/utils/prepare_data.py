@@ -282,7 +282,7 @@ def make_matrix_from_sequence_8(sequence: str, device: str = 'cpu') -> torch.Ten
         [0, 0, 0, 0, 0, 1, 0, 0],  # GU
         [0, 0, 0, 0, 0, 0, 1, 0],  # UA
         [0, 0, 0, 0, 0, 0, 0, 1],  # AU
-    ], dtype=np.float32, device=device)
+    ], dtype=np.float32)
 
     basepairs = ["GC", "CG", "UG", "GU", "UA", "AU"]
 
