@@ -340,6 +340,39 @@ def onehot_to_image_17(array):
   rgb_image[indices] = [255, 255, 255]
 
 
+def onehot_to_image_16(array):
+  """
+  """
+  channel_to_color = {0: [255, 255, 255], #invalid pairing = white (AA)
+                      1: [128, 0, 0], #AU = dark red
+                      2: [255, 255, 255], #invalid pairing = white (AC)
+                      3: [255, 255, 255], #invalid pairing = white (AG)
+                      4: [255, 0, 0], #UA = red
+                      5: [255, 255, 255], #invalid pairing = white (UU)
+                      6: [255, 255, 255], #invalid pairing = white (UC)
+                      7: [0, 0, 255], #UG = blue
+                      8: [255, 255, 255], #invalid pairing = white (CA)
+                      9: [255, 255, 255], #invalid pairing = white (CU)
+                      10: [255, 255, 255], #invalid pairing = white (CC)
+                      11: [0, 128, 0], #CG = dark green
+                      12: [255, 255, 255], #invalid pairing = white (GA)
+                      13: [0, 0, 128], #GU = dark blue
+                      14: [0, 255, 0], #GC = green
+                      15: [255, 255, 255]} #invalid pairing = white (GG)
+
+  rgb_image = np.zeros((array.shape[0], array.shape[1], 3), dtype=np.uint8)
+
+  
+  for channel, color in channel_to_color.items():
+    # Select the indices where the channel has non-zero values
+    indices = array[:, :, channel] == 1
+    # Assign the corresponding color to those indices in the RGB image
+    rgb_image[indices] = color
+
+  indices = np.sum(array == 1, axis=2) > 1
+  rgb_image[indices] = [255, 255, 255]
+
+
   return rgb_image
 
 def show_matrices(inputs, observed, predicted, treshold=0.5, output_file = None, input_size = 8):
@@ -351,6 +384,8 @@ def show_matrices(inputs, observed, predicted, treshold=0.5, output_file = None,
     axs[0].imshow(onehot_to_image_8(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()))
   elif input_size == 9: 
     axs[0].imshow(onehot_to_image_8(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()[:, :, :8]))
+  elif input_size == 16:
+    axs[0].imshow(onehot_to_image_16(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()))
   elif input_size == 17: 
     axs[0].imshow(onehot_to_image_17(inputs.permute(0, 2, 3, 1).squeeze().detach().cpu().numpy()))
   axs[0].set_title("Input")
