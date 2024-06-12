@@ -45,7 +45,7 @@ def calculate_lengths(n: int = 81, min_length: int = 60, max_length: int = 2000)
     return lengths
 
 
-def time_convert(n: int, min_length: int, max_length: int, func: function) -> list[float]:
+def time_convert(n: int, min_length: int, max_length: int, func) -> list[float]:
     """
     Calculate the time taken to convert N sequences of random RNA sequences of lengths between min_length and max_length using the given function.
     Returns the individual times in a list.
@@ -71,7 +71,7 @@ def time_convert(n: int, min_length: int, max_length: int, func: function) -> li
     
     return t
 
-def average_times(func: function, func_name: str, repeats: int = 5, n: int = 81, min_length: int = 60, max_length: int = 2000) -> list[float]:
+def average_times(func, func_name: str, repeats: int = 5, n: int = 81, min_length: int = 60, max_length: int = 2000) -> list[float]:
     """
     Calculates the average time taken to convert N sequences of random RNA sequences of lengths between min_length and max_length using the given function.
     The time is calculated by averaging the time taken over a number of repeats.
@@ -112,7 +112,7 @@ def average_times(func: function, func_name: str, repeats: int = 5, n: int = 81,
 def main(): 
     functions = {"8-channel": prepare_data.make_matrix_from_sequence_8,
                  "9-channel": prepare_data.make_matrix_from_sequence_9,
-                 "16-channel": prepare_data.input_representation,
+                 "16-channel": prepare_data.make_matrix_from_sequence_16,
                  "17-channel": prepare_data.make_matrix_from_sequence_17,}
     
     timedict = {func_name: average_times(v, func_name) for func_name, v in functions.items()}

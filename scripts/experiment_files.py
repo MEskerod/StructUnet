@@ -3,8 +3,7 @@ import os, tempfile, shutil, tarfile, pickle, sys
 import random as rd
 from collections import namedtuple
 
-from utils.prepare_data import getLength, list_all_files, make_matrix_from_basepairs, make_matrix_from_sequence_8, make_matrix_from_sequence_9, make_matrix_from_sequence_17, read_ct, update_progress_bar, make_pairs_from_list
-from utils.prepare_data import input_representation as make_matrix_from_sequence_16
+from utils.prepare_data import getLength, list_all_files, make_matrix_from_basepairs, make_matrix_from_sequence_8, make_matrix_from_sequence_9, make_matrix_from_sequence_17, read_ct, update_progress_bar, make_pairs_from_list, make_matrix_from_sequence_16
 
 def getFamily(file_name: str) -> str:
   """

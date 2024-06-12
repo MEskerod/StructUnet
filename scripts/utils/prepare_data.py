@@ -216,6 +216,19 @@ def calculate_score_matrix(sequence: str) -> np.ndarray:
     
     return S.reshape(N, N, 1)
 
+def make_matrix_from_sequence_16(sequence: str) -> torch.Tensor:
+    """
+    A sequence is converted to a matrix containing all the possible base pairs resulting in a 3D matrix with 16 layers
+    Each pair in encoded as a onehot vector.
+
+    Parameters:
+    - sequence (str): The sequence to convert.
+
+    Returns:
+    - torch.Tensor: A 3D tensor with shape (16, len(sequence), len(sequence)).
+    """
+    return torch.from_numpy(input_representation(sequence)).permute(2, 0, 1)
+
 def make_matrix_from_sequence_17(sequence: str) -> torch.Tensor:
     """
     A sequence is converted to a matrix containing all the possible base pairs and the score matrix resulting in a 3D matrix with 17 layers
