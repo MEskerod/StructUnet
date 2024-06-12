@@ -329,7 +329,7 @@ def evaluate_random_predictions(files):
 gwf = Workflow()
 
 #Make data for experiments
-for matrix_type in [(8, True), (9, True), (17, True), (8, False)]:
+for matrix_type in [(8, True), (9, True), (16, True), (17, True), (8, False)]:
     gwf.target_from_template(f'experiment_data_{matrix_type[0]}_unpaired_{matrix_type[1]}', make_experiment_data(matrix_type))
 
 #Make experiment of post processing time 

@@ -112,6 +112,7 @@ def average_times(func: function, func_name: str, repeats: int = 5, n: int = 81,
 def main(): 
     functions = {"8-channel": prepare_data.make_matrix_from_sequence_8,
                  "9-channel": prepare_data.make_matrix_from_sequence_9,
+                 "16-channel": prepare_data.input_representation,
                  "17-channel": prepare_data.make_matrix_from_sequence_17,}
     
     timedict = {func_name: average_times(v, func_name) for func_name, v in functions.items()}
