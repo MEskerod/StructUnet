@@ -37,7 +37,7 @@ StructUnet was extensively tested and compared with existing models, demonstrati
     - time_matrix_conversion.py --> script for timing conversion to different types of input matrices 
     - time_postprocessing.py --> script for timing use of different post-processing methods
     - traning.py --> script used for training the model on the entire data set using the device available
-- .gitignore --> file that wasn't added to git 
+- .gitignore  
 - workflow.py --> GWF workflow used to run some scripts on cluster
 - environment1.yml --> file containing *RNAUnet* conda environment
 - environment2.yml --> file containing *RNA_Unet* conda environment (used when using GPU)
