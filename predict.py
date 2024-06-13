@@ -1,8 +1,9 @@
 import sys, argparse, os, time
 
 from tqdm import tqdm
-
 from Bio import SeqIO
+
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -243,7 +244,7 @@ def make_matrix_from_sequence_8(sequence: str, device: str = 'cpu') -> torch.Ten
     Returns:
     - torch.Tensor: A 3D tensor with shape (8, len(sequence), len(sequence)).
     """
-    coding = torch.tensor([
+    coding = np.array([
         [1, 0, 0, 0, 0, 0, 0, 0],  # invalid pairing
         [0, 1, 0, 0, 0, 0, 0, 0],  # unpaired
         [0, 0, 1, 0, 0, 0, 0, 0],  # GC
@@ -252,26 +253,25 @@ def make_matrix_from_sequence_8(sequence: str, device: str = 'cpu') -> torch.Ten
         [0, 0, 0, 0, 0, 1, 0, 0],  # GU
         [0, 0, 0, 0, 0, 0, 1, 0],  # UA
         [0, 0, 0, 0, 0, 0, 0, 1],  # AU
-    ], dtype=torch.float32, device=device)
+    ], dtype=np.float32)
 
     basepairs = ["GC", "CG", "UG", "GU", "UA", "AU"]
 
     N = len(sequence)
 
     # Create an array filled with "invalid pairing" vectors
-    matrix = coding[0].repeat(N, N, 1)
+    matrix = np.tile(coding[0], (N, N, 1))
 
     # Update the diagonal with "unpaired" vectors
-    matrix[torch.arange(N), torch.arange(N)] = coding[1]
+    matrix[np.arange(N), np.arange(N), :] = coding[1]
     
     # Update base pair positions directly
-    for i in range(N):
-        for j in range(N):
-            pair = sequence[i] + sequence[j]
-            if pair in basepairs and abs(i-j) >=4:
-                matrix[i, j, :] = coding[basepairs.index(pair)+2]
+    for i, j in np.ndindex(N, N):
+        pair = sequence[i] + sequence[j]
+        if pair in basepairs and abs(i-j) >=4:
+            matrix[i, j, :] = coding[basepairs.index(pair)+2]
 
-    return matrix.permute(2, 0, 1).unsqueeze(0)
+    return torch.from_numpy(matrix.transpose(2, 0, 1))
 
 def pairs(x: str, y:str) -> bool:
     if x == 'A' and y == 'U':
@@ -377,6 +377,32 @@ def prepare_sequence(sequence: str) -> str:
 
     return sequence
 
+def pairs_to_db(pairs: list): 
+    """
+    Function that converts a list of pairs to dot-bracket notation.
+    The function uses a stack to keep track of the current level of the bracket structure to handle pseudoknots
+
+    Parameters:
+    - pairs (list): The list of pairs to convert.
+
+    Returns:
+    - str: The dot-bracket notation.
+    """
+    level = 0
+    last_close = [-1, -1, -1]
+    brackets = [('(', ')'), ('[', ']'), ('{', '}')]
+    db = ['.'] * len(pairs)
+    
+    for i, j in enumerate(pairs):
+        if i < j:
+            if i > last_close[level] and level > 0:
+                level -= 1
+            if i < last_close[level] and j > last_close[level] and level < 2:
+                level += 1
+            db[i], db[j] = brackets[level]
+            last_close[level] = j
+    return ''.join(db)
+
 def read_fasta(input: str) -> str:
     """
     Reads in a FASTA-file and returns the sequence
@@ -446,6 +472,26 @@ def write_bpseq(outputfile: str, sequence: str, output: torch.Tensor, seq_name: 
         f.write('\n'.join([' '.join(line) for line in bpseq]))
         f.write('\n')
 
+def write_dbn(outputfile: str, sequence: str, output: torch.Tensor, seq_name: str) -> None:
+    """
+    Writes the output to a dot-bracket notation file.
+
+    Parameters:
+    - outputfile (str): The output file to write to.
+    - sequence (str): The sequence that the output was generated from.
+    - output (torch.Tensor): The structure in matrix format.
+    - seq_name (str): The name of the sequence (not used).
+
+    Returns:
+    - None
+    """
+    pairs = torch.nonzero(output)
+
+    dbn = pairs_to_db(pairs)
+
+    with open(outputfile, 'w') as f:
+        f.write(f">{seq_name}\n{sequence}\n{dbn}\n")
+
 
 def write_to_stdout(outputfile: str, sequence: str, output: torch.Tensor, seq_name: str) -> None:
     """
@@ -494,7 +540,7 @@ if __name__ == '__main__':
        sequence = prepare_sequence(sequence)
 
     if args.output != sys.stdout:
-        output_map = {'.ct': write_ct, '.bpseq': write_bpseq}
+        output_map = {'.ct': write_ct, '.bpseq': write_bpseq, '.dbn': write_dbn}
         file_type = os.path.splitext(args.output)[1]
         if file_type not in output_map:
             raise ValueError(f"Invalid output file format. Valid file formats are .dbn, .ct and .bpseq. {file_type} is not valid")
