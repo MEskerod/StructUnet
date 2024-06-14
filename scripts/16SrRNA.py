@@ -16,18 +16,21 @@ def count_non_standard_bp(sequence, output):
     standard = ['AU', 'UA', 'CG', 'GC', 'GU', 'UG', 'NU', 'NA', 'NG', 'NC', 'UN', 'AN', 'GN', 'CN']
 
     non_standard = 0
+    total_pairs = 0
 
     for i, j in pairs:
         i, j = i.item(), j.item() 
-        if i<j and sequence[i]+sequence[j] not in standard: 
-            non_standard += 1
+        if i<j and sequence[i]+sequence[j]: 
+            total_pairs += 1 
+            if sequence[i]+sequence[j] not in standard: 
+                non_standard += 1
     
-    return non_standard
+    return non_standard, total_pairs
 
 def plot_correlation(df): 
     fig, ax = plt.subplots(figsize=(6, 5))
 
-    x = np.array([i*2/j for i, j in zip(df['Non-standard basepairs'], df['Length'])])
+    x = np.array([i/j for i, j in zip(df['Non-standard basepairs'], df['Total basepairs'])])
 
     slope, intercept, r_value, p_value, std_err = linregress(x, df['F1 score'])
     r_squared = r_value**2
@@ -37,7 +40,7 @@ def plot_correlation(df):
 
     ax.grid(linestyle = '--')
     ax.set_ylabel("F1 Score")
-    ax.set_xlabel("Proportion of Bases in Non-Standard Basepairs")
+    ax.set_xlabel("Proportion of Non-Standard Basepairs")
 
     plt.gca().spines['right'].set_visible(False)
     plt.gca().spines['top'].set_visible(False)
@@ -56,7 +59,7 @@ if __name__ == '__main__':
 
     RNA = namedtuple('RNA', 'input output length family name sequence')
 
-    df = pd.DataFrame(columns=['Length', 'Non-standard basepairs', 'F1 score'])
+    df = pd.DataFrame(columns=['Length', 'Total basepairs', 'Non-standard basepairs', 'F1 score'])
 
     progress = tqdm(total=len(files), unit='files')
 
@@ -66,16 +69,16 @@ if __name__ == '__main__':
             progress.update()
             continue
 
-        non_std = count_non_standard_bp(data.sequence, data.output)
+        non_std, total_bp = count_non_standard_bp(data.sequence, data.output)
 
         predicted = pickle.load(open(f'steps/RNA_Unet/{os.path.basename(file)}', 'rb'))
         _, _, F1_score = evaluate(predicted, data.output, device='cpu')
 
-        df.loc[len(df)] = [len(data.sequence), non_std, F1_score]
+        df.loc[len(df)] = [len(data.sequence), total_bp, non_std, F1_score]
 
         progress.update()
     
     progress.close()
 
     df.to_csv('results/16SrRNA_scores.csv', index=False)
-    plot_correlation(df['Non-standard basepairs'], df['Length'], df['F1 score'])
+    plot_correlation(df)
