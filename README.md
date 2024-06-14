@@ -17,6 +17,7 @@ StructUnet was extensively tested and compared with existing models, demonstrati
 - results   
 - scripts
     - utils --> Folder containing the functions used in various scripts
+    - 16srRNA.py --> script used to look at the correlation between F1 score of prediction and proportion of non-standard base pairs in structure
     - compare_predictions_over600.py --> script that evaluates the predictions made of the method able to predict on sequences longer than 600 nucleotides
     - compare_precitions_under600.py --> script that evaluates the predictions made of all methods on sequences below 600
     - compare_methods.py --> script that evaluates the predicted structure by different methods
@@ -28,6 +29,7 @@ StructUnet was extensively tested and compared with existing models, demonstrati
     - experiment_files.py --> script for converting sequences in RNAStralign used for experiments to matrices. Can convert inputs to 8, 9 or 17-channel input
     - make_predicted_examples.py --> script that finds examples for each of the families and returns the prediction and true structure as bpseq files
     - make_test_under_600.py --> script that writes the index of all the files in the test set with sequence lengths below 600 to pickle file
+    - pdb_plot.py --> small script used to plot PDB data
     - predict_from_file.py --> script that takes a file as input. The file must be a pickle file containing a file list of pickle files containing input as namedtuple
     - predict_test.py --> script that uses the final model to predict and post-process the files in the test set
     - prepare_archiveii.py --> script that convert files in archiveII to input format
