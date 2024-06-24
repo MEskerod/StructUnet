@@ -20,9 +20,12 @@ __pycache__
 .gwf/
 
 steps/*
+figures/defence/*
 
 RNA_Unet.pth
 
 .vscode/
 
 VARNAv3-93.jar
+defence_plots.ipynb
+CNN_animation.ipynb
