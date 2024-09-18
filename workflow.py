@@ -326,7 +326,7 @@ def evaluate_random_predictions(files):
 
 
 #FOR 16-CHANNEL INPUT
-def make_complete_set(): 
+def make_complete_set16(): 
     """
     Convert all data to matrices and save namedtuple as pickle files
     """
@@ -342,12 +342,12 @@ def make_complete_set():
     tar -czf data/test_files16.tar.gz data/test_files16"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
-def train_model_small(files): 
+def train_model_16(files): 
     """
     Train the model on the entire data set
     """
     inputs = ['data/complete_set.tar.gz'] #TODO - Change to the correct inputs
-    outputs = ['RNA_Unet.pth']
+    outputs = ['RNA_Unet16.pth']
     options = {"memory":"8gb", "walltime":"168:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} 
     spec = """CONDA_BASE=$(conda info --base)
     source $CONDA_BASE/etc/profile.d/conda.sh
@@ -359,7 +359,7 @@ def train_model_small(files):
     nvcc --version
     export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     echo "Training neural network"
-    python3 scripts/training.py"""
+    python3 scripts/training16.py"""
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 
@@ -435,3 +435,5 @@ gwf.target_from_template('evaluate_random_predictions', evaluate_random_predicti
 
 
 ##### TRAIN AND EVALUATE WITH 16 CHANNEL INPUT AND NO MASK FOR POST-PROCESSING ####
+gwf.target_from_template('convert_data16', make_complete_set16())
+gwf.target_from_template('train_RNAUnet16', train_model_16(files = pickle.load(open('data/train16.pkl', 'rb')) + pickle.load(open('data/valid16.pkl', 'rb'))))
