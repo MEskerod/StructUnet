@@ -336,7 +336,7 @@ def make_complete_set16():
                os.path.join('data', 'test16.pkl'),
                os.path.join('figures', 'length_distribution16.png'),
                os.path.join('figures', 'family_distribution16.png')]
-    options = {"memory":"64gb", "walltime":"6:00:00", "account":"RNA_Unet", "cores":4}
+    options = {"memory":"32gb", "walltime":"6:00:00", "account":"RNA_Unet", "cores":4}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/complete_dataset16.py
     tar -czf data/test_files16.tar.gz data/test_files16"""
@@ -360,6 +360,17 @@ def train_model_16(files):
     export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     echo "Training neural network"
     python3 scripts/training16.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+def predict_and_eval_RNAUnet16(files): #FIXME !!!
+    """
+    Make predictions for the data set and evaluate the results using the same framework as before
+    """
+    inputs = ['RNA_Unet16.pth'] + files
+    outputs = []
+    options = {"memory":"64gb", "walltime":"18:00:00", "account":"RNA_Unet"}
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    """
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
 
@@ -436,4 +447,5 @@ gwf.target_from_template('evaluate_random_predictions', evaluate_random_predicti
 
 ##### TRAIN AND EVALUATE WITH 16 CHANNEL INPUT AND NO MASK FOR POST-PROCESSING ####
 gwf.target_from_template('convert_data16', make_complete_set16())
-gwf.target_from_template('train_RNAUnet16', train_model_16(files = []))
+gwf.target_from_template('train_RNAUnet16', train_model_16(files = pickle.load(open('data/train16.pkl', 'rb')) + pickle.load(open('data/valid16.pkl', 'rb'))))
+gwf.target_from_template('evaluate_RNAUnet16', predict_and_eval_RNAUnet16(pickle.load(open('data/test.pkl', 'rb'))))
