@@ -325,6 +325,44 @@ def evaluate_random_predictions(files):
 
 
 
+#FOR 16-CHANNEL INPUT
+def make_complete_set(): 
+    """
+    Convert all data to matrices and save namedtuple as pickle files
+    """
+    inputs = [os.path.join('data', 'RNAStralign.tar.gz')]
+    outputs = [os.path.join('data', 'train16.pkl'),
+               os.path.join('data', 'valid16.pkl'),
+               os.path.join('data', 'test16.pkl'),
+               os.path.join('figures', 'length_distribution16.png'),
+               os.path.join('figures', 'family_distribution16.png')]
+    options = {"memory":"16gb", "walltime":"6:00:00", "account":"RNA_Unet", "cores":4}
+    spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/complete_dataset16.py
+    tar -czf data/test_files16.tar.gz data/test_files16"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+def train_model_small(files): 
+    """
+    Train the model on the entire data set
+    """
+    inputs = ['data/complete_set.tar.gz'] #TODO - Change to the correct inputs
+    outputs = ['RNA_Unet.pth']
+    options = {"memory":"8gb", "walltime":"168:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} 
+    spec = """CONDA_BASE=$(conda info --base)
+    source $CONDA_BASE/etc/profile.d/conda.sh
+    conda activate RNA_Unet
+
+    echo "Job ID: $SLURM_JOB_ID\n"
+    nvidia-smi -L
+    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+    nvcc --version
+    export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    echo "Training neural network"
+    python3 scripts/training.py"""
+    return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
+
+
 ### WORKFLOW ###
 gwf = Workflow()
 
@@ -392,3 +430,8 @@ gwf.target_from_template('compare_archiveII', compare_archiveII(methods, pickle.
 
 #Additional analysis
 gwf.target_from_template('evaluate_random_predictions', evaluate_random_predictions(pickle.load(open('data/test.pkl', 'rb'))+pickle.load(open('data/archiveii.pkl', 'rb'))))
+
+
+
+
+##### TRAIN AND EVALUATE WITH 16 CHANNEL INPUT AND NO MASK FOR POST-PROCESSING ####
