@@ -177,7 +177,7 @@ def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience
         early_stopping_counter = len(valid_loss_history) - valid_loss_history.index(best_score) - 1
         logging.info(f'Starting training from epoch {start_epoch+1}.')
 
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = 'cuda' #if torch.cuda.is_available() else 'cpu'
     
     model.to(device)
 
