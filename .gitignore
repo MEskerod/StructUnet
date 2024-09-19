@@ -10,6 +10,10 @@ data/test_files/*
 data/test_files.tar.gz
 data/archiveii/*
 data/archiveii.tar.gz
+data/complete_set16/
+data/test_files16/
+data/test_files16.tar.gz
+
 
 __pycache__
 */__pycache__
