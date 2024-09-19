@@ -348,7 +348,7 @@ def train_model_16(files):
     """
     inputs = ['data/complete_set.tar.gz'] #TODO - Change to the correct inputs
     outputs = ['RNA_Unet16.pth']
-    options = {"memory":"8gb", "walltime":"168:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"} 
+    options = {"memory":"16gb", "walltime":"168:00:00", "account":"RNA_Unet", "gres":"gpu:1", "queue":"gpu"}
     spec = """CONDA_BASE=$(conda info --base)
     source $CONDA_BASE/etc/profile.d/conda.sh
     conda activate RNA_Unet
@@ -367,9 +367,15 @@ def predict_and_eval_RNAUnet16(files): #FIXME !!!
     Make predictions for the data set and evaluate the results using the same framework as before
     """
     inputs = ['RNA_Unet16.pth'] + files
-    outputs = []
-    options = {"memory":"64gb", "walltime":"18:00:00", "account":"RNA_Unet"}
+    outputs = ['results/family_scores_RNAUnet16.csv',
+               'figures/per_sequence_F1_RNAUnet16.png',
+               'results/times_final16_cpu.csv',
+               'figures/time_final16_cpu.png', 
+               'results/family_scores_RNAUnet16_archive.csv',
+               'figures/per_sequence_F1_archive_RNAUnet16.png',]
+    options = {"memory":"64gb", "walltime":"48:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
+    python3 scripts/evaluate16.py
     """
     return AnonymousTarget(inputs=inputs, outputs=outputs, options=options, spec=spec)
 
@@ -448,4 +454,4 @@ gwf.target_from_template('evaluate_random_predictions', evaluate_random_predicti
 ##### TRAIN AND EVALUATE WITH 16 CHANNEL INPUT AND NO MASK FOR POST-PROCESSING ####
 gwf.target_from_template('convert_data16', make_complete_set16())
 gwf.target_from_template('train_RNAUnet16', train_model_16(files = pickle.load(open('data/train16.pkl', 'rb')) + pickle.load(open('data/valid16.pkl', 'rb'))))
-gwf.target_from_template('evaluate_RNAUnet16', predict_and_eval_RNAUnet16(pickle.load(open('data/test.pkl', 'rb'))))
+gwf.target_from_template('evaluate_RNAUnet16', predict_and_eval_RNAUnet16(pickle.load(open('data/test.pkl', 'rb')) + pickle.load(open('data/archiveii.pkl', 'rb'))))

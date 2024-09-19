@@ -177,7 +177,7 @@ def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience
         early_stopping_counter = len(valid_loss_history) - valid_loss_history.index(best_score) - 1
         logging.info(f'Starting training from epoch {start_epoch+1}.')
 
-    device = 'cuda' #if torch.cuda.is_available() else 'cpu'
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
     model.to(device)
 
@@ -245,8 +245,8 @@ def fit_model(model: torch.nn.Module, train_dataset, validtion_dataset, patience
 
         logging.info(f"Epoch {epoch+1}/{epochs}: Train loss: {train_loss_history[-1]:.4f}, Train F1: {train_F1_history[-1]:.4f}, Validation loss: {valid_loss_history[-1]:.4f}, Validation F1: {valid_F1_history[-1]:.4f}")
         if epoch > 0:
-            show_history(train_loss_history, valid_loss_history, title = 'Loss', outputfile = 'steps/training_log/loss_history.png')
-            show_history(train_F1_history, valid_F1_history, title = 'F1 score', outputfile = 'steps/training_log/F1_history.png')
+            show_history(train_loss_history, valid_loss_history, title = 'Loss', outputfile = 'steps/training_log/loss_history16.png')
+            show_history(train_F1_history, valid_F1_history, title = 'F1 score', outputfile = 'steps/training_log/F1_history16.png')
         
         data = {"train_loss": train_loss_history, "train_F1": train_F1_history, "valid_loss": valid_loss_history, "valid_F1": valid_F1_history}
         df = pd.DataFrame(data)
@@ -290,7 +290,7 @@ def count_parameters(model: torch.nn.Module) -> int:
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 if __name__ == "__main__":
-    os.makedirs('steps/training_log16', exist_ok=True)
+    os.makedirs('steps/training_log', exist_ok=True)
     logging.basicConfig(filename=f'steps/training_log/training_log16.txt', level=logging.INFO)
     
     train = pickle.load(open('data/train16.pkl', 'rb'))
