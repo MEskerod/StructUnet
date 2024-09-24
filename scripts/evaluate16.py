@@ -50,7 +50,7 @@ def predict(sequence: str, name: str, outputdir: str) -> tuple:
     - tuple: The time it took for the prediction in the order (time without post-processing, time for only prediction, time without conversion, total time)
     """
     start1 = time.time()
-    input = make_matrix_from_sequence_16(sequence, device=device).unsqueeze(0).to(device)
+    input = make_matrix_from_sequence_16(sequence).unsqueeze(0).to(device)
     start2 = time.time()
     output = model(input).squeeze(0).squeeze(0).detach() 
     time1 = time.time()-start1 #Time without post-processing
@@ -165,7 +165,7 @@ def evaluate_file(predicted, file: str, pseudoknots_all, testfile_dir = 'data/te
 
     pseudoknot_score = scores_pseudoknot(predicted, target_pk) #Check if predicted and/or target has pseudoknots
     pseudoknots_all += pseudoknot_score
-    if data.length < 600 and pseudoknots_under is not None:
+    if results[0] < 600 and pseudoknots_under is not None:
         pseudoknots_under += pseudoknot_score
     
     return results
@@ -272,10 +272,12 @@ if __name__ == '__main__':
     metrics = ['precision', 'recall', 'f1', 'precision_shift', 'recall_shift', 'f1_shift']
 
     pseudoknot_F1 = pd.DataFrame(index = ['under', 'all'], columns = ['RNAUnet16'])
-    df_testscores = pd.DataFrame(index = range(len(test_data)), columns = ['length', 'family'] + [f'RNAUnet16_{metric}' for metric in metrics])
     mean_scores= pd.DataFrame(columns = metrics + ['f1_weighted'])
 
-    progress_bar = tqdm(total=len(test_data), unit='sequence')
+    columns = [f'RNAUnet16_{metric}' for metric in metrics]
+    df_testscores = pd.DataFrame(index = range(len(test_data)), columns = ['length', 'family'] + columns)
+
+    progress_bar = tqdm(total=len(test_data), unit='sequence', file=sys.stdout)
     
     #Predict for all sequences and save the results and times
     #Time all steps of prediction, with conversion to matrix, prediction and post-processing
@@ -297,20 +299,9 @@ if __name__ == '__main__':
     progress_bar.close()
 
     print('-- Predictions done --')
-    print(f'Total time: {format_time(sum(times_total))}. Average time per sequence: {sum(times_total)/len(test_data):.5f}\n')
-
-    print('-- Calculating mean F1 scores and pseudoknot scores --')
-    pseudoknot_F1.loc['under'] = f1_pk_score(pseudoknots_under)
-    pseudoknot_F1.loc['all'] = f1_pk_score(pseudoknots_all)
+    print(f'Total time RNAStralign: {format_time(sum(times_total))}. Average time per sequence: {sum(times_total)/len(test_data):.5f}\n')
 
     df_under600 = df_testscores[df_testscores['length'] < 600]
-
-    mean_scores.loc['RNAUnet16_under600'] = df_under600[metrics].mean().tolist() + [calculate_weighted_f1(df_under600['length'].tolist(), df_under600['f1'].tolist())]
-    mean_scores.loc['RNAUnet16'] = df_testscores[metrics].mean().tolist() + [calculate_weighted_f1(df_testscores['length'].tolist(), df_testscores['f1'].tolist())]
-
-    #Evaluate families
-    family_df = evaluate_families(df_testscores, 'RNAUnet16')
-    family_df.to_csv('results/family_scores_RNAUnet16.csv')
 
     print('-- Saving results --')
     #Check if testscores can be concatenated to existing file
@@ -338,6 +329,17 @@ if __name__ == '__main__':
     else:
         df_under600.to_csv('results/testscores_under600_RNAUnet16.csv', index=False)
         print('\t\t Unable to merge. Saved new testscores for under 600')
+
+    print('-- Calculating mean F1 scores and pseudoknot scores --')
+    pseudoknot_F1.loc['under'] = f1_pk_score(pseudoknots_under)
+    pseudoknot_F1.loc['all'] = f1_pk_score(pseudoknots_all)
+
+    mean_scores.loc['RNAUnet16_under600'] = df_under600[columns].mean().tolist() + [calculate_weighted_f1(df_under600['length'].tolist(), df_under600['RNAUnet16_f1'].tolist())]
+    mean_scores.loc['RNAUnet16'] = df_testscores[columns].mean().tolist() + [calculate_weighted_f1(df_testscores['length'].tolist(), df_testscores['RNAUnet16_f1'].tolist())]
+
+    #Evaluate families
+    family_df = evaluate_families(df_testscores, 'RNAUnet16')
+    family_df.to_csv('results/family_scores_RNAUnet16.csv')
     
     #Add to existing results
     pseudoknot_df = pd.read_csv('results/pseudoknot_F1.csv', index_col=0)
@@ -345,7 +347,7 @@ if __name__ == '__main__':
     pseudoknot_df.to_csv('results/pseudoknot_F1.csv')
 
     mean_df = pd.read_csv('results/average_scores.csv', index_col=0)
-    mean_df = mean_df.append(mean_scores)
+    mean_df = pd.concat([mean_df, mean_scores])
     mean_df.to_csv('results/average_scores.csv')
 
     
@@ -383,21 +385,37 @@ if __name__ == '__main__':
 
 
     print('--- Predicting and evaluating for Archive II ---')
-    progress_bar = tqdm(total=len(files), unit='files')
+    progress_bar = tqdm(total=len(files), unit='files', file=sys.stdout)
 
+    total_time = 0 
     for i, file in enumerate(files):
         name = os.path.basename(file)
         sequence = pickle.load(open(file, 'rb')).sequence
-        _, _, _, _, output = predict(sequence, name, outputdir='steps/RNAUnet16_archive')
+        _, _, _, file_time, output = predict(sequence, name, outputdir='steps/RNAUnet16_archive')
         results = evaluate_file(output, name, pseudoknots, testfile_dir='data/archiveii')
+        total_time += file_time
         df_testscores_archive.loc[i] = results
         progress_bar.update(1)
     
     progress_bar.close()
 
     print('--- Evaluation done for Archive II ---')
+    print(f'Total time Archive II: {format_time(total_time)}. Average time per sequence: {times_total/len(files):.5f}\n')
 
     print('--- Summarizing and saving results for Archive II ---')
+    # Save testscores
+    df_archive = pd.read_csv('results/testscores_archive.csv')
+    if df_archive['length'].equals(df_testscores_archive['length']):
+        df_archive = pd.concat([df_archive, df_testscores_archive.drop(columns=['length', 'family'])], axis=1)
+        df_archive.to_csv('results/testscores_archive.csv', index=False)
+        f1 = df_archive[[f'{method}_f1' for method in ['nussinov', 'viennaRNA', 'contrafold', 'CNNfold', 'RNAUnet', 'RNAUnet16']]]
+        f1 = f1.apply(pd.to_numeric, errors='coerce')
+        violin_plot(f1, 'Methods', outputfile='figures/evaluation_predictions_archive_RNAUnet16.png')
+        print('\t\t Successfully merged and saved testscores')
+    else:
+        df_testscores_archive.to_csv('results/testscores_archive_RNAUnet16.csv', index=False)
+        print('\t\t Unable to merge. Saved new testscores')
+
     #Save pseudoknot score
     df_pseudoknot_archive = pd.read_csv('results/pseudoknot_F1_archive.csv', index_col=0)
     df_pseudoknot_archive["RNAUnet16"] = [f1_pk_score(pseudoknots)]
@@ -411,19 +429,6 @@ if __name__ == '__main__':
     #Save family scores
     family_df = evaluate_families(df_testscores_archive, 'RNAUnet16')
     family_df.to_csv('results/family_scores_RNAUnet16_archive.csv')
-
-    # Save testscores
-    df_archive = pd.read_csv('results/testscores_archive.csv')
-    if df_archive['length'].equals(df_testscores_archive['length']):
-        df_archive = pd.concat([df_archive, df_testscores_archive.drop(columns=['length', 'family'])], axis=1)
-        df_archive.to_csv('results/testscores_archive.csv', index=False)
-        f1 = df_archive[[f'{method}_f1' for method in ['nussinov', 'viennaRNA', 'contrafold', 'CNNfold', 'RNAUnet', 'RNAUnet16']]]
-        f1 = f1.apply(pd.to_numeric, errors='coerce')
-        violin_plot(f1, 'Methods', outputfile='figures/evaluation_predictions_archive_RNAUnet16.png')
-        print('\t\t Successfully merged and saved testscores')
-    else:
-        df_testscores_archive.to_csv('results/testscores_archive_RNAUnet16.csv', index=False)
-        print('\t\t Unable to merge. Saved new testscores')
 
     print('--- Make plots for Archive II ---')
     plot_F1(df_testscores_archive, 'figures/per_sequence_F1_archive_RNAUnet16.png')

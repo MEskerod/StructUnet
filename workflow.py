@@ -373,7 +373,7 @@ def predict_and_eval_RNAUnet16(files): #FIXME !!!
                'figures/time_final16_cpu.png', 
                'results/family_scores_RNAUnet16_archive.csv',
                'figures/per_sequence_F1_archive_RNAUnet16.png',]
-    options = {"memory":"64gb", "walltime":"48:00:00", "account":"RNA_Unet"}
+    options = {"memory":"32gb", "walltime":"24:00:00", "account":"RNA_Unet"}
     spec = """echo "Job ID: $SLURM_JOB_ID\n"
     python3 scripts/evaluate16.py
     """
