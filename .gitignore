@@ -27,6 +27,7 @@ steps/*
 figures/defence/*
 
 RNA_Unet.pth
+RNA_Unet16.pth
 
 .vscode/
 
