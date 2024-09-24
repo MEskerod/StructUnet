@@ -255,6 +255,7 @@ if __name__ == '__main__':
     model.load_state_dict(torch.load('RNA_Unet16.pth', map_location=torch.device(device)))
     model.to(device)
 
+
     test_data = pickle.load(open('data/test.pkl', 'rb'))
     print('-- Model and data loaded --\n')
 
@@ -377,7 +378,7 @@ if __name__ == '__main__':
     #### ARCHIVE II ####
     print('--- Starting evaluation for Archive II ---')
     os.makedirs('steps/RNAUnet16_archive', exist_ok=True)
-    files = [os.path.basename(file) for file in pickle.load(open('data/archiveii.pkl', 'rb'))]
+    files = pickle.load(open('data/archiveii.pkl', 'rb'))
     
     pseudoknots = np.array([0, 0, 0, 0])
 
@@ -400,7 +401,7 @@ if __name__ == '__main__':
     progress_bar.close()
 
     print('--- Evaluation done for Archive II ---')
-    print(f'Total time Archive II: {format_time(total_time)}. Average time per sequence: {times_total/len(files):.5f}\n')
+    print(f'Total time Archive II: {format_time(total_time)}. Average time per sequence: {total_time/len(files):.5f}\n')
 
     print('--- Summarizing and saving results for Archive II ---')
     # Save testscores
@@ -413,8 +414,8 @@ if __name__ == '__main__':
         violin_plot(f1, 'Methods', outputfile='figures/evaluation_predictions_archive_RNAUnet16.png')
         print('\t\t Successfully merged and saved testscores')
     else:
-        df_testscores_archive.to_csv('results/testscores_archive_RNAUnet16.csv', index=False)
-        print('\t\t Unable to merge. Saved new testscores')
+       df_testscores_archive.to_csv('results/testscores_archive_RNAUnet16.csv', index=False)
+       print('\t\t Unable to merge. Saved new testscores')
 
     #Save pseudoknot score
     df_pseudoknot_archive = pd.read_csv('results/pseudoknot_F1_archive.csv', index_col=0)
@@ -423,7 +424,7 @@ if __name__ == '__main__':
 
     #Save mean scores
     df_average_archive = pd.read_csv('results/average_scores_archive.csv', index_col=0)
-    df_average_archive.loc['RNAUnet16'] = df[[f'RNAUnet16_{metric}' for metric in metrics]].mean().tolist() + [calculate_weighted_f1(df['length'].tolist(), df[f'RNAUnet16_f1'].tolist())]
+    df_average_archive.loc['RNAUnet16'] = df_testscores_archive[[f'RNAUnet16_{metric}' for metric in metrics]].mean().tolist() + [calculate_weighted_f1(df_testscores_archive['length'].tolist(), df_testscores_archive[f'RNAUnet16_f1'].tolist())]
     df_average_archive.to_csv('results/average_scores_archive.csv')
 
     #Save family scores
